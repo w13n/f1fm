@@ -4,38 +4,44 @@ use std::fmt::{Debug, Display, Formatter};
 struct FantasySeason {
     teams: Vec<Team>,
     results: Vec<RaceResults>,
+    status: Status,
     scorer: fn(&DriverResult) -> i16,
     drafter: fn(Vec<u8>) -> Vec<u8>,
     team_count: u16,
     driver_count: u8,
     season: u16,
-
 }
 
 impl FantasySeason {
     pub fn score(&mut self, round: u8) -> Result<(), ScoreError> {
         let mut team_results = Vec::with_capacity(self.team_count as usize);
-        let race_result: &RaceResults;
 
-        if let Some(result) = self.results.iter().find(|rr| rr.round == round) {
-            race_result = result;
-        } else {
-            return Err(ScoreError::RoundResultsDoNotExist(round))
+        if !self.status.has_results(round) {
+            return Err(ScoreError::RoundResultsDoNotExist(round));
         }
 
-        for team in self.teams {
-            if team.contains_results_for_round(round) {
-                return Err(ScoreError::RoundAlreadyScored(round))
-            }
+        if !self.status.has_drafted(round) {
+            return Err(ScoreError::RoundLineupDoesNotExist(round));
+        }
+
+        if self.status.has_scored(round) {
+            return Err(ScoreError::RoundAlreadyScored(round))
+        }
+
+        let race_result = self.results.iter().find(|rr| rr.round == round).expect("status out of sync");
+
+        for team in &self.teams {
             let maybe_team_result = team.get_team_race_result(round, self.scorer, &race_result.drivers);
             if let Err(team_result) = maybe_team_result {
                 return Err(team_result)
             }
             team_results.push(maybe_team_result.unwrap());
         }
-        for mut team in self.teams {
+        for team in &mut self.teams {
             team.update_points(team_results.remove(0));
         }
+
+        self.status.toggle_scored(round);
         Ok(())
     }
 
@@ -53,10 +59,10 @@ impl Team {
     // compute the TeamRoundResult for the round given for this team based on scorer and drivers
     // O(n) where n is the number of drivers on this team (assumes the total drivers in F1 remains at 20)
     fn get_team_race_result(&self, round: u8, scorer: fn(&DriverResult) -> i16, drivers: &Vec<DriverResult>) -> Result<TeamRoundResult, ScoreError> {
-        if let Some(round_lineup) = self.drivers.iter().rev().find(|trr| trr.round == round) {
-            return round_lineup.get_lineup_result(scorer, drivers);
-        }
-        Err(ScoreError::RoundLineupDoesNotExist(round))
+        self.drivers
+            .iter().rev().find(|trr| trr.round == round)
+            .expect("status out of sync")
+            .get_lineup_result(scorer, drivers)
     }
 
     // computes if this team already has a TeamRoundResult for the given round
@@ -86,11 +92,11 @@ impl TeamRoundLineup {
     // O(n) where n is the number of drivers on this team (assumes the total drivers in F1 remains at 20)
     fn get_lineup_result(&self, scorer: fn(&DriverResult) -> i16, drivers: &Vec<DriverResult>) -> Result<TeamRoundResult, ScoreError> {
         let mut points: i16 = 0;
-        for team_driver in self.drivers {
-            if let Some(driver_result) = drivers.iter().find(|dr| dr.driver == team_driver) {
+        for team_driver in &self.drivers {
+            if let Some(driver_result) = drivers.iter().find(|dr| dr.driver == *team_driver) {
                 points += scorer(driver_result);
             } else {
-                return Err(ScoreError::DriverDidNotRace(team_driver));
+                return Err(ScoreError::DriverDidNotRace(*team_driver));
             }
         }
         Ok(TeamRoundResult {round: self.round, points})
@@ -117,6 +123,81 @@ struct DriverResult {
     qualifying_position: u8,
 }
 
+// stores the status of each round, if the race results have been collected, the teams have drafted, or the teams have been scored
+struct Status {
+    tasks: Vec<RoundStatus>, // a collection of statuses where the nth element of the RoundStatus is the nth  round
+}
+
+impl Status {
+
+    fn _get_round_status(& self, round: u8) -> Option<&RoundStatus> {
+        if self.tasks.len() >= round as usize {
+            return self.tasks.get(round as usize - 1);
+        }
+        None
+    }
+
+    fn _find_mut_round_status(&mut self, round: u8) -> &mut RoundStatus {
+        if self.tasks.len() < round as usize  {
+            for i in self.tasks.len()..(round as usize) {
+                self.tasks.push(RoundStatus::new())
+            }
+        }
+        return self.tasks.get_mut(round as usize - 1).unwrap()
+    }
+
+    fn has_results(& self, round: u8) -> bool {
+        if let Some(status) = self._get_round_status(round) {
+            return status.results;
+        }
+        false
+    }
+    fn has_drafted(&self, round: u8) -> bool {
+        if let Some(status) = self._get_round_status(round) {
+            return status.drafted;
+        }
+        false
+    }
+
+    fn has_scored(&self, round: u8) -> bool {
+        if let Some(status) = self._get_round_status(round) {
+            return status.scored;
+        }
+        false
+    }
+
+    fn toggle_results(&mut self, round: u8) {
+        let rs = self._find_mut_round_status(round);
+        rs.results = !rs.results;
+    }
+
+    fn toggle_drafted(&mut self, round: u8) {
+        let rs = self._find_mut_round_status(round);
+        rs.drafted = !rs.drafted;
+    }
+
+    fn toggle_scored(&mut self, round: u8) {
+        let rs = self._find_mut_round_status(round);
+        rs.scored = !rs.scored;
+    }
+}
+
+#[derive(Default)]
+struct RoundStatus {
+    results: bool,
+    drafted: bool,
+    scored: bool,
+}
+
+impl RoundStatus {
+    fn new() -> RoundStatus {
+        RoundStatus {
+            results: false,
+            drafted: false,
+            scored: false,
+        }
+    }
+}
 #[derive(Debug)]
 enum ScoreError {
     DriverDidNotRace(u8),
