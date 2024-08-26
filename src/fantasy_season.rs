@@ -139,7 +139,7 @@ impl Status {
 
     fn _find_mut_round_status(&mut self, round: u8) -> &mut RoundStatus {
         if self.tasks.len() < round as usize  {
-            for i in self.tasks.len()..(round as usize) {
+            for _ in self.tasks.len()..(round as usize) {
                 self.tasks.push(RoundStatus::new())
             }
         }
