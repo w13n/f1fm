@@ -1,13 +1,16 @@
-use std::error::Error;
 use crate::fantasy_season::race_results::RaceResults;
+use std::error::Error;
 
-mod fantasy_season;
 mod error;
+mod fantasy_season;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let x = RaceResults::build(200, 2024)?;
-
-    println!("{:#?}", x);
+    let x = RaceResults::build(17, 2024);
+    if let Err(err) = x {
+        println!("Error: cannot get race results. {}", err);
+    } else {
+        println!("{:#?}", x);
+    }
 
     Ok(())
 }

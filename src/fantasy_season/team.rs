@@ -1,87 +1,93 @@
+use super::DriverResult;
 use crate::error::{DraftError, ScoreError};
-use crate::fantasy_season::DriverResult;
+use std::cell::Cell;
 
 pub struct Team {
     name: String,
-    drivers: Vec<TeamRoundLineup>, // the driver lineup of this team for each round
-    points: Vec<TeamRoundResult>, // the points gained for this team per round
+    rounds: Vec<TeamRound>, // the driver lineup and points scored of this team for each round
 }
 
 impl Team {
-
-    // compute the TeamRoundResult for the round given for this team based on scorer and drivers
-    // O(n) where n is the number of drivers on this team (assumes the total drivers in F1 remains at 20)
-    pub fn get_team_race_result(&self, round: u8, scorer: fn(&DriverResult) -> i16, drivers: &Vec<DriverResult>) -> Result<TeamRoundResult, ScoreError> {
-        self.drivers
-            .iter().rev().find(|trr| trr.round == round)
-            .expect("status out of sync")
-            .get_lineup_result(scorer, drivers)
-    }
-
-    // computes if this team already has a TeamRoundResult for the given round
-    pub fn contains_results_for_round(&self, round: u8) -> bool {
-        self.points.iter().find(|trr| trr.round == round).is_some()
-    }
-
-    // saves the new TeamRoundResult to this Team
-    // Panics: if this Team already has a TeamRoundResult for the given TRR's round
-    pub fn update_points(&mut self, team_round_result: TeamRoundResult) {
-        if self.contains_results_for_round(team_round_result.round) {
-            panic!("cannot not update points for a round that has already been scored");
+    pub fn new(name: String, r1_lineup: Vec<u8>) -> Team {
+        Team {
+            name,
+            rounds: vec![TeamRound::new(1, r1_lineup)],
         }
-        self.points.push(team_round_result);
     }
 
-    pub fn get_team_lineup(&mut self, round: u8, drafter: fn(&str, &Vec<u8>) -> Result<Vec<u8>, DraftError>) -> Result<TeamRoundLineup, DraftError> {
-        let prev_round_drivers = &self.drivers
-            .iter().rev().find(|trr| trr.round == round - 1)
-            .expect("status out of sync")
-            .drivers;
+    pub fn calculate_score(
+        &self,
+        round: u8,
+        grid_size: u8,
+        scorer: fn(u8, &DriverResult) -> i16,
+        driver_results: &[DriverResult],
+    ) -> Result<i16, ScoreError> {
+        let team_round = self
+            .rounds
+            .iter()
+            .rev()
+            .find(|tr| tr.round == round)
+            .expect("status out of date: scoring");
 
-        let maybe_team_lineup = drafter(&*self.name, prev_round_drivers);
-        if let Err(error) = maybe_team_lineup {
-            return Err(error);
+        let mut points = 0;
+
+        for driver in &team_round.lineup {
+            let driver_result = driver_results
+                .iter()
+                .find(|dr| dr.driver == *driver)
+                .ok_or(ScoreError::DriverDidNotRace(*driver))?;
+            points += scorer(grid_size, driver_result)
         }
-        Ok(TeamRoundLineup{round, drivers: maybe_team_lineup.unwrap()})
+        Ok(points)
     }
 
-    pub fn update_lineup(&mut self, team_round_lineup: TeamRoundLineup) {
-        if self.contains_lineup_for_round(team_round_lineup.round) {
+    pub fn store_score(&mut self, round: u8, score: i16) {
+        let team_round = self
+            .rounds
+            .iter()
+            .rev()
+            .find(|tr| tr.round == round)
+            .expect("status out of date: scoring");
+
+        team_round.points.set(Some(score));
+    }
+
+    pub fn calculate_lineup(
+        &self,
+        round: u8,
+        drafter: fn(&str, &Vec<u8>) -> Result<Vec<u8>, DraftError>,
+    ) -> Result<Vec<u8>, DraftError> {
+        let prev_round_drivers = &self
+            .rounds
+            .iter()
+            .rev()
+            .find(|trr| trr.round == round - 1)
+            .expect("status out of sync")
+            .lineup;
+
+        drafter(&self.name, prev_round_drivers)
+    }
+    pub fn store_lineup(&mut self, round: u8, lineup: Vec<u8>) {
+        if self.rounds.iter().any(|tr| tr.round == round) {
             panic!("cannot update lineup for a round that has already been scored");
         }
-        self.drivers.push(team_round_lineup);
-    }
-
-    fn contains_lineup_for_round(&self, round: u8) -> bool {
-        self.drivers.iter().find(|trl| trl.round == round).is_some()
+        self.rounds.push(TeamRound::new(round, lineup));
     }
 }
 
 // the drivers that a given team has for the round given
-pub struct TeamRoundLineup {
-    round: u8, // which round this lineup is for
-    drivers: Vec<u8>, // which drivers are on this team for this round
+pub struct TeamRound {
+    round: u8,                 // which round this lineup is for
+    lineup: Vec<u8>,           // which drivers are on this team for this round
+    points: Cell<Option<i16>>, // the number of points gained for this round
 }
 
-impl TeamRoundLineup {
-
-    // compute the TeamRoundResult for this teams driver lineup based on the DriverResults and scorer
-    // O(n) where n is the number of drivers on this team (assumes the total drivers in F1 remains at 20)
-    fn get_lineup_result(&self, scorer: fn(&DriverResult) -> i16, drivers: &Vec<DriverResult>) -> Result<TeamRoundResult, ScoreError> {
-        let mut points: i16 = 0;
-        for team_driver in &self.drivers {
-            if let Some(driver_result) = drivers.iter().find(|dr| dr.driver == *team_driver) {
-                points += scorer(driver_result);
-            } else {
-                return Err(ScoreError::DriverDidNotRace(*team_driver));
-            }
+impl TeamRound {
+    pub fn new(round: u8, lineup: Vec<u8>) -> TeamRound {
+        TeamRound {
+            round,
+            lineup,
+            points: Cell::new(None),
         }
-        Ok(TeamRoundResult {round: self.round, points})
     }
-}
-
-// the points gained for this team from the round given
-pub struct TeamRoundResult {
-    round: u8, // which round these points were gained for
-    points: i16, // the number of points gained for this round
 }

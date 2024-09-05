@@ -1,50 +1,115 @@
-mod team;
+mod drafter;
 pub mod race_results;
+pub mod scorer;
+mod status;
+mod team;
 
-use std::fmt::{Debug, Display};
-use crate::error::{ScoreError, DraftError};
-use super::fantasy_season::race_results::*;
-use super::fantasy_season::team::Team;
+use crate::error::{DraftError, ResultError, ScoreError};
+use drafter::Drafter;
+use race_results::{DriverResult, RaceResults};
+use scorer::Scorer;
+use status::Status;
+use team::Team;
 
 pub struct FantasySeason {
     teams: Vec<Team>,
     results: Vec<RaceResults>,
     status: Status,
-    scorer: fn(&DriverResult) -> i16,
-    drafter: fn(&str, &Vec<u8>) -> Result<Vec<u8>, DraftError>,
+    scorer: Scorer,
+    drafter: Drafter,
     team_count: u16,
     driver_count: u8,
     season: u16,
+    grid_size: u8,
     enforce_uniqueness: bool,
 }
 
 impl FantasySeason {
-    pub fn score(&mut self, round: u8) -> Result<(), ScoreError> {
-        let mut team_results = Vec::with_capacity(self.team_count as usize);
+    pub fn new(
+        scorer: Scorer,
+        drafter: Drafter,
+        mut team_names: Vec<String>,
+        team_lineups: Vec<Vec<u8>>,
+        season: u16,
+        grid_size: u8,
+        enforce_uniqueness: bool,
+    ) -> FantasySeason {
+        let team_count = team_names.len() as u16;
+        let driver_count = team_lineups.first().expect("no teams exist").len() as u8;
+        assert_eq!(team_names.len(), team_lineups.len());
+        for lineup in &team_lineups {
+            assert_eq!(lineup.len() as u8, driver_count);
+        }
+        if enforce_uniqueness {
+            let mut already_seen =
+                Vec::with_capacity((team_count * (driver_count as u16)) as usize);
+            for lineup in &team_lineups {
+                for driver in lineup {
+                    assert!(!already_seen.contains(driver));
+                    already_seen.push(*driver);
+                }
+            }
+        }
 
+        let mut teams = Vec::with_capacity(team_count as usize);
+        for lineup in team_lineups {
+            teams.push(Team::new(team_names.remove(0), lineup))
+        }
+
+        let results = Vec::new();
+        let mut status = Status::new();
+        status.toggle_drafted(1);
+
+        FantasySeason {
+            teams,
+            results,
+            status,
+            scorer,
+            drafter,
+            team_count,
+            driver_count,
+            season,
+            grid_size,
+            enforce_uniqueness,
+        }
+    }
+
+    pub fn download(&mut self, round: u8) -> Result<(), ResultError> {
+        if self.status.has_results(round) {
+            return Err(ResultError::RaceResultsAlreadyDownloaded(round));
+        }
+
+        self.results.push(RaceResults::build(round, self.season)?);
+        Ok(())
+    }
+    pub fn score(&mut self, round: u8) -> Result<(), ScoreError> {
         if !self.status.has_results(round) {
             return Err(ScoreError::RoundResultsDoNotExist(round));
         }
-
         if !self.status.has_drafted(round) {
             return Err(ScoreError::RoundLineupDoesNotExist(round));
         }
-
         if self.status.has_scored(round) {
-            return Err(ScoreError::RoundResultsAlreadyExist(round))
+            return Err(ScoreError::RoundResultsAlreadyExist(round));
         }
 
-        let race_result = self.results.iter().find(|rr| rr.round == round).expect("status out of sync");
-
+        let driver_results = &self
+            .results
+            .iter()
+            .find(|dr| dr.round == round)
+            .expect("status out of sync: DriverResult")
+            .drivers;
+        let mut points = Vec::with_capacity(self.teams.len());
         for team in &self.teams {
-            let maybe_team_result = team.get_team_race_result(round, self.scorer, &race_result.drivers);
-            if let Err(error) = maybe_team_result {
-                return Err(error)
-            }
-            team_results.push(maybe_team_result.unwrap());
+            points.push(team.calculate_score(
+                round,
+                self.grid_size,
+                self.scorer.get_fn(),
+                driver_results,
+            )?);
         }
         for team in &mut self.teams {
-            team.update_points(team_results.remove(0));
+            team.store_score(round, points.remove(0));
         }
 
         self.status.toggle_scored(round);
@@ -52,113 +117,36 @@ impl FantasySeason {
     }
 
     pub fn draft(&mut self, round: u8) -> Result<(), DraftError> {
-        let mut team_round_lineups = Vec::with_capacity(self.team_count as usize);
-
-
         if !self.status.has_drafted(round - 1) {
-            return Err(DraftError::PreviousRoundLineupDoesNotExist(round - 1))
+            return Err(DraftError::PreviousRoundLineupDoesNotExist(round - 1));
         }
-
         if self.status.has_drafted(round) {
             return Err(DraftError::RoundLineupAlreadyExists(round));
         }
 
-        for team in &mut self.teams {
-            let maybe_team_round_lineup = team.get_team_lineup(round, self.drafter);
-            if let Err(error) = maybe_team_round_lineup {
-                return Err(error);
+        let mut lineups = Vec::with_capacity(self.teams.len());
+        for team in &self.teams {
+            lineups.push(team.calculate_lineup(round, self.drafter.get_fn())?);
+        }
+
+        if self.enforce_uniqueness {
+            let mut already_seen =
+                Vec::with_capacity((self.team_count * self.driver_count as u16) as usize);
+            for lineup in &lineups {
+                for driver in lineup {
+                    if already_seen.contains(&driver) {
+                        return Err(DraftError::RoundDraftNonUnique(round, *driver));
+                    }
+                    already_seen.push(driver);
+                }
             }
-            team_round_lineups.push(maybe_team_round_lineup.unwrap());
-
-        }
-
-        if (self.enforce_uniqueness) {
-            //TODO
         }
 
         for team in &mut self.teams {
-            team.update_lineup(team_round_lineups.remove(0));
+            team.store_lineup(round, lineups.remove(0));
         }
 
         self.status.toggle_drafted(round);
         Ok(())
-    }
-
-    
-}
-
-// stores the status of each round, if the race results have been collected, the teams have drafted, or the teams have been scored
-struct Status {
-    tasks: Vec<RoundStatus>, // a collection of statuses where the nth element of the RoundStatus is the nth  round
-}
-
-impl Status {
-
-    fn _get_round_status(& self, round: u8) -> Option<&RoundStatus> {
-        if self.tasks.len() >= round as usize {
-            return self.tasks.get(round as usize - 1);
-        }
-        None
-    }
-
-    fn _find_mut_round_status(&mut self, round: u8) -> &mut RoundStatus {
-        if self.tasks.len() < round as usize  {
-            for _ in self.tasks.len()..(round as usize) {
-                self.tasks.push(RoundStatus::new())
-            }
-        }
-        return self.tasks.get_mut(round as usize - 1).unwrap()
-    }
-
-    fn has_results(& self, round: u8) -> bool {
-        if let Some(status) = self._get_round_status(round) {
-            return status.results;
-        }
-        false
-    }
-    fn has_drafted(&self, round: u8) -> bool {
-        if let Some(status) = self._get_round_status(round) {
-            return status.drafted;
-        }
-        false
-    }
-
-    fn has_scored(&self, round: u8) -> bool {
-        if let Some(status) = self._get_round_status(round) {
-            return status.scored;
-        }
-        false
-    }
-
-    fn toggle_results(&mut self, round: u8) {
-        let rs = self._find_mut_round_status(round);
-        rs.results = !rs.results;
-    }
-
-    fn toggle_drafted(&mut self, round: u8) {
-        let rs = self._find_mut_round_status(round);
-        rs.drafted = !rs.drafted;
-    }
-
-    fn toggle_scored(&mut self, round: u8) {
-        let rs = self._find_mut_round_status(round);
-        rs.scored = !rs.scored;
-    }
-}
-
-#[derive(Default)]
-struct RoundStatus {
-    results: bool,
-    drafted: bool,
-    scored: bool,
-}
-
-impl RoundStatus {
-    fn new() -> RoundStatus {
-        RoundStatus {
-            results: false,
-            drafted: false,
-            scored: false,
-        }
     }
 }
