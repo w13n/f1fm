@@ -1,6 +1,5 @@
+use crate::api::Api;
 use crate::error::ResultError;
-use ergast_rs::apis::response::Response;
-use reqwest::blocking::Client;
 use std::cmp::Ordering;
 
 // the results of a race for all drivers
@@ -12,44 +11,14 @@ pub struct RaceResults {
 
 impl RaceResults {
     pub fn build(round: u8, season: u16) -> Result<RaceResults, ResultError> {
-        let api_client = Client::new();
-        let mut races = api_client
-            .get(format!(
-                "https://api.jolpi.ca/ergast/f1/{season}/{round}/qualifying/"
-            ))
-            .send()
-            .map_err(|_| ResultError::CannotConnectToServer)?
-            .json::<Response>()
-            .map_err(|_| ResultError::CannotParseJson(round))?
-            .data
-            .race_table
-            .expect("bad response")
-            .races;
-        let qualifying_results = if !races.is_empty() {
-            races
-                .swap_remove(0)
-                .qualifying_results
-                .expect("bad response")
-        } else {
-            return Err(ResultError::RaceResultsNotYetAvailable(round));
-        };
-        races = api_client
-            .get(format!(
-                "https://api.jolpi.ca/ergast/f1/{season}/{round}/results/"
-            ))
-            .send()
-            .map_err(|_| ResultError::CannotConnectToServer)?
-            .json::<Response>()
-            .map_err(|_| ResultError::CannotParseJson(round))?
-            .data
-            .race_table
-            .unwrap()
-            .races;
-        let race_results = if !races.is_empty() {
-            races.swap_remove(0).race_results.unwrap()
-        } else {
-            return Err(ResultError::RaceResultsNotYetAvailable(round));
-        };
+        let api_client = Api::new();
+        let qualifying_results = api_client
+            .get_qualifying_results(season, round)
+            .map_err(ResultError::ApiError)?;
+
+        let race_results = api_client
+            .get_race_results(season, round)
+            .map_err(ResultError::ApiError)?;
 
         let mut broken_drivers = Vec::new();
         for result in race_results {
@@ -81,7 +50,6 @@ impl RaceResults {
 
 // the results for a driver in a round
 #[derive(Debug)]
-
 pub struct DriverResult {
     pub driver: u8,
     pub final_position: u8,

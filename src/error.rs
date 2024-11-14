@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Debug)]
 pub enum ScoreError {
@@ -61,24 +61,14 @@ impl Error for DraftError {}
 
 #[derive(Debug)]
 pub enum ResultError {
-    CannotConnectToServer,
-    CannotParseJson(u8),
-    RaceResultsNotYetAvailable(u8),
+    ApiError(ApiError),
     RaceResultsAlreadyDownloaded(u8),
 }
 
 impl Display for ResultError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ResultError::CannotConnectToServer => write!(f, "cannot connect to server"),
-            ResultError::CannotParseJson(round) => write!(
-                f,
-                "results for round ({}) could not be parsed and may not exist",
-                round
-            ),
-            ResultError::RaceResultsNotYetAvailable(round) => {
-                write!(f, "results for round ({}) are not yet available", round)
-            }
+            ResultError::ApiError(ae) => Display::fmt(&ae, f),
             ResultError::RaceResultsAlreadyDownloaded(round) => write!(
                 f,
                 "results for round ({}) have already been downloaded",
@@ -89,3 +79,28 @@ impl Display for ResultError {
 }
 
 impl Error for ResultError {}
+
+#[derive(Debug)]
+pub enum ApiError {
+    CannotConnectToServer,
+    CannotParseJson(u8),
+    RaceResultsNotYetAvailable(u8),
+}
+
+impl Display for ApiError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ApiError::CannotConnectToServer => write!(f, "cannot connect to server"),
+            ApiError::CannotParseJson(round) => write!(
+                f,
+                "results for round ({}) could not be parsed and may not exist",
+                round
+            ),
+            ApiError::RaceResultsNotYetAvailable(round) => {
+                write!(f, "results for round ({}) are not yet available", round)
+            }
+        }
+    }
+}
+
+impl Error for ApiError {}
