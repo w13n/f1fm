@@ -1,22 +1,26 @@
-mod drafter;
+pub mod drafter;
 pub mod race_results;
 pub mod scorer;
 mod status;
 mod team;
 
 use crate::error::{DraftError, ResultError, ScoreError};
+use crate::fantasy_season::drafter::DraftChoice;
+use crate::fantasy_season::scorer::ScoreChoice;
 use drafter::Drafter;
 use race_results::{DriverResult, RaceResults};
 use scorer::Scorer;
 use status::Status;
+use std::collections::HashMap;
+use std::ops::Deref;
 use team::Team;
 
 pub struct FantasySeason {
     teams: Vec<Team>,
     results: Vec<RaceResults>,
     status: Status,
-    scorer: Scorer,
-    drafter: Drafter,
+    score_choice: ScoreChoice,
+    draft_choice: DraftChoice,
     team_count: u16,
     driver_count: u8,
     season: u16,
@@ -26,8 +30,8 @@ pub struct FantasySeason {
 
 impl FantasySeason {
     pub fn new(
-        scorer: Scorer,
-        drafter: Drafter,
+        score_choice: ScoreChoice,
+        draft_choice: DraftChoice,
         mut team_names: Vec<String>,
         team_lineups: Vec<Vec<u8>>,
         season: u16,
@@ -64,8 +68,8 @@ impl FantasySeason {
             teams,
             results,
             status,
-            scorer,
-            drafter,
+            score_choice,
+            draft_choice,
             team_count,
             driver_count,
             season,
@@ -80,6 +84,7 @@ impl FantasySeason {
         }
 
         self.results.push(RaceResults::build(round, self.season)?);
+        self.status.toggle_results(round);
         Ok(())
     }
     pub fn score(&mut self, round: u8) -> Result<(), ScoreError> {
@@ -104,7 +109,7 @@ impl FantasySeason {
             points.push(team.calculate_score(
                 round,
                 self.grid_size,
-                self.scorer.get_fn(),
+                &Box::new(&self.score_choice),
                 driver_results,
             )?);
         }
@@ -116,7 +121,7 @@ impl FantasySeason {
         Ok(())
     }
 
-    pub fn draft(&mut self, round: u8) -> Result<(), DraftError> {
+    pub fn draft(&mut self, round: u8, df: Box<dyn Drafter>) -> Result<(), DraftError> {
         if !self.status.has_drafted(round - 1) {
             return Err(DraftError::PreviousRoundLineupDoesNotExist(round - 1));
         }
@@ -126,7 +131,7 @@ impl FantasySeason {
 
         let mut lineups = Vec::with_capacity(self.teams.len());
         for team in &self.teams {
-            lineups.push(team.calculate_lineup(round, self.drafter.get_fn())?);
+            lineups.push(team.calculate_lineup(round, &df)?);
         }
 
         if self.enforce_uniqueness {
@@ -148,5 +153,13 @@ impl FantasySeason {
 
         self.status.toggle_drafted(round);
         Ok(())
+    }
+
+    pub fn get_points_at(&self, round: u8) -> HashMap<String, i16> {
+        let mut map = HashMap::with_capacity(self.team_count as usize);
+        for team in &self.teams {
+            map.insert(team.name(), team.get_points_at(round));
+        }
+        map
     }
 }

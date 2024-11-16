@@ -1,5 +1,7 @@
+use super::drafter::Drafter;
 use super::DriverResult;
-use crate::error::{DraftError, ScoreError};
+use crate::error::{DraftError, ResultError, ScoreError};
+use crate::fantasy_season::scorer::Scorer;
 use std::cell::Cell;
 
 pub struct Team {
@@ -8,6 +10,19 @@ pub struct Team {
 }
 
 impl Team {
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn get_points_at(&self, round: u8) -> i16 {
+        let mut points = 0;
+        for tr in &self.rounds {
+            if tr.round <= round {
+                points += tr.points.get().unwrap_or(0);
+            }
+        }
+        points
+    }
     pub fn new(name: String, r1_lineup: Vec<u8>) -> Team {
         Team {
             name,
@@ -19,7 +34,7 @@ impl Team {
         &self,
         round: u8,
         grid_size: u8,
-        scorer: fn(u8, &DriverResult) -> i16,
+        scorer: &Box<&dyn Scorer>,
         driver_results: &[DriverResult],
     ) -> Result<i16, ScoreError> {
         let team_round = self
@@ -36,7 +51,7 @@ impl Team {
                 .iter()
                 .find(|dr| dr.driver == *driver)
                 .ok_or(ScoreError::DriverDidNotRace(*driver))?;
-            points += scorer(grid_size, driver_result)
+            points += scorer.score(grid_size, driver_result)
         }
         Ok(points)
     }
@@ -55,7 +70,7 @@ impl Team {
     pub fn calculate_lineup(
         &self,
         round: u8,
-        drafter: fn(&str, &Vec<u8>) -> Result<Vec<u8>, DraftError>,
+        drafter: &Box<dyn Drafter>,
     ) -> Result<Vec<u8>, DraftError> {
         let prev_round_drivers = &self
             .rounds
@@ -65,7 +80,7 @@ impl Team {
             .expect("status out of sync")
             .lineup;
 
-        drafter(&self.name, prev_round_drivers)
+        drafter.draft(&self.name, prev_round_drivers)
     }
     pub fn store_lineup(&mut self, round: u8, lineup: Vec<u8>) {
         if self.rounds.iter().any(|tr| tr.round == round) {

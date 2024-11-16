@@ -1,13 +1,17 @@
-use crate::error::DraftError;
+use crate::error::{DraftError, ResultError};
 
-pub enum Drafter {
+pub enum DraftChoice {
     Skip,
 }
 
-impl Drafter {
-    pub fn get_fn(&self) -> fn(&str, &Vec<u8>) -> Result<Vec<u8>, DraftError> {
-        match self {
-            Drafter::Skip => |_, prev_lineup| Ok(prev_lineup.clone()),
-        }
+pub trait Drafter {
+    fn draft(&self, team_name: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError>;
+}
+
+pub struct Skipper {}
+
+impl Drafter for Skipper {
+    fn draft(&self, _: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
+        Ok(previous_drivers.to_vec())
     }
 }
