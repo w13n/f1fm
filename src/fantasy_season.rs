@@ -14,13 +14,12 @@ use std::collections::HashMap;
 use team::Team;
 
 pub struct FantasySeason {
+    name: String,
     teams: Vec<Team>,
     results: Vec<RaceResults>,
     status: Status,
     score_choice: ScoreChoice,
     draft_choice: DraftChoice,
-    team_count: u16,
-    driver_count: u8,
     season: u16,
     grid_size: u8,
     enforce_uniqueness: bool,
@@ -28,6 +27,7 @@ pub struct FantasySeason {
 
 impl FantasySeason {
     pub fn new(
+        name: String,
         score_choice: ScoreChoice,
         draft_choice: DraftChoice,
         mut team_names: Vec<String>,
@@ -63,13 +63,12 @@ impl FantasySeason {
         status.toggle_drafted(1);
 
         FantasySeason {
+            name,
             teams,
             results,
             status,
             score_choice,
             draft_choice,
-            team_count,
-            driver_count,
             season,
             grid_size,
             enforce_uniqueness,
@@ -142,7 +141,7 @@ impl FantasySeason {
 
         if self.enforce_uniqueness {
             let mut already_seen =
-                Vec::with_capacity((self.team_count * self.driver_count as u16) as usize);
+                Vec::new();
             for lineup in &lineups {
                 for driver in lineup {
                     if already_seen.contains(&driver) {
@@ -166,7 +165,7 @@ impl FantasySeason {
     }
 
     pub fn get_points_by(&self, round: u8) -> HashMap<String, i16> {
-        let mut map = HashMap::with_capacity(self.team_count as usize);
+        let mut map = HashMap::new();
         self.teams.iter().for_each(|t| {map.insert(t.name(), t.get_points_by(round));});
         map
     }
@@ -189,5 +188,11 @@ impl FantasySeason {
             }
         });
         map
+    }
+
+    pub fn get_status_at(&self, round: u8) -> (bool, bool, bool) {
+        (self.status.has_drafted(round),
+         self.status.has_results(round),
+         self.status.has_scored(round))
     }
 }
