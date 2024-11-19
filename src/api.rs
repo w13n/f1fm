@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::error::ApiError;
 use ergast_rs::apis::race_table::{QualifyingResult, Race, RaceResult};
 use ergast_rs::apis::response::Response;
@@ -12,6 +13,26 @@ impl Api {
         Api {
             client: Client::new(),
         }
+    }
+
+    pub fn get_race_names(&self, season: u16) -> Result<HashMap<u8, String>, ApiError> {
+        let mut map = HashMap::new();
+        self
+            .client
+            .get(format!(
+                "https://api.jolpi.ca/ergast/f1/{season}/races/"
+            ))
+            .send()
+            .map_err(|_| ApiError::CannotConnectToServer)?
+            .json::<Response>()
+            .map_err(|_| ApiError::CannotParseJsonOther)?
+            .data
+            .race_table
+            .expect("bad response")
+            .races
+            .into_iter()
+            .for_each(|r| {map.insert(r.round as u8, r.name);});
+        Ok(map)
     }
 
     pub fn get_race_results(&self, season: u16, round: u8) -> Result<Vec<RaceResult>, ApiError> {
@@ -47,7 +68,7 @@ impl Api {
             .send()
             .map_err(|_| ApiError::CannotConnectToServer)?
             .json::<Response>()
-            .map_err(|_| ApiError::CannotParseJson(round))?
+            .map_err(|_| ApiError::CannotParseJsonRound(round))?
             .data
             .race_table
             .expect("bad response")

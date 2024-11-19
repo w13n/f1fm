@@ -83,7 +83,8 @@ impl Error for ResultError {}
 #[derive(Debug)]
 pub enum ApiError {
     CannotConnectToServer,
-    CannotParseJson(u8),
+    CannotParseJsonRound(u8),
+    CannotParseJsonOther,
     RaceResultsNotYetAvailable(u8),
 }
 
@@ -91,14 +92,17 @@ impl Display for ApiError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ApiError::CannotConnectToServer => write!(f, "cannot connect to server"),
-            ApiError::CannotParseJson(round) => write!(
+            ApiError::CannotParseJsonRound(round) => write!(
                 f,
                 "results for round ({}) could not be parsed and may not exist",
                 round
             ),
-            ApiError::RaceResultsNotYetAvailable(round) => {
-                write!(f, "results for round ({}) are not yet available", round)
-            }
+            ApiError::CannotParseJsonOther => write!(
+                f, "api results could not be parsed",
+            ),
+            ApiError::RaceResultsNotYetAvailable(round) => write!(
+                f, "results for round ({}) are not yet available", round
+            )
         }
     }
 }

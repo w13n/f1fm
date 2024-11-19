@@ -3,6 +3,7 @@ use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::fantasy_season::FantasySeason;
 use std::error::Error;
+use crate::api::Api;
 
 mod api;
 mod error;
@@ -25,18 +26,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     season.download(2)?;
     season.score(2)?;
 
-    let map = season.get_points_at(16);
+    let map = season.get_points_at(2);
     println!("{:#?}", map);
 
-    let x = RaceResults::build(1, 2024);
-    match x {
-        Ok(results) => {
-            println!("{:#?}", results);
-        }
-        Err(err) => {
-            println!("Error: cannot get race results. {}", err);
-        }
-    }
+    println!("{:#?}", Api::new().get_race_names(2024));
 
     Ok(())
 }
