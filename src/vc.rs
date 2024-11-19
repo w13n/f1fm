@@ -1,10 +1,10 @@
 mod season;
 
-use iced::Element;
 use crate::fantasy_season::draft::DraftChoice;
-use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::score::ScoreChoice;
+use crate::fantasy_season::FantasySeason;
 use crate::vc::season::{Season, SeasonMessage};
+use iced::Element;
 
 pub(crate) struct ViewController {
     window: Window,
@@ -19,7 +19,7 @@ impl Default for ViewController {
 
 impl ViewController {
     pub(crate) fn new() -> ViewController {
-        let mut season = FantasySeason::new(
+        let season = FantasySeason::new(
             "F1FL".to_string(),
             ScoreChoice::FormulaOne,
             DraftChoice::Skip,
@@ -32,24 +32,20 @@ impl ViewController {
 
         ViewController {
             seasons: Vec::new(),
-            window: Window::Season(Season::new(season))
+            window: Window::Season(Season::new(season)),
         }
     }
     pub fn view(&self) -> Element<VCMessage> {
         match &self.window {
-            Window::Season(Season) => {
-                Season.view().map(VCMessage::SeasonMessage)
-            }
+            Window::Season(season) => season.view().map(VCMessage::SeasonMessage),
         }
     }
 
     pub fn update(&mut self, message: VCMessage) {
         match message {
-            VCMessage::SeasonMessage(sm) => {
-                match &mut self.window {
-                    Window::Season(s) => {s.update(sm)}
-                }
-            }
+            VCMessage::SeasonMessage(sm) => match &mut self.window {
+                Window::Season(s) => s.update(sm),
+            },
         }
     }
 }
@@ -60,5 +56,5 @@ enum Window {
 
 #[derive(Debug, Copy, Clone)]
 pub enum VCMessage {
-    SeasonMessage(SeasonMessage)
+    SeasonMessage(SeasonMessage),
 }

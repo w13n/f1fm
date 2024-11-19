@@ -97,12 +97,10 @@ impl Display for ApiError {
                 "results for round ({}) could not be parsed and may not exist",
                 round
             ),
-            ApiError::CannotParseJsonOther => write!(
-                f, "api results could not be parsed",
-            ),
-            ApiError::RaceResultsNotYetAvailable(round) => write!(
-                f, "results for round ({}) are not yet available", round
-            )
+            ApiError::CannotParseJsonOther => write!(f, "api results could not be parsed",),
+            ApiError::RaceResultsNotYetAvailable(round) => {
+                write!(f, "results for round ({}) are not yet available", round)
+            }
         }
     }
 }

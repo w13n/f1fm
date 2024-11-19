@@ -14,7 +14,7 @@ pub struct Skipper {}
 
 impl Skipper {
     pub(crate) fn new() -> Skipper {
-        Skipper{}
+        Skipper {}
     }
 }
 

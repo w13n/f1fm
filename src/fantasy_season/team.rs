@@ -21,7 +21,7 @@ impl Team {
         &self,
         round: u8,
         grid_size: u8,
-        scorer: &Box<&dyn Scorer>,
+        scorer: &dyn Scorer,
         driver_results: &[DriverResult],
     ) -> Result<i16, ScoreError> {
         let team_round = self
@@ -57,7 +57,7 @@ impl Team {
     pub fn calculate_lineup(
         &self,
         round: u8,
-        drafter: &Box<dyn Drafter>,
+        drafter: &dyn Drafter,
     ) -> Result<Vec<u8>, DraftError> {
         let prev_round_drivers = &self
             .rounds
@@ -81,10 +81,11 @@ impl Team {
     }
 
     pub fn get_points_by(&self, round: u8) -> i16 {
-        self.rounds.iter().
-            filter(|tr| tr.round <= round)
+        self.rounds
+            .iter()
+            .filter(|tr| tr.round <= round)
             .map(|tr| tr.points.get().unwrap_or_default())
-            .fold(0, |sum, rp| sum + rp)
+            .sum::<i16>()
     }
 
     pub fn get_points_at(&self, round: u8) -> Option<i16> {
@@ -98,10 +99,8 @@ impl Team {
         self.rounds
             .iter()
             .find(|tr| tr.round == round)
-            .and_then(|tr| Some(tr.lineup.clone()))
+            .map(|tr| tr.lineup.clone())
     }
-
-
 }
 
 // the drivers that a given team has for the round given

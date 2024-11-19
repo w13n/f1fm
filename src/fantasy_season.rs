@@ -140,8 +140,7 @@ impl FantasySeason {
         }
 
         if self.enforce_uniqueness {
-            let mut already_seen =
-                Vec::new();
+            let mut already_seen = Vec::new();
             for lineup in &lineups {
                 for driver in lineup {
                     if already_seen.contains(&driver) {
@@ -166,7 +165,9 @@ impl FantasySeason {
 
     pub fn get_points_by(&self, round: u8) -> HashMap<String, i16> {
         let mut map = HashMap::new();
-        self.teams.iter().for_each(|t| {map.insert(t.name(), t.get_points_by(round));});
+        self.teams.iter().for_each(|t| {
+            map.insert(t.name(), t.get_points_by(round));
+        });
         map
     }
 
@@ -191,8 +192,10 @@ impl FantasySeason {
     }
 
     pub fn get_status_at(&self, round: u8) -> (bool, bool, bool) {
-        (self.status.has_drafted(round),
-         self.status.has_results(round),
-         self.status.has_scored(round))
+        (
+            self.status.has_drafted(round),
+            self.status.has_results(round),
+            self.status.has_scored(round),
+        )
     }
 }
