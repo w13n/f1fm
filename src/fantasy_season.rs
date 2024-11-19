@@ -1,18 +1,16 @@
-pub mod drafter;
+pub mod draft;
 pub mod race_results;
-pub mod scorer;
+pub mod score;
 mod status;
 mod team;
 
 use crate::error::{DraftError, ResultError, ScoreError};
-use crate::fantasy_season::drafter::DraftChoice;
-use crate::fantasy_season::scorer::ScoreChoice;
-use drafter::Drafter;
+use crate::fantasy_season::draft::DraftChoice;
+use crate::fantasy_season::score::ScoreChoice;
+use draft::Drafter;
 use race_results::{DriverResult, RaceResults};
-use scorer::Scorer;
 use status::Status;
 use std::collections::HashMap;
-use std::ops::Deref;
 use team::Team;
 
 pub struct FantasySeason {
@@ -87,6 +85,10 @@ impl FantasySeason {
         self.status.toggle_results(round);
         Ok(())
     }
+
+    pub fn get_score_choice(&self) -> ScoreChoice {
+        self.score_choice
+    }
     pub fn score(&mut self, round: u8) -> Result<(), ScoreError> {
         if !self.status.has_results(round) {
             return Err(ScoreError::RoundResultsDoNotExist(round));
@@ -119,6 +121,10 @@ impl FantasySeason {
 
         self.status.toggle_scored(round);
         Ok(())
+    }
+
+    pub fn get_draft_choice(&self) -> DraftChoice {
+        self.draft_choice
     }
 
     pub fn draft(&mut self, round: u8, df: Box<dyn Drafter>) -> Result<(), DraftError> {
@@ -155,11 +161,33 @@ impl FantasySeason {
         Ok(())
     }
 
-    pub fn get_points_at(&self, round: u8) -> HashMap<String, i16> {
+    pub fn get_team_names(&self) -> Vec<String> {
+        self.teams.iter().map(|t| t.name()).collect()
+    }
+
+    pub fn get_points_by(&self, round: u8) -> HashMap<String, i16> {
         let mut map = HashMap::with_capacity(self.team_count as usize);
-        for team in &self.teams {
-            map.insert(team.name(), team.get_points_at(round));
-        }
+        self.teams.iter().for_each(|t| {map.insert(t.name(), t.get_points_by(round));});
+        map
+    }
+
+    pub fn get_points_at(&self, round: u8) -> HashMap<String, i16> {
+        let mut map = HashMap::new();
+        self.teams.iter().for_each(|t| {
+            if let Some(points) = t.get_points_at(round) {
+                map.insert(t.name(), points);
+            }
+        });
+        map
+    }
+
+    pub fn get_lineup_at(&self, round: u8) -> HashMap<String, Vec<u8>> {
+        let mut map = HashMap::new();
+        self.teams.iter().for_each(|t| {
+            if let Some(points) = t.get_lineup_at(round) {
+                map.insert(t.name(), points);
+            }
+        });
         map
     }
 }

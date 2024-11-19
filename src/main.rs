@@ -1,6 +1,6 @@
-use crate::fantasy_season::drafter::{DraftChoice, Drafter, Skipper};
+use crate::fantasy_season::draft::{DraftChoice, Skipper};
 use crate::fantasy_season::race_results::RaceResults;
-use crate::fantasy_season::scorer::{ScoreChoice, Scorer};
+use crate::fantasy_season::score::ScoreChoice;
 use crate::fantasy_season::FantasySeason;
 use std::error::Error;
 

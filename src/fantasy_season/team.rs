@@ -1,7 +1,7 @@
-use super::drafter::Drafter;
+use super::draft::Drafter;
 use super::DriverResult;
-use crate::error::{DraftError, ResultError, ScoreError};
-use crate::fantasy_season::scorer::Scorer;
+use crate::error::{DraftError, ScoreError};
+use crate::fantasy_season::score::Scorer;
 use std::cell::Cell;
 
 pub struct Team {
@@ -10,19 +10,6 @@ pub struct Team {
 }
 
 impl Team {
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    pub fn get_points_at(&self, round: u8) -> i16 {
-        let mut points = 0;
-        for tr in &self.rounds {
-            if tr.round <= round {
-                points += tr.points.get().unwrap_or(0);
-            }
-        }
-        points
-    }
     pub fn new(name: String, r1_lineup: Vec<u8>) -> Team {
         Team {
             name,
@@ -88,6 +75,33 @@ impl Team {
         }
         self.rounds.push(TeamRound::new(round, lineup));
     }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn get_points_by(&self, round: u8) -> i16 {
+        self.rounds.iter().
+            filter(|tr| tr.round <= round)
+            .map(|tr| tr.points.get().unwrap_or_default())
+            .fold(0, |sum, rp| sum + rp)
+    }
+
+    pub fn get_points_at(&self, round: u8) -> Option<i16> {
+        self.rounds
+            .iter()
+            .find(|tr| tr.round == round)
+            .and_then(|tr| tr.points.get())
+    }
+
+    pub fn get_lineup_at(&self, round: u8) -> Option<Vec<u8>> {
+        self.rounds
+            .iter()
+            .find(|tr| tr.round == round)
+            .and_then(|tr| Some(tr.lineup.clone()))
+    }
+
+
 }
 
 // the drivers that a given team has for the round given
