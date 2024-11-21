@@ -27,11 +27,8 @@ impl Season {
         let leaderboard = self.season.get_points_by(self.current_round);
         let round_points = self.season.get_points_at(self.current_round);
         let round_lineup = self.season.get_lineup_at(self.current_round);
-
-        let mut leaderboard_vec: Vec<_> = leaderboard.into_iter().collect::<Vec<_>>();
-        leaderboard_vec.sort_by(|a, b| b.1.cmp(&a.1));
-
-        let leadership_col: Vec<_> = leaderboard_vec
+        
+        let leadership_col: Vec<_> = leaderboard
             .into_iter()
             .map(|lp| text!("{:04}: {}", lp.1, lp.0).into())
             .collect();
@@ -62,7 +59,7 @@ impl Season {
             }
             SeasonMessage::Draft => self
                 .season
-                .draft(self.current_round, Box::new(Skipper::new()))
+                .draft(self.current_round, &Skipper::new())
                 .unwrap(),
             SeasonMessage::Download => {
                 self.season.download(self.current_round).unwrap();

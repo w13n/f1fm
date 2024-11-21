@@ -1,8 +1,9 @@
 use super::draft::Drafter;
+use super::score::Scorer;
 use super::DriverResult;
 use crate::error::{DraftError, ScoreError};
-use crate::fantasy_season::score::Scorer;
 use std::cell::Cell;
+use std::cmp::Ordering;
 
 pub struct Team {
     name: String,
@@ -101,9 +102,51 @@ impl Team {
             .find(|tr| tr.round == round)
             .map(|tr| tr.lineup.clone())
     }
+    
+    pub fn sort_by(a: &Team, b: &Team, round: u8) -> Ordering {
+        let a_points = a.get_points_by(round);
+        let b_points = b.get_points_by(round);
+        match b_points.cmp(&a_points) { 
+            Ordering::Equal => {
+                let val = {|p: &Team| p.rounds
+                    .iter()
+                    .filter(|r| r.round <= round)
+                    .map(|r| r.points.get().unwrap_or_default())
+                    .max().unwrap_or_default()};
+                let a_max = val(a);
+                let b_max = val(b);
+                match b_max.cmp(&a_max) {
+                    Ordering::Equal => {
+                        let min = {|p: &Team| p.rounds
+                            .iter()
+                            .filter(|r| r.round <= round)
+                            .map(|r| r.points.get().unwrap_or_default())
+                            .min().unwrap_or_default()};
+                        let a_min = min(a);
+                        let b_min = min(b);
+                        a_min.cmp(&b_min)
+                    }
+                    other => other
+                }
+            }
+            other => other
+        }
+    }
+
+    pub fn sort_at(a: &Team, b: &Team, round: u8) -> Ordering {
+        let pts = {
+            |p: &Team| p.rounds
+                .iter()
+                .find(|tr| tr.round == round).expect("status out of sync")
+                .points.get().expect("status out of sync")
+        };
+        let a = pts(a);
+        let b = pts(b);
+        b.cmp(&a)
+    }
 }
 
-// the drivers that a given team has for the round given
+/// the drivers that a given team has for the round given
 pub struct TeamRound {
     round: u8,                 // which round this lineup is for
     lineup: Vec<u8>,           // which drivers are on this team for this round
