@@ -4,7 +4,7 @@ use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::fantasy_season::FantasySeason;
 use crate::vc::season::{Season, SeasonMessage};
-use iced::Element;
+use iced::{Element, Task};
 
 pub(crate) struct ViewController {
     window: Window,
@@ -41,10 +41,10 @@ impl ViewController {
         }
     }
 
-    pub fn update(&mut self, message: VCMessage) {
+    pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
         match message {
             VCMessage::SeasonMessage(sm) => match &mut self.window {
-                Window::Season(s) => s.update(sm),
+                Window::Season(s) => s.update(sm).map(VCMessage::SeasonMessage),
             },
         }
     }
@@ -54,7 +54,7 @@ enum Window {
     Season(Season),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum VCMessage {
     SeasonMessage(SeasonMessage),
 }

@@ -1,24 +1,26 @@
 use crate::api::Api;
-use crate::error::ResultError;
+use crate::error::DownloadError;
 use std::cmp::Ordering;
 
 // the results of a race for all drivers
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RaceResults {
-    pub round: u8,
-    pub drivers: Vec<DriverResult>,
+    pub(super) round: u8,
+    pub(super) drivers: Vec<DriverResult>,
 }
 
 impl RaceResults {
-    pub fn build(round: u8, season: u16) -> Result<RaceResults, ResultError> {
+    pub async fn build(round: u8, season: u16) -> Result<RaceResults, DownloadError> {
         let api_client = Api::new();
         let qualifying_results = api_client
             .get_qualifying_results(season, round)
-            .map_err(ResultError::ApiError)?;
+            .await
+            .map_err(DownloadError::ApiError)?;
 
         let race_results = api_client
             .get_race_results(season, round)
-            .map_err(ResultError::ApiError)?;
+            .await
+            .map_err(DownloadError::ApiError)?;
 
         let mut broken_drivers = Vec::new();
         for result in race_results {
@@ -49,7 +51,7 @@ impl RaceResults {
 }
 
 // the results for a driver in a round
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct DriverResult {
     pub driver: u8,
     pub final_position: u8,

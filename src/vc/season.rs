@@ -1,26 +1,54 @@
+use crate::api::Api;
+use crate::error::DownloadError;
 use crate::fantasy_season::draft::Skipper;
+use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
-use iced::widget;
-use iced::widget::{text, Column};
 use iced::Element;
+use iced::{widget, Task};
+use std::collections::HashMap;
 
 pub struct Season {
     season: FantasySeason,
     current_round: u8,
+    round_names: HashMap<u8, String>,
+    download_attempts: HashMap<u8, bool>,
 }
 
 impl Season {
     pub(crate) fn new(season: FantasySeason) -> Season {
+        let api = Api::new();
+        let round_names = api.get_race_names(season.get_season()).unwrap_or_default();
+
         Season {
             season,
             current_round: 1,
+            round_names,
+            download_attempts: HashMap::new(),
         }
     }
     pub(crate) fn view(&self) -> Element<SeasonMessage> {
-        let top_row = widget::row![
+        let top = widget::text!(
+            "{}",
+            match self.season.get_status_at(self.current_round) {
+                (_, true, _) => "round results downloaded",
+                (_, false, _) => match self.download_attempts.get(&self.current_round) {
+                    Some(bool) => match bool {
+                        true => "round results downloading failed",
+                        false => "round results downloading",
+                    },
+                    None => "round results not downloaded",
+                },
+            }
+        );
+        let round_row = widget::row![
             widget::button("-").on_press_maybe(
                 (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound)
             ),
+            if let Some(string) = self.round_names.get(&self.current_round) {
+                widget::text!("{}", string)
+            } else {
+                widget::text!("{}", self.current_round)
+            },
             widget::button("+").on_press(SeasonMessage::IncrementRound),
         ];
 
@@ -30,7 +58,7 @@ impl Season {
 
         let leadership_col: Vec<_> = leaderboard
             .into_iter()
-            .map(|tp| text!("{:04}: {}", tp.1, tp.0).into())
+            .map(|tp| widget::text!("{:04}: {}", tp.1, tp.0).into())
             .collect();
 
         let round_col: Vec<_> = match round_points {
@@ -39,20 +67,30 @@ impl Season {
             }
             Some(vec) => vec
                 .into_iter()
-                .map(|tp| text!("{:04}: {}", tp.1, tp.0).into())
+                .map(|tp| widget::text!("{:04}: {}", tp.1, tp.0).into())
                 .collect(),
         };
 
+        let prev_status = if self.current_round == 1 {
+            (true, true, true)
+        } else {
+            self.season.get_status_at(self.current_round - 1)
+        };
         let status = self.season.get_status_at(self.current_round);
-        let bottom_row = widget::row![
-            widget::button("draft").on_press_maybe((!status.0).then_some(SeasonMessage::Draft)),
-            widget::button("download")
-                .on_press_maybe((!status.1).then_some(SeasonMessage::Download)),
-            widget::button("score").on_press_maybe((!status.2).then_some(SeasonMessage::Score)),
-        ];
+
+        let bottom_row = match (prev_status, status) {
+            ((_, _, false), _) => widget::button("draft"),
+            ((_, _, true), (false, _, _)) => widget::button("draft").on_press(SeasonMessage::Draft),
+            ((_, _, true), (true, false, _)) => widget::button("score"),
+            ((_, _, true), (true, true, false)) => {
+                widget::button("score").on_press(SeasonMessage::Score)
+            }
+            ((_, _, true), (true, true, true)) => widget::button("score"),
+        };
 
         widget::column![
-            top_row,
+            top,
+            round_row,
             widget::Column::from_vec(leadership_col),
             widget::Column::from_vec(round_col),
             bottom_row
@@ -60,31 +98,60 @@ impl Season {
         .into()
     }
 
-    pub fn update(&mut self, message: SeasonMessage) {
+    pub fn update(&mut self, message: SeasonMessage) -> Task<SeasonMessage> {
         match message {
             SeasonMessage::IncrementRound => {
                 self.current_round += 1;
+                self.download_task()
             }
             SeasonMessage::DecrementRound => {
                 self.current_round -= 1;
+                self.download_task()
             }
-            SeasonMessage::Draft => self
-                .season
-                .draft(self.current_round, &Skipper::new())
-                .unwrap(),
-            SeasonMessage::Download => {
-                self.season.download(self.current_round).unwrap();
+            SeasonMessage::Draft => {
+                self.season
+                    .draft(self.current_round, &Skipper::new())
+                    .unwrap();
+                Task::none()
             }
-            SeasonMessage::Score => self.season.score(self.current_round).unwrap(),
+            SeasonMessage::Score => {
+                self.season.score(self.current_round).unwrap();
+                Task::none()
+            }
+            SeasonMessage::DownloadedResults(result) => {
+                if let Ok(result) = result.1 {
+                    self.season.update_results(result).expect("cannot happen");
+                };
+                self.download_attempts.insert(result.0, true);
+                Task::none()
+            }
+        }
+    }
+
+    fn download_task(&mut self) -> Task<SeasonMessage> {
+        if !self.season.get_status_at(self.current_round).1
+            && self.download_attempts.get(&self.current_round).is_none()
+        {
+            self.download_attempts.insert(self.current_round, false);
+            Task::perform(
+                build_with_round(self.current_round, self.season.get_season()),
+                SeasonMessage::DownloadedResults,
+            )
+        } else {
+            Task::none()
         }
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+async fn build_with_round(round: u8, season: u16) -> (u8, Result<RaceResults, DownloadError>) {
+    (round, RaceResults::build(round, season).await)
+}
+
+#[derive(Debug, Clone)]
 pub enum SeasonMessage {
     IncrementRound,
     DecrementRound,
     Draft,
-    Download,
     Score,
+    DownloadedResults((u8, Result<RaceResults, DownloadError>)),
 }

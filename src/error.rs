@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ScoreError {
     DriverDidNotRace(u8),
     RoundLineupDoesNotExist(u8),
@@ -30,7 +30,7 @@ impl Display for ScoreError {
 
 impl Error for ScoreError {}
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum DraftError {
     RoundLineupAlreadyExists(u8),
     PreviousRoundLineupDoesNotExist(u8),
@@ -59,17 +59,17 @@ impl Display for DraftError {
 
 impl Error for DraftError {}
 
-#[derive(Debug)]
-pub enum ResultError {
+#[derive(Debug, Copy, Clone)]
+pub enum DownloadError {
     ApiError(ApiError),
     RaceResultsAlreadyDownloaded(u8),
 }
 
-impl Display for ResultError {
+impl Display for DownloadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ResultError::ApiError(ae) => Display::fmt(&ae, f),
-            ResultError::RaceResultsAlreadyDownloaded(round) => write!(
+            DownloadError::ApiError(ae) => Display::fmt(&ae, f),
+            DownloadError::RaceResultsAlreadyDownloaded(round) => write!(
                 f,
                 "results for round ({}) have already been downloaded",
                 round
@@ -78,9 +78,9 @@ impl Display for ResultError {
     }
 }
 
-impl Error for ResultError {}
+impl Error for DownloadError {}
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ApiError {
     CannotConnectToServer,
     CannotParseJsonRound(u8),

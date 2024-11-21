@@ -1,10 +1,10 @@
 pub mod draft;
-mod race_results;
+pub mod race_results;
 pub mod score;
 mod status;
 mod team;
 
-use crate::error::{DraftError, ResultError, ScoreError};
+use crate::error::{DownloadError, DraftError, ScoreError};
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use draft::Drafter;
@@ -75,12 +75,13 @@ impl FantasySeason {
         }
     }
 
-    pub fn download(&mut self, round: u8) -> Result<(), ResultError> {
+    pub fn update_results(&mut self, race_results: RaceResults) -> Result<(), DownloadError> {
+        let round = race_results.round;
         if self.status.has_results(round) {
-            return Err(ResultError::RaceResultsAlreadyDownloaded(round));
+            return Err(DownloadError::RaceResultsAlreadyDownloaded(round));
         }
 
-        self.results.push(RaceResults::build(round, self.season)?);
+        self.results.push(race_results);
         self.status.toggle_results(round);
         Ok(())
     }
@@ -161,6 +162,10 @@ impl FantasySeason {
 
     pub fn get_team_names(&self) -> Vec<String> {
         self.teams.iter().map(|t| t.name()).collect()
+    }
+
+    pub fn get_season(&self) -> u16 {
+        self.season
     }
 
     // returns an ordered list of (TeamName, Points) pairs, sorted first to last. Tiebreakers are,
