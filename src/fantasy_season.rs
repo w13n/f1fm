@@ -1,6 +1,6 @@
 pub mod draft;
-pub mod score;
 mod race_results;
+pub mod score;
 mod status;
 mod team;
 
@@ -170,22 +170,30 @@ impl FantasySeason {
     pub fn get_points_by(&self, round: u8) -> Vec<(String, i16)> {
         let mut teams: Vec<_> = self.teams.iter().collect();
         teams.sort_by(|a, b| Team::sort_by(a, b, round));
-        teams.into_iter().map(|t| (t.name(), t.get_points_by(round))).collect()
+        teams
+            .into_iter()
+            .map(|t| (t.name(), t.get_points_by(round)))
+            .collect()
     }
 
-    // returns an ordered list of (TeamName, Point) pairs, sorted first to last. Tiebreakers are,
-    // as follows: most points, highest points round, highest lowest-points-round,order in fantasy_season.
-    // as a result, teams in fantasy_season should be added in tiebreaking order, eg: the reverse
-    // standings from the previous season
     pub fn get_points_at(&self, round: u8) -> Option<Vec<(String, i16)>> {
         if self.status.has_scored(round) {
             let mut teams: Vec<_> = self.teams.iter().collect();
-            teams.sort_by(|a, b| Team::sort_by(a, b, round));
-            Some(teams.into_iter().map(|t| (t.name(), t.get_points_by(round))).collect())
+            teams.sort_by(|a, b| Team::sort_at(a, b, round));
+            Some(
+                teams
+                    .into_iter()
+                    .map(|t| {
+                        (
+                            t.name(),
+                            t.get_points_at(round).expect("status out of date"),
+                        )
+                    })
+                    .collect(),
+            )
         } else {
             None
         }
-        
     }
 
     pub fn get_lineup_at(&self, round: u8) -> HashMap<String, Vec<u8>> {

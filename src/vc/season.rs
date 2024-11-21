@@ -27,11 +27,21 @@ impl Season {
         let leaderboard = self.season.get_points_by(self.current_round);
         let round_points = self.season.get_points_at(self.current_round);
         let round_lineup = self.season.get_lineup_at(self.current_round);
-        
+
         let leadership_col: Vec<_> = leaderboard
             .into_iter()
-            .map(|lp| text!("{:04}: {}", lp.1, lp.0).into())
+            .map(|tp| text!("{:04}: {}", tp.1, tp.0).into())
             .collect();
+
+        let round_col: Vec<_> = match round_points {
+            None => {
+                vec![widget::text!("round not yet scored").into()]
+            }
+            Some(vec) => vec
+                .into_iter()
+                .map(|tp| text!("{:04}: {}", tp.1, tp.0).into())
+                .collect(),
+        };
 
         let status = self.season.get_status_at(self.current_round);
         let bottom_row = widget::row![
@@ -44,6 +54,7 @@ impl Season {
         widget::column![
             top_row,
             widget::Column::from_vec(leadership_col),
+            widget::Column::from_vec(round_col),
             bottom_row
         ]
         .into()
