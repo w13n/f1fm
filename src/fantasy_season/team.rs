@@ -55,6 +55,20 @@ impl Team {
         team_round.points.set(Some(score));
     }
 
+    pub fn delete_score(&mut self, round: u8) {
+        self.rounds
+            .iter()
+            .rev()
+            .find(|tr| tr.round == round)
+            .expect("status out of date: deleting")
+            .points
+            .set(None);
+    }
+
+    pub fn delete_round(&mut self, round: u8) {
+        self.rounds.retain(|tr| tr.round != round)
+    }
+
     pub fn calculate_lineup(
         &self,
         round: u8,
@@ -76,7 +90,6 @@ impl Team {
         }
         self.rounds.push(TeamRound::new(round, lineup));
     }
-
     pub fn name(&self) -> String {
         self.name.clone()
     }

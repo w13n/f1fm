@@ -50,7 +50,7 @@ impl Display for DraftError {
             ),
             DraftError::RoundDraftNonUnique(round, driver) => write!(
                 f,
-                "lineup for round {} has multiple driver #{}",
+                "lineup for round {} has multiple drivers #{}",
                 round, driver
             ),
         }
@@ -71,7 +71,7 @@ impl Display for DownloadError {
             DownloadError::ApiError(ae) => Display::fmt(&ae, f),
             DownloadError::RaceResultsAlreadyDownloaded(round) => write!(
                 f,
-                "results for round ({}) have already been downloaded",
+                "results for round {} have already been downloaded",
                 round
             ),
         }
@@ -94,15 +94,57 @@ impl Display for ApiError {
             ApiError::CannotConnectToServer => write!(f, "cannot connect to server"),
             ApiError::CannotParseJsonRound(round) => write!(
                 f,
-                "results for round ({}) could not be parsed and may not exist",
+                "results for round {} could not be parsed and may not exist",
                 round
             ),
             ApiError::CannotParseJsonOther => write!(f, "api results could not be parsed",),
             ApiError::RaceResultsNotYetAvailable(round) => {
-                write!(f, "results for round ({}) are not yet available", round)
+                write!(f, "results for round {} are not yet available", round)
             }
         }
     }
 }
 
 impl Error for ApiError {}
+
+#[derive(Debug, Copy, Clone)]
+pub enum DeleteError {
+    ResultsDeleteWhenResultsDontExist(u8),
+    LineupDeleteWhileScoresExist(u8),
+    LineupDeleteWhenNextRoundDrafted(u8),
+    LineupDeleteFirstRound,
+}
+
+impl Display for DeleteError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DeleteError::ResultsDeleteWhenResultsDontExist(round) => {
+                write!(
+                    f,
+                    "results for round {} cannot be deleted, as they do not exist",
+                    round
+                )
+            }
+            DeleteError::LineupDeleteWhileScoresExist(round) => {
+                write!(
+                    f,
+                    "results for round {} still exist, so the lineup cannot be deleted",
+                    round
+                )
+            }
+            DeleteError::LineupDeleteWhenNextRoundDrafted(round) => {
+                write!(
+                    f,
+                    "the lineup for round {} exists, so the lineup for round {} cannot be deleted",
+                    round + 1,
+                    round
+                )
+            }
+            DeleteError::LineupDeleteFirstRound => {
+                write!(f, "cannot delete round one lineup")
+            }
+        }
+    }
+}
+
+impl Error for DeleteError {}

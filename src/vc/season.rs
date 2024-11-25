@@ -3,11 +3,12 @@ use crate::error::DownloadError;
 use crate::fantasy_season::draft::Skipper;
 use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
+use crate::vc::season::SeasonMessage::{DeleteLineup, DeleteRound};
 use iced::Element;
 use iced::{widget, Task};
 use std::collections::HashMap;
 
-pub struct Season {
+pub(crate) struct Season {
     season: FantasySeason,
     current_round: u8,
     round_names: HashMap<u8, String>,
@@ -15,7 +16,7 @@ pub struct Season {
 }
 
 impl Season {
-    pub(crate) fn new(season: FantasySeason) -> Season {
+    pub fn new(season: FantasySeason) -> Season {
         let api = Api::new();
         let round_names = api.get_race_names(season.get_season()).unwrap_or_default();
 
@@ -26,7 +27,7 @@ impl Season {
             download_attempts: HashMap::new(),
         }
     }
-    pub(crate) fn view(&self) -> Element<SeasonMessage> {
+    pub fn view(&self) -> Element<SeasonMessage> {
         let top = widget::text!(
             "{}",
             match self.season.get_status_at(self.current_round) {
@@ -77,16 +78,34 @@ impl Season {
             self.season.get_status_at(self.current_round - 1)
         };
         let status = self.season.get_status_at(self.current_round);
+        let next_status = self.season.get_status_at(self.current_round + 1);
 
-        let bottom_row = match (prev_status, status) {
-            ((_, _, false), _) => widget::button("draft"),
-            ((_, _, true), (false, _, _)) => widget::button("draft").on_press(SeasonMessage::Draft),
-            ((_, _, true), (true, false, _)) => widget::button("score"),
-            ((_, _, true), (true, true, false)) => {
+        let add_button = match (prev_status, status) {
+            ((false, _, _), _) => widget::button("draft"),
+            ((true, _, _), (false, _, _)) => widget::button("draft").on_press(SeasonMessage::Draft),
+            ((true, _, _), (true, false, _)) => widget::button("score"),
+            ((true, _, _), (true, true, false)) => {
                 widget::button("score").on_press(SeasonMessage::Score)
             }
-            ((_, _, true), (true, true, true)) => widget::button("score"),
+            ((true, _, _), (true, true, true)) => widget::button("scored"),
         };
+
+        let delete_lineup_button = match (self.current_round, status, next_status) {
+            (1, _, _) => widget::button("delete round"),
+            (_, (true, _, false), (false, _, _)) => {
+                widget::button("delete lineup").on_press(DeleteLineup)
+            }
+            _ => widget::button("delete lineup"),
+        }
+        .style(widget::button::danger);
+
+        let delete_round_button = match status {
+            (_, true, _) => widget::button("delete round").on_press(DeleteRound),
+            _ => widget::button("delete round"),
+        }
+        .style(widget::button::danger);
+
+        let bottom_row = widget::row![add_button, delete_lineup_button, delete_round_button];
 
         widget::column![
             top,
@@ -125,6 +144,15 @@ impl Season {
                 self.download_attempts.insert(result.0, true);
                 Task::none()
             }
+            SeasonMessage::DeleteLineup => {
+                self.season.delete_lineup(self.current_round).unwrap();
+                Task::none()
+            }
+            SeasonMessage::DeleteRound => {
+                self.season.delete_round(self.current_round).unwrap();
+                self.download_attempts.remove(&self.current_round);
+                Task::none()
+            }
         }
     }
 
@@ -154,4 +182,6 @@ pub enum SeasonMessage {
     Draft,
     Score,
     DownloadedResults((u8, Result<RaceResults, DownloadError>)),
+    DeleteLineup,
+    DeleteRound,
 }

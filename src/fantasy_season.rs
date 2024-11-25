@@ -4,7 +4,7 @@ pub mod score;
 mod status;
 mod team;
 
-use crate::error::{DownloadError, DraftError, ScoreError};
+use crate::error::{DeleteError, DownloadError, DraftError, ScoreError};
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use draft::Drafter;
@@ -156,6 +156,46 @@ impl FantasySeason {
             team.store_lineup(round, lineups.remove(0));
         }
 
+        self.status.toggle_drafted(round);
+        Ok(())
+    }
+
+    pub fn delete_round(&mut self, round: u8) -> Result<(), DeleteError> {
+        if !self.status.has_results(round) {
+            return Err(DeleteError::ResultsDeleteWhenResultsDontExist(round));
+        }
+
+        if self.status.has_scored(round) {
+            self.teams
+                .iter_mut()
+                .for_each(|mut t| t.delete_score(round));
+            self.status.toggle_scored(round);
+        }
+
+        if self.status.has_results(round) {
+            self.results.retain(|rr| rr.round != round);
+            self.status.toggle_results(round);
+        }
+
+        Ok(())
+    }
+
+    pub fn delete_lineup(&mut self, round: u8) -> Result<(), DeleteError> {
+        if round == 1 {
+            return Err(DeleteError::LineupDeleteFirstRound);
+        }
+
+        if self.status.has_scored(round) {
+            return Err(DeleteError::LineupDeleteWhileScoresExist(round));
+        }
+
+        if self.status.has_drafted(round + 1) {
+            return Err(DeleteError::LineupDeleteWhileScoresExist(round));
+        }
+
+        self.teams
+            .iter_mut()
+            .for_each(|mut t| t.delete_round(round));
         self.status.toggle_drafted(round);
         Ok(())
     }

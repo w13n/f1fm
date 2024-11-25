@@ -1,10 +1,10 @@
 // stores if the race results have been collected, the teams have drafted, or the teams have been scored for each round
-pub struct Status {
+pub(super) struct Status {
     tasks: Vec<RoundStatus>, // a collection of statuses where the nth element of the RoundStatus is the nth  round
 }
 
 impl Status {
-    pub(crate) fn new() -> Status {
+    pub fn new() -> Status {
         Status { tasks: Vec::new() }
     }
     fn _get_round_status(&self, round: u8) -> Option<&RoundStatus> {
