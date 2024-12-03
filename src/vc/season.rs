@@ -91,7 +91,7 @@ impl Season {
         };
 
         let delete_lineup_button = match (self.current_round, status, next_status) {
-            (1, _, _) => widget::button("delete round"),
+            (1, _, _) => widget::button("delete lineup"),
             (_, (true, _, false), (false, _, _)) => {
                 widget::button("delete lineup").on_press(DeleteLineup)
             }
