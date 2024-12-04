@@ -12,7 +12,7 @@ pub(super) struct Season {
     season: FantasySeason,
     current_round: u8,
     round_names: HashMap<u8, String>,
-    download_attempts: HashMap<u8, bool>,
+    download_attempts: HashMap<u8, String>,
 }
 
 impl Season {
@@ -33,11 +33,8 @@ impl Season {
             match self.season.get_status_at(self.current_round) {
                 (_, true, _) => "round results downloaded",
                 (_, false, _) => match self.download_attempts.get(&self.current_round) {
-                    Some(bool) => match bool {
-                        true => "round results downloading failed",
-                        false => "round results downloading",
-                    },
-                    None => "round results not downloaded",
+                    Some(msg) => msg,
+                    None => "round results not yet downloaded",
                 },
             }
         );
@@ -136,10 +133,12 @@ impl Season {
                 Task::none()
             }
             SeasonMessage::DownloadedResults(result) => {
-                if let Ok(result) = result.1 {
-                    self.season.update_results(result).expect("cannot happen");
-                };
-                self.download_attempts.insert(result.0, true);
+                if let Ok(rr) = result.1 {
+                    self.season.update_results(rr).expect("cannot happen");
+                    self.download_attempts.remove(&result.0);
+                } else if let Err(err) = result.1 {
+                    self.download_attempts.insert(result.0, err.to_string());
+                }
                 Task::none()
             }
             SeasonMessage::DeleteLineup => {
@@ -158,7 +157,8 @@ impl Season {
         if !self.season.get_status_at(self.current_round).1
             && self.download_attempts.get(&self.current_round).is_none()
         {
-            self.download_attempts.insert(self.current_round, false);
+            self.download_attempts
+                .insert(self.current_round, "round results downloading".to_string());
             Task::perform(
                 build_with_round(self.current_round, self.season.get_season()),
                 SeasonMessage::DownloadedResults,
