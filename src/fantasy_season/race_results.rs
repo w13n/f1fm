@@ -12,15 +12,15 @@ pub struct RaceResults {
 impl RaceResults {
     pub async fn build(round: u8, season: u16) -> Result<RaceResults, DownloadError> {
         let api_client = Api::new();
-        let qualifying_results = api_client
-            .get_qualifying_results(season, round)
-            .await
-            .map_err(DownloadError::ApiError)?;
 
-        let race_results = api_client
-            .get_race_results(season, round)
-            .await
-            .map_err(DownloadError::ApiError)?;
+        let (qualifying_results_down, race_results_down) = tokio::join!(
+            api_client.get_qualifying_results(season, round),
+            api_client.get_race_results(season, round)
+        );
+
+        let qualifying_results = qualifying_results_down.map_err(DownloadError::ApiError)?;
+
+        let race_results = race_results_down.map_err(DownloadError::ApiError)?;
 
         let mut broken_drivers = Vec::new();
         for result in race_results {
