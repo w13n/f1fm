@@ -128,9 +128,7 @@ impl Season {
                 self.download_task()
             }
             SeasonMessage::Draft => {
-                self.season
-                    .draft(self.current_round, &Skip::new())
-                    .unwrap();
+                self.season.draft(self.current_round, &Skip::new()).unwrap();
                 Task::none()
             }
             SeasonMessage::Score => {

@@ -15,10 +15,7 @@ impl Team {
     pub fn new(name: String, r1_lineup: Vec<u8>) -> Team {
         let mut rounds = HashMap::new();
         rounds.insert(1, TeamRound::new(r1_lineup));
-        Team {
-            name,
-            rounds,
-        }
+        Team { name, rounds }
     }
 
     pub fn calculate_score(

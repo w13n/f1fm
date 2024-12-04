@@ -1,9 +1,8 @@
+use crate::fantasy_season::draft::DraftChoice;
+use crate::fantasy_season::score::ScoreChoice;
+use crate::fantasy_season::FantasySeason;
 use iced::Element;
 use time::OffsetDateTime;
-use crate::fantasy_season::draft::DraftChoice;
-use crate::fantasy_season::FantasySeason;
-use crate::fantasy_season::score::ScoreChoice;
-
 
 const GRID_SIZE_DEFAULT: u8 = 20;
 const TEAM_SIZE_DEFAULT: u8 = 3;
@@ -35,18 +34,12 @@ impl Builder {
 
     pub fn update(&mut self, message: BuilderMessage) {
         match message {
-            BuilderMessage::ChangeName(name) => {
-                self.name = name
-            }
-            BuilderMessage::ScoreChoiceSelected(choice) => {
-                self.score_choice = choice
-            }
-            BuilderMessage::DraftChoiceSelected(choice) => {
-                self.draft_choice = choice
-            }
-            BuilderMessage::AddTeam => {
-                self.teams.push(TeamBuilder::new(self.teams.len(), self.team_size))
-            }
+            BuilderMessage::ChangeName(name) => self.name = name,
+            BuilderMessage::ScoreChoiceSelected(choice) => self.score_choice = choice,
+            BuilderMessage::DraftChoiceSelected(choice) => self.draft_choice = choice,
+            BuilderMessage::AddTeam => self
+                .teams
+                .push(TeamBuilder::new(self.teams.len(), self.team_size)),
             BuilderMessage::DeleteTeam(team) => {
                 self.teams.remove(team);
                 for team_id in team..self.teams.len() {
@@ -99,7 +92,7 @@ impl Builder {
             self.teams.iter().map(|team| team.parse()).collect(),
             self.season.parse::<u16>().expect("cannot call create"),
             self.grid_size.parse::<u8>().expect("cannot call create"),
-            self.enforce_uniqueness
+            self.enforce_uniqueness,
         )
     }
 }
@@ -124,7 +117,7 @@ pub enum BuilderMessage {
 struct TeamBuilder {
     id: usize,
     name: String,
-    numbers: Vec<String>
+    numbers: Vec<String>,
 }
 
 impl TeamBuilder {
@@ -133,7 +126,7 @@ impl TeamBuilder {
         for _ in 0..team_size {
             vec.push(String::new())
         }
-        TeamBuilder{
+        TeamBuilder {
             id,
             name: String::new(),
             numbers: vec,
@@ -149,7 +142,7 @@ impl TeamBuilder {
     }
 
     fn get_name(&self) -> String {
-        return self.name.clone()
+        return self.name.clone();
     }
 
     fn set_name(&mut self, name: String) {
@@ -169,14 +162,20 @@ impl TeamBuilder {
     }
 
     fn can_parse(&self) -> bool {
-        self.numbers.iter().fold(true, |can_parse, cur_val| {
-            validate(cur_val) && can_parse
-        })
+        self.numbers
+            .iter()
+            .fold(true, |can_parse, cur_val| validate(cur_val) && can_parse)
     }
 
     fn parse(&self) -> Vec<u8> {
-        self.numbers.iter().map(|cur_val| cur_val.parse::<u8>()
-            .expect("cannot call parse if can_parse is false")).collect()
+        self.numbers
+            .iter()
+            .map(|cur_val| {
+                cur_val
+                    .parse::<u8>()
+                    .expect("cannot call parse if can_parse is false")
+            })
+            .collect()
     }
 }
 

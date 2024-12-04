@@ -1,12 +1,12 @@
-mod season;
 mod builder;
+mod season;
 
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::fantasy_season::FantasySeason;
+use crate::vc::builder::{Builder, BuilderMessage};
 use crate::vc::season::{Season, SeasonMessage};
 use iced::{Element, Task};
-use crate::vc::builder::{Builder, BuilderMessage};
 
 pub(super) struct ViewController {
     window: Window,
@@ -40,7 +40,7 @@ impl ViewController {
     pub fn view(&self) -> Element<VCMessage> {
         match &self.window {
             Window::Season(season) => season.view().map(VCMessage::SeasonMessage),
-            Window::Builder(builder) => {builder.view().map(VCMessage::BuilderMessage)}
+            Window::Builder(builder) => builder.view().map(VCMessage::BuilderMessage),
         }
     }
 
@@ -48,20 +48,25 @@ impl ViewController {
         match message {
             VCMessage::SeasonMessage(sm) => match &mut self.window {
                 Window::Season(s) => s.update(sm).map(VCMessage::SeasonMessage),
-                _ => {panic!("SeasonMessage created for non season")}
+                _ => {
+                    panic!("SeasonMessage created for non season")
+                }
             },
             VCMessage::BuilderMessage(bm) => match &mut self.window {
-                Window::Builder(b) => {
-                    match bm {
-                        BuilderMessage::Create => {
-                            self.window = Window::Season(Season::new(b.create()));
-                            Task::none()
-                        },
-                        _ => {b.update(bm); Task::none()},
+                Window::Builder(b) => match bm {
+                    BuilderMessage::Create => {
+                        self.window = Window::Season(Season::new(b.create()));
+                        Task::none()
                     }
+                    _ => {
+                        b.update(bm);
+                        Task::none()
+                    }
+                },
+                _ => {
+                    panic!("BuilderMessage created for non builder")
                 }
-                _ => {panic!("BuilderMessage created for non builder")}
-            }
+            },
         }
     }
 }
@@ -74,5 +79,5 @@ enum Window {
 #[derive(Debug, Clone)]
 pub enum VCMessage {
     SeasonMessage(SeasonMessage),
-    BuilderMessage(BuilderMessage)
+    BuilderMessage(BuilderMessage),
 }
