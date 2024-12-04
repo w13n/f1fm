@@ -9,3 +9,4 @@ reqwest = { version = "0.12", features = ["json"] }
 ergast-rs = "0.3.2"
 iced = { version = "0.13", features = ["tokio"] }
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
+time = {version = "0.3"}

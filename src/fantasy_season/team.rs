@@ -5,7 +5,7 @@ use crate::error::{DraftError, ScoreError};
 use std::cell::Cell;
 use std::cmp::Ordering;
 
-pub struct Team {
+pub(super) struct Team {
     name: String,
     rounds: Vec<TeamRound>, // the driver lineup and points scored of this team for each round
 }

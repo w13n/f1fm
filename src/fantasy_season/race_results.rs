@@ -52,7 +52,7 @@ impl RaceResults {
 
 // the results for a driver in a round
 #[derive(Debug, Copy, Clone)]
-pub struct DriverResult {
+pub(super) struct DriverResult {
     pub driver: u8,
     pub final_position: u8,
     pub grid_position: u8,

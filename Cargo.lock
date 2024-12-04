@@ -1046,6 +1046,7 @@ dependencies = [
  "ergast-rs",
  "iced",
  "reqwest 0.12.7",
+ "time",
  "tokio",
 ]
 

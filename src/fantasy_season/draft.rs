@@ -1,8 +1,11 @@
 use crate::error::DraftError;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub enum DraftChoice {
+    #[default]
     Skip,
+    RollOn,
+    AllReplace,
 }
 
 pub trait Drafter {
@@ -10,15 +13,15 @@ pub trait Drafter {
 }
 
 #[derive(Default)]
-pub struct Skipper {}
+pub struct Skip {}
 
-impl Skipper {
-    pub(crate) fn new() -> Skipper {
-        Skipper {}
+impl Skip {
+    pub(crate) fn new() -> Skip {
+        Skip {}
     }
 }
 
-impl Drafter for Skipper {
+impl Drafter for Skip {
     fn draft(&self, _: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
         Ok(previous_drivers.to_vec())
     }

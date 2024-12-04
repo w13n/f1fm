@@ -1,6 +1,6 @@
 use crate::api::Api;
 use crate::error::DownloadError;
-use crate::fantasy_season::draft::Skipper;
+use crate::fantasy_season::draft::Skip;
 use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
 use crate::vc::season::SeasonMessage::{DeleteLineup, DeleteRound};
@@ -8,7 +8,7 @@ use iced::Element;
 use iced::{widget, Task};
 use std::collections::HashMap;
 
-pub(crate) struct Season {
+pub(super) struct Season {
     season: FantasySeason,
     current_round: u8,
     round_names: HashMap<u8, String>,
@@ -129,7 +129,7 @@ impl Season {
             }
             SeasonMessage::Draft => {
                 self.season
-                    .draft(self.current_round, &Skipper::new())
+                    .draft(self.current_round, &Skip::new())
                     .unwrap();
                 Task::none()
             }

@@ -1,4 +1,5 @@
 mod season;
+mod builder;
 
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
@@ -6,7 +7,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::vc::season::{Season, SeasonMessage};
 use iced::{Element, Task};
 
-pub(crate) struct ViewController {
+pub(super) struct ViewController {
     window: Window,
     seasons: Vec<FantasySeason>,
 }
