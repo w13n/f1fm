@@ -33,7 +33,7 @@ impl Builder {
         }
     }
 
-    fn update(&mut self, message: BuilderMessage) {
+    pub fn update(&mut self, message: BuilderMessage) {
         match message {
             BuilderMessage::ChangeName(name) => {
                 self.name = name
@@ -86,13 +86,13 @@ impl Builder {
         }
     }
 
-    fn view(&self) -> Element<BuilderMessage> {
+    pub fn view(&self) -> Element<BuilderMessage> {
         todo!()
     }
 
-    fn create(self) -> FantasySeason {
+    pub fn create(&mut self) -> FantasySeason {
         FantasySeason::new(
-            self.name,
+            self.name.clone(),
             self.score_choice,
             self.draft_choice,
             self.teams.iter().map(|team| team.get_name()).collect(),
@@ -104,7 +104,8 @@ impl Builder {
     }
 }
 
-enum BuilderMessage {
+#[derive(Clone, Debug)]
+pub enum BuilderMessage {
     ChangeName(String),
     ScoreChoiceSelected(ScoreChoice),
     DraftChoiceSelected(DraftChoice),

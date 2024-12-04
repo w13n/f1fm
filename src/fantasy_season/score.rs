@@ -4,7 +4,7 @@ pub trait Scorer {
     fn score(&self, grid_size: u8, dr: &DriverResult) -> i16;
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Debug)]
 pub enum ScoreChoice {
     #[default]
     FormulaOne,

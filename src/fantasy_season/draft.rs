@@ -1,6 +1,6 @@
 use crate::error::DraftError;
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Debug)]
 pub enum DraftChoice {
     #[default]
     Skip,
