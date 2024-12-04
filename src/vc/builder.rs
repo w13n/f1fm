@@ -22,7 +22,7 @@ pub(super) struct Builder {
 impl Builder {
     fn new() -> Builder {
         Builder {
-            name: "".to_string(),
+            name: String::new(),
             teams: Vec::new(),
             score_choice: ScoreChoice::default(),
             draft_choice: DraftChoice::default(),
