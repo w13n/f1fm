@@ -45,11 +45,11 @@ impl Builder {
                 self.draft_choice = choice
             }
             BuilderMessage::AddTeam => {
-                self.teams.push(TeamBuilder::new(self.teams.size(), self.team_size))
+                self.teams.push(TeamBuilder::new(self.teams.len(), self.team_size))
             }
             BuilderMessage::DeleteTeam(team) => {
                 self.teams.remove(team);
-                for team_id in team..self.teams.size() {
+                for team_id in team..self.teams.len() {
                     self.teams[team_id].decrease_id()
                 }
             }
