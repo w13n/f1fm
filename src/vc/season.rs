@@ -1,9 +1,9 @@
 use crate::api::Api;
-use crate::error::DownloadError;
+use crate::error::{ApiError, DownloadError};
 use crate::fantasy_season::draft::Skip;
 use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
-use crate::vc::season::SeasonMessage::{DeleteLineup, DeleteRound};
+use crate::vc::season::SeasonMessage::{DeleteLineup, DeleteRound, DownloadedRaceNames};
 use iced::Element;
 use iced::{widget, Task};
 use std::collections::HashMap;
@@ -11,19 +11,16 @@ use std::collections::HashMap;
 pub(super) struct Season {
     season: FantasySeason,
     current_round: u8,
-    round_names: HashMap<u8, String>,
+    round_names: Option<HashMap<u8, String>>,
     download_attempts: HashMap<u8, String>,
 }
 
 impl Season {
     pub fn new(season: FantasySeason) -> Season {
-        let api = Api::new();
-        let round_names = api.get_race_names(season.get_season()).unwrap_or_default();
-
         Season {
             season,
             current_round: 1,
-            round_names,
+            round_names: None,
             download_attempts: HashMap::new(),
         }
     }
@@ -42,7 +39,11 @@ impl Season {
             widget::button("-").on_press_maybe(
                 (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound)
             ),
-            if let Some(string) = self.round_names.get(&self.current_round) {
+            if let Some(string) = self
+                .round_names
+                .as_ref()
+                .and_then(|hash| hash.get(&self.current_round))
+            {
                 widget::text!("{}", string)
             } else {
                 widget::text!("{}", self.current_round)
@@ -124,6 +125,7 @@ impl Season {
                 self.current_round -= 1;
                 self.download_task()
             }
+            SeasonMessage::DownloadFirstRace => self.download_task(),
             SeasonMessage::Draft => {
                 self.season.draft(self.current_round, &Skip::new()).unwrap();
                 Task::none()
@@ -150,6 +152,14 @@ impl Season {
                 self.download_attempts.remove(&self.current_round);
                 Task::none()
             }
+            SeasonMessage::DownloadedRaceNames(results) => {
+                self.round_names = results.ok();
+                Task::none()
+            }
+            SeasonMessage::DownloadRaceNames => Task::perform(
+                download_race_names(self.season.get_season()),
+                SeasonMessage::DownloadedRaceNames,
+            ),
         }
     }
 
@@ -173,13 +183,21 @@ async fn build_with_round(round: u8, season: u16) -> (u8, Result<RaceResults, Do
     (round, RaceResults::build(round, season).await)
 }
 
+async fn download_race_names(season: u16) -> Result<HashMap<u8, String>, ApiError> {
+    let api = Api::new();
+    api.get_race_names(season).await
+}
+
 #[derive(Debug, Clone)]
 pub enum SeasonMessage {
     IncrementRound,
     DecrementRound,
+    DownloadFirstRace,
     Draft,
     Score,
     DownloadedResults((u8, Result<RaceResults, DownloadError>)),
     DeleteLineup,
     DeleteRound,
+    DownloadRaceNames,
+    DownloadedRaceNames(Result<HashMap<u8, String>, ApiError>),
 }

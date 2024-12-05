@@ -7,6 +7,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::vc::builder::{Builder, BuilderMessage};
 use crate::vc::season::{Season, SeasonMessage};
 use iced::{Element, Task};
+use std::collections::HashMap;
 
 pub(super) struct ViewController {
     window: Window,
@@ -21,17 +22,6 @@ impl Default for ViewController {
 
 impl ViewController {
     pub(crate) fn new() -> ViewController {
-        let season = FantasySeason::new(
-            "F1FL".to_string(),
-            ScoreChoice::FormulaOne,
-            DraftChoice::Skip,
-            vec!["Red Bull".to_string(), "Mercedes".to_string()],
-            vec![vec![33, 11], vec![44, 63]],
-            2024,
-            20,
-            true,
-        );
-
         ViewController {
             seasons: Vec::new(),
             window: Window::Builder(Builder::new()),
@@ -56,7 +46,10 @@ impl ViewController {
                 Window::Builder(b) => match bm {
                     BuilderMessage::Create => {
                         self.window = Window::Season(Season::new(b.create()));
-                        Task::none()
+                        Task::batch(vec![
+                            Task::done(VCMessage::SeasonMessage(SeasonMessage::DownloadFirstRace)),
+                            Task::done(VCMessage::SeasonMessage(SeasonMessage::DownloadRaceNames)),
+                        ])
                     }
                     _ => {
                         b.update(bm);

@@ -14,8 +14,6 @@ impl Api {
             client: Client::new(),
         }
     }
-
-    #[tokio::main]
     pub async fn get_race_names(&self, season: u16) -> Result<HashMap<u8, String>, ApiError> {
         let mut map = HashMap::new();
         self.client
