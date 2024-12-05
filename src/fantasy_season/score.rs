@@ -1,16 +1,29 @@
+use std::fmt::Display;
 use crate::fantasy_season::race_results::DriverResult;
 
 pub trait Scorer {
     fn score(&self, grid_size: u8, dr: &DriverResult) -> i16;
 }
 
-#[derive(Copy, Clone, Default, Debug)]
+#[derive(Copy, Clone, Default, Debug, PartialOrd, PartialEq, Ord, Eq)]
 pub enum ScoreChoice {
     #[default]
     FormulaOne,
     RacePosition,
     Improvement,
     Domination,
+}
+
+impl Display for ScoreChoice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            ScoreChoice::FormulaOne => { String::from("Formula One") }
+            ScoreChoice::RacePosition => { String::from("Race Position") }
+            ScoreChoice::Improvement => { String::from("Improvement") }
+            ScoreChoice::Domination => { String::from("Domination") }
+        };
+        write!(f, "{}", str)
+    }
 }
 
 impl Scorer for ScoreChoice {

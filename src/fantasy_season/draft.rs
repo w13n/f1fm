@@ -1,11 +1,24 @@
+use std::fmt::Display;
 use crate::error::DraftError;
+use crate::fantasy_season::score::ScoreChoice;
 
-#[derive(Copy, Clone, Default, Debug)]
+#[derive(Copy, Clone, Default, Debug, PartialOrd, PartialEq, Ord, Eq)]
 pub enum DraftChoice {
     #[default]
     Skip,
     RollOn,
-    AllReplace,
+    ReplaceAll,
+}
+
+impl Display for DraftChoice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            DraftChoice::Skip => { String::from("Skip") }
+            DraftChoice::RollOn => { String::from("Roll On") }
+            DraftChoice::ReplaceAll => { String::from("Replace All") }
+        };
+        write!(f, "{}", str)
+    }
 }
 
 pub trait Drafter {

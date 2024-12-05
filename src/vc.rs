@@ -34,7 +34,7 @@ impl ViewController {
 
         ViewController {
             seasons: Vec::new(),
-            window: Window::Season(Season::new(season)),
+            window: Window::Builder(Builder::new()),
         }
     }
     pub fn view(&self) -> Element<VCMessage> {

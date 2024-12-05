@@ -1,7 +1,7 @@
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::fantasy_season::FantasySeason;
-use iced::Element;
+use iced::{Element, widget};
 use time::OffsetDateTime;
 
 const GRID_SIZE_DEFAULT: u8 = 20;
@@ -19,7 +19,7 @@ pub(super) struct Builder {
 }
 
 impl Builder {
-    fn new() -> Builder {
+    pub fn new() -> Builder {
         Builder {
             name: String::new(),
             teams: Vec::new(),
@@ -51,7 +51,7 @@ impl Builder {
                 self.team_size += 1;
             }
             BuilderMessage::DecreaseTeamSize => {
-                self.teams.iter_mut().for_each(|team| team.increase_size());
+                self.teams.iter_mut().for_each(|team| team.decrease_size());
                 self.team_size -= 1;
             }
             BuilderMessage::ChangeDriverNum(team, index, new_driver) => {
@@ -69,18 +69,79 @@ impl Builder {
                     self.grid_size = size;
                 }
             }
-            BuilderMessage::ToggleEnforceUniqueness => {
-                self.enforce_uniqueness = !self.enforce_uniqueness
+            BuilderMessage::ToggleEnforceUniqueness(bool) => {
+                self.enforce_uniqueness = bool
             }
             BuilderMessage::Create => {
                 panic!("create message passed to builder");
             }
-            BuilderMessage::ChangeTeamName(_, _) => {}
+            BuilderMessage::ChangeTeamName(id, name) => {
+                self.teams.get_mut(id).expect("id out of sync").set_name(name)
+            }
         }
     }
 
     pub fn view(&self) -> Element<BuilderMessage> {
-        todo!()
+        let name = widget::text_input("fantasy season name here", &*self.name)
+            .on_input(BuilderMessage::ChangeName);
+
+        let team_sizes = widget::row![
+            widget::button("-")
+            .on_press_maybe(if self.team_size > 1 {Some(BuilderMessage::DecreaseTeamSize)} else {None}),
+            widget::button("+").on_press(BuilderMessage::IncreaseTeamSize),
+        ];
+
+        let add_team = widget::button("add team").on_press(BuilderMessage::AddTeam);
+
+        let teams = widget::container(widget::scrollable(
+            widget::Column::from_vec(self.teams.iter().map(|t| t.view()).collect())
+        )).max_height(400);
+
+        let score_coice = widget::pick_list(
+            vec![ScoreChoice::FormulaOne, ScoreChoice::RacePosition,
+                 ScoreChoice::Improvement, ScoreChoice::Domination],
+            Some(self.score_choice), BuilderMessage::ScoreChoiceSelected);
+
+        let draft_choice = widget::pick_list(
+            vec![DraftChoice::Skip, DraftChoice::RollOn,
+                 DraftChoice::ReplaceAll],
+            Some(self.draft_choice), BuilderMessage::DraftChoiceSelected);
+
+        let season = widget::text_input("season", &*self.season)
+            .on_input(BuilderMessage::ChangeSeason);
+
+        let grid_size = widget::text_input("grid size", &*self.grid_size)
+            .on_input(BuilderMessage::ChangeGridSize);
+
+        let uniqueness = widget::toggler(self.enforce_uniqueness).on_toggle(BuilderMessage::ToggleEnforceUniqueness);
+
+        let create = widget::button("create team").on_press_maybe(
+            if self.teams
+                .iter()
+                .fold(true, |carried, this| this.can_parse() && carried)
+            && self.teams.len() > 0 {
+                let mut valid = true;
+                if self.enforce_uniqueness {
+                    let mut already_seen = Vec::new();
+                    for team in &self.teams {
+                        for driver in team.parse() {
+                            valid = valid && !already_seen.contains(&driver);
+                            already_seen.push(driver);
+                        }
+                    }
+                }
+                if valid {
+                    Some(BuilderMessage::Create)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        );
+
+
+        widget::column![name, team_sizes, add_team, teams, score_coice, draft_choice, season, grid_size, uniqueness, create].spacing(10).into()
     }
 
     pub fn create(&mut self) -> FantasySeason {
@@ -110,7 +171,7 @@ pub enum BuilderMessage {
     ChangeTeamName(usize, String),
     ChangeSeason(String),
     ChangeGridSize(String),
-    ToggleEnforceUniqueness,
+    ToggleEnforceUniqueness(bool),
     Create,
 }
 
@@ -133,8 +194,20 @@ impl TeamBuilder {
         }
     }
 
-    fn view() -> Element<'static, BuilderMessage> {
-        todo!()
+    fn view(&self) -> Element<BuilderMessage> {
+        let name = widget::text_input("name of team", &*self.name)
+            .on_input(|name| BuilderMessage::ChangeTeamName(self.id, name)).width(200);
+
+        let mut drivers = widget::Row::with_capacity(self.numbers.len());
+        for idx in 0..self.numbers.len() {
+            drivers = drivers.push(
+                widget::text_input(&format!("# {idx}"), self.numbers.get(idx).expect("cannot happen"))
+                    .on_input(move |num| BuilderMessage::ChangeDriverNum(self.id, idx, num))
+                    .width(50)
+            )
+        }
+
+        widget::row![name, drivers].spacing(5).padding(10).into()
     }
 
     fn decrease_id(&mut self) {
@@ -165,6 +238,7 @@ impl TeamBuilder {
         self.numbers
             .iter()
             .fold(true, |can_parse, cur_val| validate(cur_val) && can_parse)
+        && !self.name.is_empty()
     }
 
     fn parse(&self) -> Vec<u8> {
