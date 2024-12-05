@@ -233,7 +233,7 @@ impl TeamBuilder {
         for idx in 0..self.numbers.len() {
             drivers = drivers.push(
                 widget::text_input(
-                    &format!("# {idx}"),
+                    &format!("# {}", idx + 1),
                     self.numbers.get(idx).expect("cannot happen"),
                 )
                 .on_input(move |num| BuilderMessage::ChangeDriverNum(self.id, idx, num))
@@ -241,7 +241,9 @@ impl TeamBuilder {
             )
         }
 
-        widget::row![name, drivers].spacing(5).padding(10).into()
+        let delete = widget::button("delete").on_press(BuilderMessage::DeleteTeam(self.id));
+
+        widget::row![name, drivers, delete].spacing(5).into()
     }
 
     fn decrease_id(&mut self) {

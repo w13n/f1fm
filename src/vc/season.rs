@@ -3,7 +3,6 @@ use crate::error::{ApiError, DownloadError};
 use crate::fantasy_season::draft::Skip;
 use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
-use crate::vc::season::SeasonMessage::{DeleteLineup, DeleteRound, DownloadedRaceNames};
 use iced::Element;
 use iced::{widget, Task};
 use std::collections::HashMap;
@@ -91,14 +90,14 @@ impl Season {
         let delete_lineup_button = match (self.current_round, status, next_status) {
             (1, _, _) => widget::button("delete lineup"),
             (_, (true, _, false), (false, _, _)) => {
-                widget::button("delete lineup").on_press(DeleteLineup)
+                widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup)
             }
             _ => widget::button("delete lineup"),
         }
         .style(widget::button::danger);
 
         let delete_round_button = match status {
-            (_, true, _) => widget::button("delete round").on_press(DeleteRound),
+            (_, true, _) => widget::button("delete round").on_press(SeasonMessage::DeleteRound),
             _ => widget::button("delete round"),
         }
         .style(widget::button::danger);
