@@ -5,7 +5,8 @@ use iced::{widget, Element};
 use time::OffsetDateTime;
 
 const GRID_SIZE_DEFAULT: u8 = 20;
-const TEAM_SIZE_DEFAULT: u8 = 3;
+const TEAM_SIZE_DEFAULT: u8 = 2;
+const TEAM_COUNT_DEFAULT: u8 = 3;
 
 pub(super) struct Builder {
     name: String,
@@ -22,7 +23,9 @@ impl Builder {
     pub fn new() -> Builder {
         Builder {
             name: String::new(),
-            teams: Vec::new(),
+            teams: vec![TeamBuilder::new(0, TEAM_SIZE_DEFAULT),
+                        TeamBuilder::new(1, TEAM_SIZE_DEFAULT),
+                        TeamBuilder::new(2, TEAM_SIZE_DEFAULT)],
             score_choice: ScoreChoice::default(),
             draft_choice: DraftChoice::default(),
             season: (OffsetDateTime::now_utc().year() as u16).to_string(),
@@ -91,7 +94,7 @@ impl Builder {
             } else {
                 None
             }),
-            widget::button("+").on_press(BuilderMessage::IncreaseTeamSize),
+            widget::button(iced::widget::text![" + "].size(20)).on_press(BuilderMessage::IncreaseTeamSize).padding(10).style(super::style::button::primary),
         ];
 
         let add_team = widget::button("add team").on_press(BuilderMessage::AddTeam);

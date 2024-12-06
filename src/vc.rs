@@ -1,13 +1,11 @@
 mod builder;
 mod season;
+mod style;
 
-use crate::fantasy_season::draft::DraftChoice;
-use crate::fantasy_season::score::ScoreChoice;
 use crate::fantasy_season::FantasySeason;
 use crate::vc::builder::{Builder, BuilderMessage};
 use crate::vc::season::{Season, SeasonMessage};
 use iced::{Element, Task};
-use std::collections::HashMap;
 
 pub(super) struct ViewController {
     window: Window,
