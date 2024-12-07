@@ -93,15 +93,15 @@ impl Builder {
                 Some(BuilderMessage::DecreaseTeamSize)
             } else {
                 None
-            }),
-            widget::button(iced::widget::text![" + "].size(20)).on_press(BuilderMessage::IncreaseTeamSize).padding(10).style(super::style::button::primary),
-        ];
+            }).style(super::style::button::secondary),
+            widget::button("+").on_press(BuilderMessage::IncreaseTeamSize).style(super::style::button::secondary),
+        ].spacing(10);
 
-        let add_team = widget::button("add team").on_press(BuilderMessage::AddTeam);
+        let add_team = widget::button("add team").on_press(BuilderMessage::AddTeam).style(super::style::button::secondary);
 
         let teams = widget::container(widget::scrollable(widget::Column::from_vec(
             self.teams.iter().map(|t| t.view()).collect(),
-        )))
+        ).spacing(10)))
         .max_height(400);
 
         let score_coice = widget::pick_list(
@@ -159,7 +159,7 @@ impl Builder {
             } else {
                 None
             },
-        );
+        ).style(super::style::button::primary);
 
         widget::column![
             name,
@@ -244,7 +244,7 @@ impl TeamBuilder {
             )
         }
 
-        let delete = widget::button("delete").on_press(BuilderMessage::DeleteTeam(self.id));
+        let delete = widget::button("delete").on_press(BuilderMessage::DeleteTeam(self.id)).style(super::style::button::danger);
 
         widget::row![name, drivers, delete].spacing(5).into()
     }
