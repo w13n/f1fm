@@ -23,9 +23,11 @@ impl Builder {
     pub fn new() -> Builder {
         Builder {
             name: String::new(),
-            teams: vec![TeamBuilder::new(0, TEAM_SIZE_DEFAULT),
-                        TeamBuilder::new(1, TEAM_SIZE_DEFAULT),
-                        TeamBuilder::new(2, TEAM_SIZE_DEFAULT)],
+            teams: vec![
+                TeamBuilder::new(0, TEAM_SIZE_DEFAULT),
+                TeamBuilder::new(1, TEAM_SIZE_DEFAULT),
+                TeamBuilder::new(2, TEAM_SIZE_DEFAULT),
+            ],
             score_choice: ScoreChoice::default(),
             draft_choice: DraftChoice::default(),
             season: (OffsetDateTime::now_utc().year() as u16).to_string(),
@@ -86,22 +88,30 @@ impl Builder {
 
     pub fn view(&self) -> Element<BuilderMessage> {
         let name = widget::text_input("fantasy season name here", &*self.name)
-            .on_input(BuilderMessage::ChangeName);
+            .on_input(BuilderMessage::ChangeName)
+            .style(super::style::text_input::default);
 
         let team_sizes = widget::row![
-            widget::button("-").on_press_maybe(if self.team_size > 1 {
-                Some(BuilderMessage::DecreaseTeamSize)
-            } else {
-                None
-            }).style(super::style::button::secondary),
-            widget::button("+").on_press(BuilderMessage::IncreaseTeamSize).style(super::style::button::secondary),
-        ].spacing(10);
+            widget::button("-")
+                .on_press_maybe(if self.team_size > 1 {
+                    Some(BuilderMessage::DecreaseTeamSize)
+                } else {
+                    None
+                })
+                .style(super::style::button::secondary),
+            widget::button("+")
+                .on_press(BuilderMessage::IncreaseTeamSize)
+                .style(super::style::button::secondary),
+        ]
+        .spacing(10);
 
-        let add_team = widget::button("add team").on_press(BuilderMessage::AddTeam).style(super::style::button::secondary);
+        let add_team = widget::button("add team")
+            .on_press(BuilderMessage::AddTeam)
+            .style(super::style::button::secondary);
 
-        let teams = widget::container(widget::scrollable(widget::Column::from_vec(
-            self.teams.iter().map(|t| t.view()).collect(),
-        ).spacing(10)))
+        let teams = widget::container(widget::scrollable(
+            widget::Column::from_vec(self.teams.iter().map(|t| t.view()).collect()).spacing(10),
+        ))
         .max_height(400);
 
         let score_coice = widget::pick_list(
@@ -125,41 +135,45 @@ impl Builder {
             BuilderMessage::DraftChoiceSelected,
         );
 
-        let season =
-            widget::text_input("season", &*self.season).on_input(BuilderMessage::ChangeSeason);
+        let season = widget::text_input("season", &*self.season)
+            .on_input(BuilderMessage::ChangeSeason)
+            .style(super::style::text_input::default);
 
         let grid_size = widget::text_input("grid size", &*self.grid_size)
-            .on_input(BuilderMessage::ChangeGridSize);
+            .on_input(BuilderMessage::ChangeGridSize)
+            .style(super::style::text_input::default);
 
         let uniqueness = widget::toggler(self.enforce_uniqueness)
             .on_toggle(BuilderMessage::ToggleEnforceUniqueness);
 
-        let create = widget::button("create team").on_press_maybe(
-            if self
-                .teams
-                .iter()
-                .fold(true, |carried, this| this.can_parse() && carried)
-                && self.teams.len() > 0
-            {
-                let mut valid = true;
-                if self.enforce_uniqueness {
-                    let mut already_seen = Vec::new();
-                    for team in &self.teams {
-                        for driver in team.parse() {
-                            valid = valid && !already_seen.contains(&driver);
-                            already_seen.push(driver);
+        let create = widget::button("create team")
+            .on_press_maybe(
+                if self
+                    .teams
+                    .iter()
+                    .fold(true, |carried, this| this.can_parse() && carried)
+                    && self.teams.len() > 0
+                {
+                    let mut valid = true;
+                    if self.enforce_uniqueness {
+                        let mut already_seen = Vec::new();
+                        for team in &self.teams {
+                            for driver in team.parse() {
+                                valid = valid && !already_seen.contains(&driver);
+                                already_seen.push(driver);
+                            }
                         }
                     }
-                }
-                if valid {
-                    Some(BuilderMessage::Create)
+                    if valid {
+                        Some(BuilderMessage::Create)
+                    } else {
+                        None
+                    }
                 } else {
                     None
-                }
-            } else {
-                None
-            },
-        ).style(super::style::button::primary);
+                },
+            )
+            .style(super::style::button::primary);
 
         widget::column![
             name,
@@ -230,23 +244,29 @@ impl TeamBuilder {
     fn view(&self) -> Element<BuilderMessage> {
         let name = widget::text_input("name of team", &*self.name)
             .on_input(|name| BuilderMessage::ChangeTeamName(self.id, name))
-            .width(200);
+            .width(200)
+            .style(super::style::text_input::default);
 
         let mut drivers = widget::Row::with_capacity(self.numbers.len());
         for idx in 0..self.numbers.len() {
-            drivers = drivers.push(
-                widget::text_input(
-                    &format!("# {}", idx + 1),
-                    self.numbers.get(idx).expect("cannot happen"),
+            drivers = drivers
+                .push(
+                    widget::text_input(
+                        &format!("#{}", idx + 1),
+                        self.numbers.get(idx).expect("cannot happen"),
+                    )
+                    .style(super::style::text_input::default)
+                    .on_input(move |num| BuilderMessage::ChangeDriverNum(self.id, idx, num))
+                    .width(50),
                 )
-                .on_input(move |num| BuilderMessage::ChangeDriverNum(self.id, idx, num))
-                .width(50),
-            )
+                .spacing(5)
         }
 
-        let delete = widget::button("delete").on_press(BuilderMessage::DeleteTeam(self.id)).style(super::style::button::danger);
+        let delete = widget::button("delete")
+            .on_press(BuilderMessage::DeleteTeam(self.id))
+            .style(super::style::button::danger);
 
-        widget::row![name, drivers, delete].spacing(5).into()
+        widget::row![name, drivers, delete].spacing(10).into()
     }
 
     fn decrease_id(&mut self) {
