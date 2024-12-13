@@ -1,6 +1,5 @@
 use crate::error::DraftError;
-use crate::fantasy_season::score::ScoreChoice;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 #[derive(Copy, Clone, Default, Debug, PartialOrd, PartialEq, Ord, Eq)]
 pub enum DraftChoice {
@@ -21,11 +20,11 @@ impl Display for DraftChoice {
     }
 }
 
-pub trait Drafter {
+pub trait Drafter: Debug + Sync + Send {
     fn draft(&self, team_name: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError>;
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct Skip {}
 
 impl Skip {

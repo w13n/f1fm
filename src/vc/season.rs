@@ -1,17 +1,21 @@
 use crate::api::Api;
 use crate::error::{ApiError, DownloadError};
-use crate::fantasy_season::draft::Skip;
+use crate::fantasy_season::draft::{DraftChoice, Drafter, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
+use draft_window::DraftWindow;
 use iced::Element;
 use iced::{widget, Task};
 use std::collections::HashMap;
+
+mod draft_window;
 
 pub(super) struct Season {
     season: FantasySeason,
     current_round: u8,
     round_names: Option<HashMap<u8, String>>,
     download_attempts: HashMap<u8, String>,
+    draft_window: Option<DraftWindow>,
 }
 
 impl Season {
@@ -21,6 +25,7 @@ impl Season {
             current_round: 1,
             round_names: None,
             download_attempts: HashMap::new(),
+            draft_window: None,
         }
     }
     pub fn view(&self) -> Element<SeasonMessage> {
@@ -79,7 +84,9 @@ impl Season {
 
         let add_button = match (prev_status, status) {
             ((false, _, _), _) => widget::button("draft"),
-            ((true, _, _), (false, _, _)) => widget::button("draft").on_press(SeasonMessage::Draft),
+            ((true, _, _), (false, _, _)) => {
+                widget::button("draft").on_press(SeasonMessage::DraftStart)
+            }
             ((true, _, _), (true, false, _)) => widget::button("score"),
             ((true, _, _), (true, true, false)) => {
                 widget::button("score").on_press(SeasonMessage::Score)
@@ -125,9 +132,22 @@ impl Season {
                 self.download_task()
             }
             SeasonMessage::DownloadFirstRace => self.download_task(),
-            SeasonMessage::Draft => {
-                self.season.draft(self.current_round, &Skip::new()).unwrap();
-                Task::none()
+            SeasonMessage::DraftStart => match self.season.get_draft_choice() {
+                DraftChoice::Skip => {
+                    self.season
+                        .draft(self.current_round, &Skip::new())
+                        .expect("TODO");
+                    Task::none()
+                }
+                DraftChoice::RollOn => {
+                    todo!()
+                }
+                DraftChoice::ReplaceAll => {
+                    todo!()
+                }
+            },
+            SeasonMessage::CloseDW => {
+                todo!()
             }
             SeasonMessage::Score => {
                 self.season.score(self.current_round).unwrap();
@@ -192,7 +212,8 @@ pub enum SeasonMessage {
     IncrementRound,
     DecrementRound,
     DownloadFirstRace,
-    Draft,
+    DraftStart,
+    CloseDW,
     Score,
     DownloadedResults((u8, Result<RaceResults, DownloadError>)),
     DeleteLineup,
