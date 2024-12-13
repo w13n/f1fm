@@ -1,4 +1,5 @@
 use crate::error::DraftError;
+use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 
 #[derive(Copy, Clone, Default, Debug, PartialOrd, PartialEq, Ord, Eq)]
@@ -36,5 +37,39 @@ impl Skip {
 impl Drafter for Skip {
     fn draft(&self, _: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
         Ok(previous_drivers.to_vec())
+    }
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct RollOn {
+    drafted_drivers: HashMap<String, u8>,
+}
+
+impl RollOn {
+    pub(crate) fn new(drafted_drivers: HashMap<String, u8>) -> RollOn {
+        RollOn { drafted_drivers }
+    }
+}
+
+impl Drafter for RollOn {
+    fn draft(&self, team: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
+        let team = team.to_string();
+        if self.drafted_drivers.contains_key(&team) {
+            let mut lineup = previous_drivers.clone();
+            lineup.pop();
+            lineup.insert(0, *self.drafted_drivers.get(&team).unwrap());
+            Ok(lineup)
+        } else {
+            Err(DraftError::IncompleteDrafter)
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct ReplaceAll {}
+
+impl Drafter for ReplaceAll {
+    fn draft(&self, _: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
+        todo!()
     }
 }

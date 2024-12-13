@@ -35,6 +35,7 @@ pub enum DraftError {
     RoundLineupAlreadyExists(u8),
     PreviousRoundLineupDoesNotExist(u8),
     RoundDraftNonUnique(u8, u8),
+    IncompleteDrafter,
 }
 
 impl Display for DraftError {
@@ -53,6 +54,9 @@ impl Display for DraftError {
                 "lineup for round {} has multiple drivers #{}",
                 round, driver
             ),
+            DraftError::IncompleteDrafter => {
+                write!(f, "drafter was constructed with incomplete information",)
+            }
         }
     }
 }

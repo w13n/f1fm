@@ -1,5 +1,7 @@
+use crate::fantasy_season::draft::Drafter;
 use iced::application::View;
 use iced::Element;
+use std::collections::HashMap;
 
 mod replace_all;
 mod roll_on;
@@ -9,33 +11,44 @@ pub(super) enum DraftWindow {
     ReplaceAll(replace_all::ReplaceAll),
 }
 
+#[derive(Clone, Debug)]
 pub enum DWMessage {
     RollOn(roll_on::ROMessage),
     ReplaceAll(replace_all::RAMessage),
+    Draft,
 }
 
 impl DraftWindow {
-    fn view(&self) -> Element<DWMessage> {
+    pub fn new_roll_on(previous_lineup: HashMap<String, Vec<u8>>) -> DraftWindow {
+        DraftWindow::RollOn(roll_on::RollOn::new(previous_lineup))
+    }
+    pub fn view(&self) -> Element<DWMessage> {
         match self {
-            DraftWindow::RollOn(ro) => ro.view().map(DWMessage::RollOn),
-            DraftWindow::ReplaceAll(ra) => ra.view().map(DWMessage::ReplaceAll),
+            DraftWindow::RollOn(ro) => ro.view(),
+            DraftWindow::ReplaceAll(ra) => ra.view(),
         }
     }
 
-    fn update(&mut self, message: DWMessage) {
+    pub fn update(&mut self, message: DWMessage) {
+        match message {
+            DWMessage::RollOn(msg) => match self {
+                DraftWindow::RollOn(ro) => ro.update(msg),
+                DraftWindow::ReplaceAll(_) => panic!("RollOn msg passed to ReplaceAll"),
+            },
+            DWMessage::ReplaceAll(msg) => match self {
+                DraftWindow::RollOn(_) => panic!("ReplaceAll msg passed to ReplaceAll"),
+                DraftWindow::ReplaceAll(ra) => ra.update(msg),
+            },
+            DWMessage::Draft => {
+                panic!("draft msg passed to draft window")
+            }
+        }
+    }
+
+    pub fn get_drafter(self) -> Box<dyn Drafter> {
         match self {
-            DraftWindow::RollOn(ro) => match message {
-                DWMessage::RollOn(msg) => ro.update(msg),
-                DWMessage::ReplaceAll(_) => {
-                    panic!("ReplaceAll message passed to RollOn")
-                }
-            },
-            DraftWindow::ReplaceAll(ra) => match message {
-                DWMessage::RollOn(_) => {
-                    panic!("ReplaceAll message passed to RollOn")
-                }
-                DWMessage::ReplaceAll(msg) => ra.update(msg),
-            },
+            DraftWindow::RollOn(ro) => Box::new(ro.get_drafter()),
+            DraftWindow::ReplaceAll(ra) => Box::new(ra.get_drafter()),
         }
     }
 }
