@@ -67,8 +67,7 @@ pub mod button {
 }
 
 pub mod text_input {
-    use iced::theme::palette::{Extended, Pair};
-    use iced::theme::Palette;
+    use iced::theme::palette::Extended;
     use iced::widget::text_input::{Status, Style};
     use iced::{border, Background, Color, Theme};
 
@@ -84,11 +83,50 @@ pub mod text_input {
     }
     pub fn default(theme: &Theme, status: Status) -> Style {
         let ep = theme.extended_palette();
+
         match status {
             Status::Active => style(ep, ep.background.strong.color),
             Status::Hovered => style(ep, ep.background.strong.color),
             Status::Focused => style(ep, ep.background.base.text),
             Status::Disabled => style(ep, ep.background.weak.color),
+        }
+    }
+}
+
+pub mod pick_list {
+    use iced::overlay::menu;
+    use iced::theme::palette::{Extended, Pair};
+    use iced::widget::pick_list::{Status, Style};
+    use iced::{border, Background, Theme};
+
+    fn style(ep: &Extended, background: Pair) -> Style {
+        Style {
+            text_color: background.text,
+            placeholder_color: ep.secondary.weak.color,
+            handle_color: ep.background.base.color,
+            background: Background::Color(background.color),
+            border: border::rounded(5),
+        }
+    }
+    pub fn default(theme: &Theme, status: Status) -> Style {
+        let ep = theme.extended_palette();
+
+        match status {
+            Status::Active => style(ep, ep.secondary.base),
+            Status::Hovered => style(ep, ep.secondary.strong),
+            Status::Opened => style(ep, ep.secondary.base),
+        }
+    }
+
+    pub fn default_menu(theme: &Theme) -> menu::Style {
+        let ep = theme.extended_palette();
+
+        menu::Style {
+            background: Background::Color(ep.secondary.base.color),
+            border: border::rounded(5),
+            text_color: ep.secondary.base.text,
+            selected_text_color: ep.secondary.strong.text,
+            selected_background: Background::Color(ep.secondary.strong.color),
         }
     }
 }

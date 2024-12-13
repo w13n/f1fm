@@ -133,7 +133,9 @@ impl Builder {
             ],
             Some(self.draft_choice),
             BuilderMessage::DraftChoiceSelected,
-        );
+        )
+        .style(super::style::pick_list::default)
+        .menu_style(super::style::pick_list::default_menu);
 
         let season = widget::text_input("season", &*self.season)
             .on_input(BuilderMessage::ChangeSeason)
