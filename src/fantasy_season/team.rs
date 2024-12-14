@@ -78,7 +78,7 @@ impl Team {
         drafter.draft(&self.name, prev_round_drivers)
     }
     pub fn store_lineup(&mut self, round: u8, lineup: Vec<u8>) {
-        if self.rounds.get(&round).is_some() {
+        if self.rounds.contains_key(&round) {
             panic!("cannot update lineup for a round that has already been scored");
         }
         self.rounds.insert(round, TeamRound::new(lineup));
@@ -100,7 +100,7 @@ impl Team {
     }
 
     pub fn get_lineup_at(&self, round: u8) -> Option<Vec<u8>> {
-        self.rounds.get(&round).and_then(|r| Some(r.lineup.clone()))
+        self.rounds.get(&round).map(|r| r.lineup.clone())
     }
 
     pub fn sort_by(a: &Team, b: &Team, round: u8) -> Ordering {

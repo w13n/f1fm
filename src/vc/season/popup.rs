@@ -1,12 +1,10 @@
-use crate::fantasy_season::draft::Drafter;
-use iced::application::View;
 use iced::Element;
 use replace_all_drafter::ReplaceAllDrafter;
 use roll_on_drafter::RollOnDrafter;
 use std::collections::HashMap;
 
-pub(super) mod replace_all_drafter;
-pub(super) mod roll_on_drafter;
+pub mod replace_all_drafter;
+pub mod roll_on_drafter;
 
 pub(super) enum Popup {
     RollOnDrafter(RollOnDrafter),

@@ -2,7 +2,6 @@ use crate::fantasy_season::draft;
 use crate::vc::season::popup::PopupMessage;
 use crate::vc::style;
 use iced::{widget, Element};
-use std::alloc::System;
 use std::collections::HashMap;
 
 pub struct ReplaceAllDrafter {
@@ -10,7 +9,7 @@ pub struct ReplaceAllDrafter {
 }
 
 impl ReplaceAllDrafter {
-    pub fn new(team_names: Vec<String>, team_size: usize) -> ReplaceAllDrafter {
+    pub(super) fn new(team_names: Vec<String>, team_size: usize) -> ReplaceAllDrafter {
         let mut team_lineups = HashMap::new();
         for team in team_names {
             team_lineups.insert(team, vec![String::new(); team_size]);
@@ -19,10 +18,10 @@ impl ReplaceAllDrafter {
         ReplaceAllDrafter { team_lineups }
     }
 
-    pub fn from(team_lineups: HashMap<String, Vec<String>>) -> ReplaceAllDrafter {
+    pub(super) fn from(team_lineups: HashMap<String, Vec<String>>) -> ReplaceAllDrafter {
         ReplaceAllDrafter { team_lineups }
     }
-    pub fn view(&self) -> Element<PopupMessage> {
+    pub(super) fn view(&self) -> Element<PopupMessage> {
         let mut draft_team = Vec::new();
         println!("{:?}", self.team_lineups.keys());
         for team in self.team_lineups.keys() {
@@ -57,7 +56,7 @@ impl ReplaceAllDrafter {
         widget::Column::from_vec(draft_team).into()
     }
 
-    pub fn update(&mut self, message: RAMessage) {
+    pub(super) fn update(&mut self, message: RAMessage) {
         match message {
             RAMessage::ChangeDriverNumber(team, idx, mut num) => {
                 if num.is_empty() || num.parse::<u8>().is_ok_and(|num| num < 100) {
@@ -75,11 +74,11 @@ impl ReplaceAllDrafter {
     }
 
     fn can_draft(&self) -> bool {
-        return self.team_lineups.iter().all(|(team, lineup)| {
+        self.team_lineups.iter().all(|(_team, lineup)| {
             lineup
                 .iter()
                 .all(|num| num.parse::<u8>().is_ok_and(|num| num < 100))
-        });
+        })
     }
 
     pub fn get_drafter(self) -> draft::ReplaceAll {
@@ -97,6 +96,6 @@ impl ReplaceAllDrafter {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum RAMessage {
+pub enum RAMessage {
     ChangeDriverNumber(String, usize, String),
 }

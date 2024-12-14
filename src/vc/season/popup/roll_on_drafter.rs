@@ -11,13 +11,13 @@ pub struct RollOnDrafter {
 }
 
 impl RollOnDrafter {
-    pub fn new(previous_lineup: HashMap<String, Vec<u8>>) -> RollOnDrafter {
+    pub(super) fn new(previous_lineup: HashMap<String, Vec<u8>>) -> RollOnDrafter {
         RollOnDrafter {
             previous_lineup,
             drivers: HashMap::new(),
         }
     }
-    pub fn view(&self) -> Element<PopupMessage> {
+    pub(super) fn view(&self) -> Element<PopupMessage> {
         let mut draft_team = Vec::new();
         for team in self.previous_lineup.keys() {
             let mut row = Vec::new();
@@ -49,7 +49,7 @@ impl RollOnDrafter {
         widget::Column::from_vec(draft_team).into()
     }
 
-    pub fn update(&mut self, message: ROMessage) {
+    pub(super) fn update(&mut self, message: ROMessage) {
         match message {
             ROMessage::ChangeDriverNumber(team, num) => {
                 if num.is_empty() || num.parse::<u8>().is_ok_and(|num| num < 100) {
@@ -73,14 +73,13 @@ impl RollOnDrafter {
     }
 
     fn can_draft(&self) -> bool {
-        return self
-            .drivers
+        self.drivers
             .iter()
-            .all(|(team, num)| num.parse::<u8>().is_ok_and(|num| num < 100));
+            .all(|(_team, num)| num.parse::<u8>().is_ok_and(|num| num < 100))
     }
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum ROMessage {
+pub enum ROMessage {
     ChangeDriverNumber(String, String),
 }

@@ -167,9 +167,7 @@ impl FantasySeason {
         }
 
         if self.status.has_scored(round) {
-            self.teams
-                .iter_mut()
-                .for_each(|mut t| t.delete_score(round));
+            self.teams.iter_mut().for_each(|t| t.delete_score(round));
             self.status.toggle_scored(round);
         }
 
@@ -194,9 +192,7 @@ impl FantasySeason {
             return Err(DeleteError::LineupDeleteWhileScoresExist(round));
         }
 
-        self.teams
-            .iter_mut()
-            .for_each(|mut t| t.delete_round(round));
+        self.teams.iter_mut().for_each(|t| t.delete_round(round));
         self.status.toggle_drafted(round);
         Ok(())
     }
@@ -253,13 +249,12 @@ impl FantasySeason {
     }
 
     pub fn get_lineup_size(&self) -> u8 {
-        return self
-            .teams
+        self.teams
             .first()
             .expect("zero team season created")
             .get_lineup_at(1)
             .expect("team created without round 1 lineup")
-            .len() as u8;
+            .len() as u8
     }
 
     pub fn get_status_at(&self, round: u8) -> (bool, bool, bool) {

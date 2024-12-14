@@ -6,7 +6,6 @@ use time::OffsetDateTime;
 
 const GRID_SIZE_DEFAULT: u8 = 20;
 const TEAM_SIZE_DEFAULT: u8 = 2;
-const TEAM_COUNT_DEFAULT: u8 = 3;
 
 pub(super) struct Builder {
     name: String,
@@ -87,7 +86,7 @@ impl Builder {
     }
 
     pub fn view(&self) -> Element<BuilderMessage> {
-        let name = widget::text_input("fantasy season name here", &*self.name)
+        let name = widget::text_input("fantasy season name here", &self.name)
             .on_input(BuilderMessage::ChangeName)
             .style(super::style::text_input::default);
 
@@ -137,11 +136,11 @@ impl Builder {
         .style(super::style::pick_list::default)
         .menu_style(super::style::pick_list::default_menu);
 
-        let season = widget::text_input("season", &*self.season)
+        let season = widget::text_input("season", &self.season)
             .on_input(BuilderMessage::ChangeSeason)
             .style(super::style::text_input::default);
 
-        let grid_size = widget::text_input("grid size", &*self.grid_size)
+        let grid_size = widget::text_input("grid size", &self.grid_size)
             .on_input(BuilderMessage::ChangeGridSize)
             .style(super::style::text_input::default);
 
@@ -154,7 +153,7 @@ impl Builder {
                     .teams
                     .iter()
                     .fold(true, |carried, this| this.can_parse() && carried)
-                    && self.teams.len() > 0
+                    && !self.teams.is_empty()
                 {
                     let mut valid = true;
                     if self.enforce_uniqueness {
@@ -244,7 +243,7 @@ impl TeamBuilder {
     }
 
     fn view(&self) -> Element<BuilderMessage> {
-        let name = widget::text_input("name of team", &*self.name)
+        let name = widget::text_input("name of team", &self.name)
             .on_input(|name| BuilderMessage::ChangeTeamName(self.id, name))
             .width(200)
             .style(super::style::text_input::default);
@@ -276,7 +275,7 @@ impl TeamBuilder {
     }
 
     fn get_name(&self) -> String {
-        return self.name.clone();
+        self.name.clone()
     }
 
     fn set_name(&mut self, name: String) {

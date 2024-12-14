@@ -1,7 +1,7 @@
 use crate::fantasy_season::race_results::DriverResult;
 use std::fmt::Display;
 
-pub trait Scorer {
+pub(super) trait Scorer {
     fn score(&self, grid_size: u8, dr: &DriverResult) -> i16;
 }
 

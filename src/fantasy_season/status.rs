@@ -21,7 +21,7 @@ impl Status {
                 self.tasks.push(RoundStatus::new())
             }
         }
-        return self.tasks.get_mut(round as usize - 1).unwrap();
+        self.tasks.get_mut(round as usize - 1).unwrap()
     }
 
     pub fn has_results(&self, round: u8) -> bool {

@@ -1,6 +1,6 @@
 use crate::api::Api;
 use crate::error::{ApiError, DownloadError};
-use crate::fantasy_season::draft::{DraftChoice, Drafter, Skip};
+use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
 use crate::vc::style;
@@ -10,7 +10,7 @@ use popup::{Popup, PopupMessage};
 use std::collections::HashMap;
 use std::mem;
 
-mod popup;
+pub mod popup;
 
 pub(super) struct Season {
     season: FantasySeason,
@@ -62,7 +62,6 @@ impl Season {
 
             let leaderboard = self.season.get_points_by(self.current_round);
             let round_points = self.season.get_points_at(self.current_round);
-            let round_lineup = self.season.get_lineup_at(self.current_round);
 
             let leadership_col: Vec<_> = leaderboard
                 .into_iter()
@@ -245,7 +244,7 @@ impl Season {
 
     fn download_task(&mut self) -> Task<SeasonMessage> {
         if !self.season.get_status_at(self.current_round).1
-            && self.download_attempts.get(&self.current_round).is_none()
+            && !self.download_attempts.contains_key(&self.current_round)
         {
             self.download_attempts
                 .insert(self.current_round, "round results downloading".to_string());
