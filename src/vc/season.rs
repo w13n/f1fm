@@ -3,21 +3,20 @@ use crate::error::{ApiError, DownloadError};
 use crate::fantasy_season::draft::{DraftChoice, Drafter, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
-use crate::vc::season::draft_window::DWMessage;
-use draft_window::DraftWindow;
 use iced::Element;
 use iced::{widget, Task};
+use popup::{Popup, PopupMessage};
 use std::collections::HashMap;
 use std::mem;
 
-mod draft_window;
+mod popup;
 
 pub(super) struct Season {
     season: FantasySeason,
     current_round: u8,
     round_names: Option<HashMap<u8, String>>,
     download_attempts: HashMap<u8, String>,
-    draft_window: Option<DraftWindow>,
+    popup: Option<Popup>,
 }
 
 impl Season {
@@ -27,12 +26,12 @@ impl Season {
             current_round: 1,
             round_names: None,
             download_attempts: HashMap::new(),
-            draft_window: None,
+            popup: None,
         }
     }
     pub fn view(&self) -> Element<SeasonMessage> {
-        if let Some(draft_window) = &self.draft_window {
-            draft_window.view().map(SeasonMessage::DWMessage)
+        if let Some(draft_window) = &self.popup {
+            draft_window.view().map(SeasonMessage::PopupMessage)
         } else {
             let top = widget::text!(
                 "{}",
@@ -146,40 +145,25 @@ impl Season {
                     Task::none()
                 }
                 DraftChoice::RollOn => {
-                    self.draft_window = Some(DraftWindow::new_roll_on(
+                    self.popup = Some(Popup::new_roll_on(
                         self.season.get_lineup_at(self.current_round - 1),
                     ));
                     Task::none()
                 }
                 DraftChoice::ReplaceAll => {
-                    self.draft_window = Some(DraftWindow::new_replace_all(
+                    self.popup = Some(Popup::new_replace_all(
                         self.season.get_team_names(),
                         self.season.get_lineup_size() as usize,
                     ));
                     Task::none()
                 }
             },
-            SeasonMessage::DWMessage(dwm) => match dwm {
-                DWMessage::Draft => {
-                    let mut drafter = mem::take(&mut self.draft_window)
-                        .expect("DWMessage passed when draft window doesn't exist")
-                        .get_drafter();
-                    self.season
-                        .draft(self.current_round, &mut *drafter)
-                        .expect("TODO");
-                    Task::none()
-                }
-                _ => match &mut self.draft_window {
-                    None => panic!("DWMessage passed when draft window doesn't exist"),
-                    Some(dw) => {
-                        dw.update(dwm);
-                        Task::none()
-                    }
-                },
-            },
             SeasonMessage::Score => {
                 self.season.score(self.current_round).unwrap();
                 Task::none()
+            }
+            SeasonMessage::ReplaceLineup => {
+                todo!()
             }
             SeasonMessage::DownloadedResults(result) => {
                 if let Ok(rr) = result.1 {
@@ -207,6 +191,30 @@ impl Season {
                 download_race_names(self.season.get_season()),
                 SeasonMessage::DownloadedRaceNames,
             ),
+            SeasonMessage::PopupMessage(pm) => match pm {
+                PopupMessage::Close => {
+                    if let Some(window) = mem::take(&mut self.popup) {
+                        match window {
+                            Popup::RollOnDrafter(rod) => self
+                                .season
+                                .draft(self.current_round, &mut rod.get_drafter())
+                                .expect("TODO"),
+                            Popup::ReplaceAllDrafter(rad) => self
+                                .season
+                                .draft(self.current_round, &mut rad.get_drafter())
+                                .expect("TODO"),
+                        }
+                    }
+                    Task::none()
+                }
+                _ => match &mut self.popup {
+                    None => panic!("DWMessage passed when draft window doesn't exist"),
+                    Some(dw) => {
+                        dw.update(pm);
+                        Task::none()
+                    }
+                },
+            },
         }
     }
 
@@ -241,11 +249,12 @@ pub enum SeasonMessage {
     DecrementRound,
     DownloadFirstRace,
     DraftStart,
-    DWMessage(DWMessage),
     Score,
+    ReplaceLineup,
     DownloadedResults((u8, Result<RaceResults, DownloadError>)),
     DeleteLineup,
     DeleteRound,
     DownloadRaceNames,
     DownloadedRaceNames(Result<HashMap<u8, String>, ApiError>),
+    PopupMessage(PopupMessage),
 }

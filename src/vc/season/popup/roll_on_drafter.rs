@@ -1,23 +1,23 @@
-use super::DWMessage;
+use super::PopupMessage;
 use crate::fantasy_season::draft;
 use crate::vc::style;
 use iced::widget;
 use iced::Element;
 use std::collections::HashMap;
 
-pub(super) struct RollOn {
+pub struct RollOnDrafter {
     previous_lineup: HashMap<String, Vec<u8>>,
     drivers: HashMap<String, String>,
 }
 
-impl RollOn {
-    pub fn new(previous_lineup: HashMap<String, Vec<u8>>) -> RollOn {
-        RollOn {
+impl RollOnDrafter {
+    pub fn new(previous_lineup: HashMap<String, Vec<u8>>) -> RollOnDrafter {
+        RollOnDrafter {
             previous_lineup,
             drivers: HashMap::new(),
         }
     }
-    pub fn view(&self) -> Element<DWMessage> {
+    pub fn view(&self) -> Element<PopupMessage> {
         let mut draft_team = Vec::new();
         for team in self.previous_lineup.keys() {
             let mut row = Vec::new();
@@ -27,7 +27,7 @@ impl RollOn {
                 widget::text_input("#1", self.drivers.get(team).unwrap_or(&String::from("")))
                     .style(style::text_input::default)
                     .on_input(move |num| {
-                        DWMessage::RollOn(ROMessage::ChangeDriverNumber(team.to_string(), num))
+                        PopupMessage::RollOn(ROMessage::ChangeDriverNumber(team.to_string(), num))
                     })
                     .width(50)
                     .into(),
@@ -42,7 +42,7 @@ impl RollOn {
         }
         draft_team.push(
             widget::button("Draft")
-                .on_press_maybe(self.can_draft().then_some(DWMessage::Draft))
+                .on_press_maybe(self.can_draft().then_some(PopupMessage::Close))
                 .into(),
         );
 

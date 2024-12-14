@@ -1,23 +1,23 @@
 use crate::fantasy_season::draft;
-use crate::vc::season::draft_window::DWMessage;
+use crate::vc::season::popup::PopupMessage;
 use crate::vc::style;
 use iced::{widget, Element};
 use std::collections::HashMap;
 
-pub(super) struct ReplaceAll {
+pub struct ReplaceAllDrafter {
     team_lineups: HashMap<String, Vec<String>>,
 }
 
-impl ReplaceAll {
-    pub fn new(team_names: Vec<String>, team_size: usize) -> ReplaceAll {
+impl ReplaceAllDrafter {
+    pub fn new(team_names: Vec<String>, team_size: usize) -> ReplaceAllDrafter {
         let mut team_lineups = HashMap::new();
         for team in team_names {
             team_lineups.insert(team, vec![String::new(); team_size]);
         }
 
-        ReplaceAll { team_lineups }
+        ReplaceAllDrafter { team_lineups }
     }
-    pub fn view(&self) -> Element<DWMessage> {
+    pub fn view(&self) -> Element<PopupMessage> {
         let mut draft_team = Vec::new();
         for team in self.team_lineups.keys() {
             let mut row = Vec::new();
@@ -28,7 +28,7 @@ impl ReplaceAll {
                     widget::text_input(&format!("#{}", idx + 1), num)
                         .style(style::text_input::default)
                         .on_input(move |num| {
-                            DWMessage::ReplaceAll(RAMessage::ChangeDriverNumber(
+                            PopupMessage::ReplaceAll(RAMessage::ChangeDriverNumber(
                                 team.to_string(),
                                 idx,
                                 num,
@@ -44,7 +44,7 @@ impl ReplaceAll {
 
         draft_team.push(
             widget::button("Draft")
-                .on_press_maybe(self.can_draft().then_some(DWMessage::Draft))
+                .on_press_maybe(self.can_draft().then_some(PopupMessage::Close))
                 .into(),
         );
 
