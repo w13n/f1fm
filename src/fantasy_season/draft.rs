@@ -22,7 +22,8 @@ impl Display for DraftChoice {
 }
 
 pub trait Drafter: Debug + Sync + Send {
-    fn draft(&self, team_name: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError>;
+    fn draft(&mut self, team_name: &str, previous_drivers: &Vec<u8>)
+        -> Result<Vec<u8>, DraftError>;
 }
 
 #[derive(Default, Debug, Clone)]
@@ -35,7 +36,7 @@ impl Skip {
 }
 
 impl Drafter for Skip {
-    fn draft(&self, _: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
+    fn draft(&mut self, _: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
         Ok(previous_drivers.to_vec())
     }
 }
@@ -52,7 +53,7 @@ impl RollOn {
 }
 
 impl Drafter for RollOn {
-    fn draft(&self, team: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
+    fn draft(&mut self, team: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
         let team = team.to_string();
         if self.drafted_drivers.contains_key(&team) {
             let mut lineup = previous_drivers.clone();
@@ -66,10 +67,22 @@ impl Drafter for RollOn {
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct ReplaceAll {}
+pub struct ReplaceAll {
+    team_lineups: HashMap<String, Vec<u8>>,
+}
 
+impl ReplaceAll {
+    pub(crate) fn new(team_lineups: HashMap<String, Vec<u8>>) -> ReplaceAll {
+        ReplaceAll { team_lineups }
+    }
+}
 impl Drafter for ReplaceAll {
-    fn draft(&self, _: &str, previous_drivers: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
-        todo!()
+    fn draft(&mut self, team: &str, _: &Vec<u8>) -> Result<Vec<u8>, DraftError> {
+        let team = team.to_string();
+        if self.team_lineups.contains_key(&team) {
+            Ok(self.team_lineups.remove(&team).unwrap())
+        } else {
+            Err(DraftError::IncompleteDrafter)
+        }
     }
 }

@@ -22,6 +22,10 @@ impl DraftWindow {
     pub fn new_roll_on(previous_lineup: HashMap<String, Vec<u8>>) -> DraftWindow {
         DraftWindow::RollOn(roll_on::RollOn::new(previous_lineup))
     }
+
+    pub fn new_replace_all(team_names: Vec<String>, team_size: usize) -> DraftWindow {
+        DraftWindow::ReplaceAll(replace_all::ReplaceAll::new(team_names, team_size))
+    }
     pub fn view(&self) -> Element<DWMessage> {
         match self {
             DraftWindow::RollOn(ro) => ro.view(),

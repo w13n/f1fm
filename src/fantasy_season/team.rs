@@ -66,7 +66,7 @@ impl Team {
     pub fn calculate_lineup(
         &self,
         round: u8,
-        drafter: &dyn Drafter,
+        drafter: &mut dyn Drafter,
     ) -> Result<Vec<u8>, DraftError> {
         let prev_round_drivers = &self
             .rounds

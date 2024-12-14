@@ -1,22 +1,96 @@
 use crate::fantasy_season::draft;
 use crate::vc::season::draft_window::DWMessage;
-use iced::Element;
+use crate::vc::style;
+use iced::{widget, Element};
+use std::collections::HashMap;
 
-pub(super) struct ReplaceAll {}
+pub(super) struct ReplaceAll {
+    team_lineups: HashMap<String, Vec<String>>,
+}
 
 impl ReplaceAll {
+    pub fn new(team_names: Vec<String>, team_size: usize) -> ReplaceAll {
+        let mut team_lineups = HashMap::new();
+        for team in team_names {
+            team_lineups.insert(team, vec![String::new(); team_size]);
+        }
+
+        ReplaceAll { team_lineups }
+    }
     pub fn view(&self) -> Element<DWMessage> {
-        todo!()
+        let mut draft_team = Vec::new();
+        for team in self.team_lineups.keys() {
+            let mut row = Vec::new();
+            row.push(widget::text!("{}", team).into());
+
+            for (idx, num) in self.team_lineups.get(team).unwrap().iter().enumerate() {
+                row.push(
+                    widget::text_input(&format!("#{}", idx + 1), num)
+                        .style(style::text_input::default)
+                        .on_input(move |num| {
+                            DWMessage::ReplaceAll(RAMessage::ChangeDriverNumber(
+                                team.to_string(),
+                                idx,
+                                num,
+                            ))
+                        })
+                        .width(50)
+                        .into(),
+                );
+            }
+
+            draft_team.push(widget::Row::from_vec(row).into())
+        }
+
+        draft_team.push(
+            widget::button("Draft")
+                .on_press_maybe(self.can_draft().then_some(DWMessage::Draft))
+                .into(),
+        );
+
+        widget::Column::from_vec(draft_team).into()
     }
 
     pub fn update(&mut self, message: RAMessage) {
-        todo!()
+        match message {
+            RAMessage::ChangeDriverNumber(team, idx, mut num) => {
+                if num.is_empty() || num.parse::<u8>().is_ok_and(|num| num < 100) {
+                    std::mem::swap(
+                        self.team_lineups
+                            .get_mut(&team)
+                            .unwrap()
+                            .get_mut(idx)
+                            .unwrap(),
+                        &mut num,
+                    );
+                }
+            }
+        }
+    }
+
+    fn can_draft(&self) -> bool {
+        return self.team_lineups.iter().all(|(team, lineup)| {
+            lineup
+                .iter()
+                .all(|num| num.parse::<u8>().is_ok_and(|num| num < 100))
+        });
     }
 
     pub fn get_drafter(self) -> draft::ReplaceAll {
-        todo!()
+        if self.can_draft() {
+            draft::ReplaceAll::new(
+                self.team_lineups
+                    .into_iter()
+                    .map(|(k, v)| (k, v.iter().map(|num| num.parse::<u8>().unwrap()).collect()))
+                    .collect(),
+            )
+        } else {
+            todo!()
+        }
     }
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum RAMessage {}
+pub(super) enum RAMessage {
+    ChangeDriverNumber(String, usize, String),
+}

@@ -141,7 +141,7 @@ impl Season {
             SeasonMessage::DraftStart => match self.season.get_draft_choice() {
                 DraftChoice::Skip => {
                     self.season
-                        .draft(self.current_round, &Skip::new())
+                        .draft(self.current_round, &mut Skip::new())
                         .expect("TODO");
                     Task::none()
                 }
@@ -152,16 +152,20 @@ impl Season {
                     Task::none()
                 }
                 DraftChoice::ReplaceAll => {
-                    todo!()
+                    self.draft_window = Some(DraftWindow::new_replace_all(
+                        self.season.get_team_names(),
+                        self.season.get_lineup_size() as usize,
+                    ));
+                    Task::none()
                 }
             },
             SeasonMessage::DWMessage(dwm) => match dwm {
                 DWMessage::Draft => {
-                    let drafter = mem::take(&mut self.draft_window)
+                    let mut drafter = mem::take(&mut self.draft_window)
                         .expect("DWMessage passed when draft window doesn't exist")
                         .get_drafter();
                     self.season
-                        .draft(self.current_round, &*drafter)
+                        .draft(self.current_round, &mut *drafter)
                         .expect("TODO");
                     Task::none()
                 }

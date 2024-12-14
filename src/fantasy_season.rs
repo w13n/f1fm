@@ -127,7 +127,7 @@ impl FantasySeason {
         self.draft_choice
     }
 
-    pub fn draft(&mut self, round: u8, df: &dyn Drafter) -> Result<(), DraftError> {
+    pub fn draft(&mut self, round: u8, df: &mut dyn Drafter) -> Result<(), DraftError> {
         if !self.status.has_drafted(round - 1) {
             return Err(DraftError::PreviousRoundLineupDoesNotExist(round - 1));
         }
@@ -249,6 +249,16 @@ impl FantasySeason {
             }
         });
         map
+    }
+
+    pub fn get_lineup_size(&self) -> u8 {
+        return self
+            .teams
+            .first()
+            .expect("zero team season created")
+            .get_lineup_at(1)
+            .expect("team created without round 1 lineup")
+            .len() as u8;
     }
 
     pub fn get_status_at(&self, round: u8) -> (bool, bool, bool) {
