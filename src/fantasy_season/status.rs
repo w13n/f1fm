@@ -1,4 +1,5 @@
 // stores if the race results have been collected, the teams have drafted, or the teams have been scored for each round
+#[derive(Debug)]
 pub(super) struct Status {
     tasks: Vec<RoundStatus>, // a collection of statuses where the nth element of the RoundStatus is the nth  round
 }
@@ -59,7 +60,7 @@ impl Status {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct RoundStatus {
     pub results: bool,
     pub drafted: bool,

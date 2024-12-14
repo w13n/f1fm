@@ -28,6 +28,10 @@ impl Popup {
     pub fn new_replace_all(team_names: Vec<String>, team_size: usize) -> Popup {
         Popup::ReplaceAllDrafter(ReplaceAllDrafter::new(team_names, team_size))
     }
+
+    pub fn replace_all_from(team_lineups: HashMap<String, Vec<String>>) -> Popup {
+        Popup::ReplaceAllDrafter(ReplaceAllDrafter::from(team_lineups))
+    }
     pub fn view(&self) -> Element<PopupMessage> {
         match self {
             Popup::RollOnDrafter(ro) => ro.view(),

@@ -3,6 +3,7 @@ use crate::error::{ApiError, DownloadError};
 use crate::fantasy_season::draft::{DraftChoice, Drafter, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::fantasy_season::FantasySeason;
+use crate::vc::style;
 use iced::Element;
 use iced::{widget, Task};
 use popup::{Popup, PopupMessage};
@@ -107,13 +108,27 @@ impl Season {
             }
             .style(widget::button::danger);
 
+            let edit_lineup_button = match (self.current_round, status, next_status) {
+                (1, _, _) => widget::button("edit lineup"),
+                (_, (true, _, false), (false, _, _)) => {
+                    widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup)
+                }
+                _ => widget::button("edit lineup"),
+            }
+            .style(style::button::success);
+
             let delete_round_button = match status {
                 (_, true, _) => widget::button("delete round").on_press(SeasonMessage::DeleteRound),
                 _ => widget::button("delete round"),
             }
-            .style(widget::button::danger);
+            .style(style::button::danger);
 
-            let bottom_row = widget::row![add_button, delete_lineup_button, delete_round_button];
+            let bottom_row = widget::row![
+                add_button,
+                delete_lineup_button,
+                delete_round_button,
+                edit_lineup_button
+            ];
 
             widget::column![
                 top,
@@ -163,7 +178,17 @@ impl Season {
                 Task::none()
             }
             SeasonMessage::ReplaceLineup => {
-                todo!()
+                let team_lineups = self
+                    .season
+                    .get_lineup_at(self.current_round)
+                    .into_iter()
+                    .map(|(team, lineup)| {
+                        (team, lineup.iter().map(|num| num.to_string()).collect())
+                    })
+                    .collect();
+                self.season.delete_lineup(self.current_round).unwrap();
+                self.popup = Some(Popup::replace_all_from(team_lineups));
+                Task::none()
             }
             SeasonMessage::DownloadedResults(result) => {
                 if let Ok(rr) = result.1 {

@@ -2,6 +2,7 @@ use crate::fantasy_season::draft;
 use crate::vc::season::popup::PopupMessage;
 use crate::vc::style;
 use iced::{widget, Element};
+use std::alloc::System;
 use std::collections::HashMap;
 
 pub struct ReplaceAllDrafter {
@@ -17,8 +18,13 @@ impl ReplaceAllDrafter {
 
         ReplaceAllDrafter { team_lineups }
     }
+
+    pub fn from(team_lineups: HashMap<String, Vec<String>>) -> ReplaceAllDrafter {
+        ReplaceAllDrafter { team_lineups }
+    }
     pub fn view(&self) -> Element<PopupMessage> {
         let mut draft_team = Vec::new();
+        println!("{:?}", self.team_lineups.keys());
         for team in self.team_lineups.keys() {
             let mut row = Vec::new();
             row.push(widget::text!("{}", team).into());

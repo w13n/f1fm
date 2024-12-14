@@ -13,6 +13,7 @@ use status::Status;
 use std::collections::HashMap;
 use team::Team;
 
+#[derive(Debug)]
 pub struct FantasySeason {
     name: String,
     teams: Vec<Team>,
@@ -244,8 +245,8 @@ impl FantasySeason {
     pub fn get_lineup_at(&self, round: u8) -> HashMap<String, Vec<u8>> {
         let mut map = HashMap::new();
         self.teams.iter().for_each(|t| {
-            if let Some(points) = t.get_lineup_at(round) {
-                map.insert(t.name(), points);
+            if let Some(lineup) = t.get_lineup_at(round) {
+                map.insert(t.name(), lineup);
             }
         });
         map

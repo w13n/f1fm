@@ -6,6 +6,7 @@ use std::cell::Cell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub(super) struct Team {
     name: String,
     rounds: HashMap<u8, TeamRound>, // the driver lineup and points scored of this team for each round
@@ -160,6 +161,7 @@ impl Team {
 }
 
 /// the drivers that a given team has for the round given
+#[derive(Debug)]
 pub struct TeamRound {
     lineup: Vec<u8>,           // which drivers are on this team for this round
     points: Cell<Option<i16>>, // the number of points gained for this round
