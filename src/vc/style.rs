@@ -130,3 +130,29 @@ pub mod pick_list {
         }
     }
 }
+
+pub mod container {
+    use iced::{Background, border, Theme};
+    use iced::widget::container::Style;
+
+    pub fn background(theme: &Theme) -> Style {
+        let ep = theme.extended_palette();
+
+        Style {
+            text_color: None,
+            background: Some(Background::Color(ep.background.base.color)),
+            border: border::rounded(5),
+            shadow: Default::default(),
+        }
+    }
+
+    pub fn overlay(_: &Theme) -> Style {
+
+        Style {
+            text_color: None,
+            background: Some(Background::Color(iced::color!(0, 0, 0, 0.5))),
+            border: border::rounded(5),
+            shadow: Default::default(),
+        }
+    }
+}

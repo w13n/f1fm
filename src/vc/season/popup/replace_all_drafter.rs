@@ -23,7 +23,6 @@ impl ReplaceAllDrafter {
     }
     pub(super) fn view(&self) -> Element<PopupMessage> {
         let mut draft_team = Vec::new();
-        println!("{:?}", self.team_lineups.keys());
         for team in self.team_lineups.keys() {
             let mut row = Vec::new();
             row.push(widget::text!("{}", team).into());

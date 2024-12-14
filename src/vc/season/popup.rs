@@ -1,7 +1,8 @@
-use iced::Element;
+use iced::{Element, Length, widget};
 use replace_all_drafter::ReplaceAllDrafter;
 use roll_on_drafter::RollOnDrafter;
 use std::collections::HashMap;
+use crate::vc::style;
 
 pub mod replace_all_drafter;
 pub mod roll_on_drafter;
@@ -31,10 +32,13 @@ impl Popup {
         Popup::ReplaceAllDrafter(ReplaceAllDrafter::from(team_lineups))
     }
     pub fn view(&self) -> Element<PopupMessage> {
-        match self {
-            Popup::RollOnDrafter(ro) => ro.view(),
-            Popup::ReplaceAllDrafter(ra) => ra.view(),
-        }
+        widget::container(
+        widget::container(
+            match self {
+                Popup::RollOnDrafter(ro) => ro.view(),
+                Popup::ReplaceAllDrafter(ra) => ra.view(),
+            }
+        ).style(style::container::background)).center(Length::Fill).style(style::container::overlay).into()
     }
 
     pub fn update(&mut self, message: PopupMessage) {
