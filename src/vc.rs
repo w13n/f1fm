@@ -8,7 +8,6 @@ use crate::vc::builder::{Builder, BuilderMessage};
 use crate::vc::landing::{Landing, LandingMessage};
 use crate::vc::season::{Season, SeasonMessage};
 use iced::{Element, Task};
-use std::rc::Rc;
 
 pub(super) struct ViewController {
     window: Window,
@@ -32,27 +31,27 @@ impl ViewController {
     }
     pub fn view(&self) -> Element<VCMessage> {
         match &self.window {
-            Window::Season(season) => season.view().map(VCMessage::SeasonMessage),
-            Window::Builder(builder) => builder.view().map(VCMessage::BuilderMessage),
-            Window::Landing(landing) => landing.view().map(VCMessage::LandingMessage),
+            Window::Season(season) => season.view().map(VCMessage::Season),
+            Window::Builder(builder) => builder.view().map(VCMessage::Builder),
+            Window::Landing(landing) => landing.view().map(VCMessage::Landing),
         }
     }
 
     pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
         match message {
-            VCMessage::SeasonMessage(sm) => match &mut self.window {
-                Window::Season(s) => s.update(sm).map(VCMessage::SeasonMessage),
+            VCMessage::Season(sm) => match &mut self.window {
+                Window::Season(s) => s.update(sm).map(VCMessage::Season),
                 _ => {
                     panic!("SeasonMessage created for non season")
                 }
             },
-            VCMessage::BuilderMessage(bm) => match &mut self.window {
+            VCMessage::Builder(bm) => match &mut self.window {
                 Window::Builder(b) => match bm {
                     BuilderMessage::Create => {
                         self.window = Window::Season(Season::new(b.create()));
                         Task::batch(vec![
-                            Task::done(VCMessage::SeasonMessage(SeasonMessage::DownloadFirstRace)),
-                            Task::done(VCMessage::SeasonMessage(SeasonMessage::DownloadRaceNames)),
+                            Task::done(VCMessage::Season(SeasonMessage::DownloadFirstRace)),
+                            Task::done(VCMessage::Season(SeasonMessage::DownloadRaceNames)),
                         ])
                     }
                     _ => {
@@ -64,7 +63,7 @@ impl ViewController {
                     panic!("BuilderMessage created for non builder")
                 }
             },
-            VCMessage::LandingMessage(lm) => {
+            VCMessage::Landing(lm) => {
                 match lm {
                     LandingMessage::Pick(idx) => {
                         self.window = Window::Season(Season::new(self.seasons.remove(idx)))
@@ -85,7 +84,7 @@ enum Window {
 
 #[derive(Debug, Clone)]
 pub enum VCMessage {
-    SeasonMessage(SeasonMessage),
-    BuilderMessage(BuilderMessage),
-    LandingMessage(LandingMessage),
+    Season(SeasonMessage),
+    Builder(BuilderMessage),
+    Landing(LandingMessage),
 }
