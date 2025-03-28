@@ -1,9 +1,11 @@
 mod builder;
+mod landing;
 mod season;
 mod style;
 
 use crate::fantasy_season::FantasySeason;
 use crate::vc::builder::{Builder, BuilderMessage};
+use crate::vc::landing::{Landing, LandingMessage};
 use crate::vc::season::{Season, SeasonMessage};
 use iced::{Element, Task};
 
@@ -65,10 +67,12 @@ impl ViewController {
 enum Window {
     Season(Season),
     Builder(Builder),
+    Landing(Landing),
 }
 
 #[derive(Debug, Clone)]
 pub enum VCMessage {
     SeasonMessage(SeasonMessage),
     BuilderMessage(BuilderMessage),
+    LandingMessage(LandingMessage),
 }
