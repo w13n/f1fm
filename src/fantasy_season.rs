@@ -31,22 +31,24 @@ impl FantasySeason {
         name: String,
         score_choice: ScoreChoice,
         draft_choice: DraftChoice,
-        mut team_names: Vec<String>,
-        team_lineups: Vec<Vec<u8>>,
+        starting_teams: HashMap<String, Vec<u8>>,
         season: u16,
         grid_size: u8,
         enforce_uniqueness: bool,
     ) -> FantasySeason {
-        let team_count = team_names.len() as u16;
-        let driver_count = team_lineups.first().expect("no teams exist").len() as u8;
-        assert_eq!(team_names.len(), team_lineups.len());
-        for lineup in &team_lineups {
+        let team_count = starting_teams.len() as u16;
+        let driver_count = starting_teams
+            .values()
+            .next()
+            .expect("no teams exist")
+            .len() as u8;
+        for lineup in starting_teams.values() {
             assert_eq!(lineup.len() as u8, driver_count);
         }
         if enforce_uniqueness {
             let mut already_seen =
                 Vec::with_capacity((team_count * (driver_count as u16)) as usize);
-            for lineup in &team_lineups {
+            for lineup in starting_teams.values() {
                 for driver in lineup {
                     assert!(!already_seen.contains(driver));
                     already_seen.push(*driver);
@@ -55,8 +57,8 @@ impl FantasySeason {
         }
 
         let mut teams = Vec::with_capacity(team_count as usize);
-        for lineup in team_lineups {
-            teams.push(Team::new(team_names.remove(0), lineup))
+        for (name, lineup) in starting_teams {
+            teams.push(Team::new(name, lineup))
         }
 
         let results = Vec::new();

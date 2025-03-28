@@ -197,8 +197,10 @@ impl Builder {
             self.name.clone(),
             self.score_choice,
             self.draft_choice,
-            self.teams.iter().map(|team| team.get_name()).collect(),
-            self.teams.iter().map(|team| team.parse()).collect(),
+            self.teams
+                .iter()
+                .map(|team| (team.get_name(), team.parse()))
+                .collect(),
             self.season.parse::<u16>().expect("cannot call create"),
             self.grid_size.parse::<u8>().expect("cannot call create"),
             self.enforce_uniqueness,
