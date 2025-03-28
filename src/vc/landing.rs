@@ -1,6 +1,5 @@
 use crate::fantasy_season::FantasySeason;
 use iced::{Element, Task, widget};
-use std::rc::Rc;
 
 pub struct Landing {
     seasons: Vec<FantasySeason>,
@@ -12,9 +11,7 @@ impl Landing {
     }
 
     pub fn update(&mut self, message: LandingMessage) -> Task<LandingMessage> {
-        match message {
-            _ => panic!("unhandled landing message"),
-        }
+        panic!("unhandled landing message")
     }
     pub fn view(&self) -> Element<LandingMessage> {
         let mut col = widget::Column::from_vec(
