@@ -232,22 +232,23 @@ impl Season {
             ),
             SeasonMessage::PopupMessage(pm) => match pm {
                 PopupMessage::Close => {
-                    match self
+                    self.popups
+                        .pop()
+                        .expect("IMPOSSIBLE: PM.C CAN ONLY TRIGGER WHEN THERE IS A POPUP");
+                    Task::none()
+                }
+                PopupMessage::UpdateLineup => {
+                    let mut drafter = self
                         .popups
                         .pop()
                         .expect("IMPOSSIBLE: PM.C CAN ONLY TRIGGER WHEN THERE IS A POPUP")
-                    {
-                        Popup::RollOnDrafter(rod) => self
-                            .season
-                            .draft(self.current_round, &mut rod.get_drafter())
-                            .expect("TODO"),
-                        Popup::ReplaceAllDrafter(rad) => self
-                            .season
-                            .draft(self.current_round, &mut rad.get_drafter())
-                            .expect("TODO"),
-                    }
+                        .get_drafter();
+                    self.season
+                        .draft(self.current_round, &mut *drafter)
+                        .expect("IMPOSSIBLE: UI CANNOT CREATE AN INVALID DRAFTER");
                     Task::none()
                 }
+
                 _ => {
                     self.popups
                         .last_mut()

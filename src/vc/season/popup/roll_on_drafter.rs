@@ -42,7 +42,7 @@ impl RollOnDrafter {
         }
         draft_team.push(
             widget::button("Draft")
-                .on_press_maybe(self.can_draft().then_some(PopupMessage::Close))
+                .on_press_maybe(self.can_draft().then_some(PopupMessage::UpdateLineup))
                 .into(),
         );
 

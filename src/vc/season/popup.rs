@@ -1,3 +1,4 @@
+use crate::fantasy_season::draft::Drafter;
 use crate::vc::style;
 use iced::{widget, Element};
 use replace_all_drafter::ReplaceAllDrafter;
@@ -16,6 +17,7 @@ pub(super) enum Popup {
 pub enum PopupMessage {
     RollOn(roll_on_drafter::ROMessage),
     ReplaceAll(replace_all_drafter::RAMessage),
+    UpdateLineup,
     Close,
 }
 
@@ -30,6 +32,13 @@ impl Popup {
 
     pub fn replace_all_from(team_lineups: HashMap<String, Vec<String>>) -> Popup {
         Popup::ReplaceAllDrafter(ReplaceAllDrafter::from(team_lineups))
+    }
+
+    pub fn get_drafter(self) -> Box<dyn Drafter> {
+        match self {
+            Popup::RollOnDrafter(ro) => Box::new(ro.get_drafter()),
+            Popup::ReplaceAllDrafter(ra) => Box::new(ra.get_drafter()),
+        }
     }
     pub fn view(&self) -> Element<PopupMessage> {
         widget::container(match self {
@@ -50,7 +59,7 @@ impl Popup {
                 Popup::RollOnDrafter(_) => panic!("ReplaceAll msg passed to ReplaceAll"),
                 Popup::ReplaceAllDrafter(ra) => ra.update(msg),
             },
-            PopupMessage::Close => {
+            PopupMessage::Close | PopupMessage::UpdateLineup => {
                 panic!("draft msg passed to draft window")
             }
         }
