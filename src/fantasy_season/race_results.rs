@@ -1,9 +1,10 @@
 use crate::api::Api;
 use crate::error::DownloadError;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
 // the results of a race for all drivers
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RaceResults {
     pub(super) round: u8,
     pub(super) drivers: Vec<DriverResult>,
@@ -51,7 +52,7 @@ impl RaceResults {
 }
 
 // the results for a driver in a round
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub(super) struct DriverResult {
     pub driver: u8,
     pub final_position: u8,

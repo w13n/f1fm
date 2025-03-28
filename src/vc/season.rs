@@ -21,6 +21,9 @@ pub(super) struct Season {
 }
 
 impl Season {
+    pub fn get_season(&self) -> &FantasySeason {
+        &self.season
+    }
     pub fn new(season: FantasySeason) -> Season {
         Season {
             season,

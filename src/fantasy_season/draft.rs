@@ -1,8 +1,9 @@
 use crate::error::DraftError;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 
-#[derive(Copy, Clone, Default, Debug, PartialOrd, PartialEq, Ord, Eq)]
+#[derive(Copy, Clone, Default, Debug, PartialOrd, PartialEq, Ord, Eq, Deserialize, Serialize)]
 pub enum DraftChoice {
     #[default]
     Skip,

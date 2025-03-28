@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 // stores if the race results have been collected, the teams have drafted, or the teams have been scored for each round
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub(super) struct Status {
     tasks: Vec<RoundStatus>, // a collection of statuses where the nth element of the RoundStatus is the nth  round
 }
@@ -60,7 +62,7 @@ impl Status {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Deserialize, Serialize)]
 struct RoundStatus {
     pub results: bool,
     pub drafted: bool,

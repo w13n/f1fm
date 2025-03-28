@@ -22,6 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 },
             )
         })
+        .subscription(ViewController::subscription)
         .run()
         .expect("TODO: panic message");
 

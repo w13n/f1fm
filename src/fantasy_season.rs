@@ -9,11 +9,12 @@ use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use draft::Drafter;
 use race_results::{DriverResult, RaceResults};
+use serde::{Deserialize, Serialize};
 use status::Status;
 use std::collections::HashMap;
 use team::Team;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FantasySeason {
     name: String,
     teams: Vec<Team>,

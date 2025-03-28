@@ -7,11 +7,16 @@ use crate::fantasy_season::FantasySeason;
 use crate::vc::builder::{Builder, BuilderMessage};
 use crate::vc::landing::{Landing, LandingMessage};
 use crate::vc::season::{Season, SeasonMessage};
-use iced::{Element, Task};
+use directories_next::ProjectDirs;
+use iced::{Element, Subscription, Task};
+use std::io::Write;
+use std::path::PathBuf;
+use std::time::Duration;
 
 pub(super) struct ViewController {
     window: Window,
     seasons: Vec<FantasySeason>,
+    save_path: PathBuf,
 }
 
 impl Default for ViewController {
@@ -27,6 +32,7 @@ impl ViewController {
         ViewController {
             seasons,
             window: Window::Landing(Landing::new(seasons_clone)),
+            save_path: PathBuf::from(ProjectDirs::from("com", "w13n", "F1FM").unwrap().data_dir()),
         }
     }
     pub fn view(&self) -> Element<VCMessage> {
@@ -35,6 +41,10 @@ impl ViewController {
             Window::Builder(builder) => builder.view().map(VCMessage::Builder),
             Window::Landing(landing) => landing.view().map(VCMessage::Landing),
         }
+    }
+
+    pub fn subscription(&self) -> Subscription<VCMessage> {
+        iced::time::every(Duration::from_secs(1)).map(|x| VCMessage::Save)
     }
 
     pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
@@ -72,6 +82,27 @@ impl ViewController {
                 }
                 Task::none()
             }
+            VCMessage::Save => {
+                let first_season = match &self.window {
+                    Window::Season(season) => {
+                        vec![season.get_season()]
+                    }
+                    _ => Vec::new(),
+                };
+                let all_seasons: Vec<_> = first_season
+                    .into_iter()
+                    .chain(self.seasons.iter())
+                    .collect();
+
+                if std::fs::create_dir_all(&self.save_path).is_ok() {
+                    let mut path = self.save_path.clone();
+                    path.push("seasons_v1");
+                    let _ = std::fs::File::create(&path)
+                        .expect("TODO")
+                        .write_all(&postcard::to_allocvec(&all_seasons).unwrap());
+                }
+                Task::none()
+            }
         }
     }
 }
@@ -84,6 +115,7 @@ enum Window {
 
 #[derive(Debug, Clone)]
 pub enum VCMessage {
+    Save,
     Season(SeasonMessage),
     Builder(BuilderMessage),
     Landing(LandingMessage),
