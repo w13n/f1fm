@@ -1,11 +1,11 @@
 use crate::api::Api;
 use crate::error::{ApiError, DownloadError};
+use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
-use crate::fantasy_season::FantasySeason;
 use crate::vc::style;
 use iced::Element;
-use iced::{widget, Task};
+use iced::{Task, widget};
 use popup::{Popup, PopupMessage};
 use std::collections::HashMap;
 
@@ -248,7 +248,6 @@ impl Season {
                         .expect("IMPOSSIBLE: UI CANNOT CREATE AN INVALID DRAFTER");
                     Task::none()
                 }
-
                 _ => {
                     self.popups
                         .last_mut()
