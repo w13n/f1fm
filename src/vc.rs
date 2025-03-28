@@ -8,6 +8,7 @@ use crate::vc::builder::{Builder, BuilderMessage};
 use crate::vc::landing::{Landing, LandingMessage};
 use crate::vc::season::{Season, SeasonMessage};
 use iced::{Element, Task};
+use std::rc::Rc;
 
 pub(super) struct ViewController {
     window: Window,
@@ -22,15 +23,18 @@ impl Default for ViewController {
 
 impl ViewController {
     pub(crate) fn new() -> ViewController {
+        let seasons = Vec::new();
+        let seasons_clone = Vec::new();
         ViewController {
-            seasons: Vec::new(),
-            window: Window::Builder(Builder::new()),
+            seasons,
+            window: Window::Landing(Landing::new(seasons_clone)),
         }
     }
     pub fn view(&self) -> Element<VCMessage> {
         match &self.window {
             Window::Season(season) => season.view().map(VCMessage::SeasonMessage),
             Window::Builder(builder) => builder.view().map(VCMessage::BuilderMessage),
+            Window::Landing(landing) => landing.view().map(VCMessage::LandingMessage),
         }
     }
 
@@ -60,6 +64,15 @@ impl ViewController {
                     panic!("BuilderMessage created for non builder")
                 }
             },
+            VCMessage::LandingMessage(lm) => {
+                match lm {
+                    LandingMessage::Pick(idx) => {
+                        self.window = Window::Season(Season::new(self.seasons.remove(idx)))
+                    }
+                    LandingMessage::Build => self.window = Window::Builder(Builder::new()),
+                }
+                Task::none()
+            }
         }
     }
 }

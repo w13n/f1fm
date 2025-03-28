@@ -78,6 +78,10 @@ impl FantasySeason {
         }
     }
 
+    pub fn get_name(&self) -> &str {
+        self.name.as_str()
+    }
+
     pub fn update_results(&mut self, race_results: RaceResults) -> Result<(), DownloadError> {
         let round = race_results.round;
         if self.status.has_results(round) {
