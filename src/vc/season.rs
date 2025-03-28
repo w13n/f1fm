@@ -16,7 +16,8 @@ pub(super) struct Season {
     current_round: u8,
     round_names: Option<HashMap<u8, String>>,
     download_attempts: HashMap<u8, String>,
-    popup: Vec<Popup>,
+    popups: Vec<Popup>,
+    warning: Option<String>,
 }
 
 impl Season {
@@ -26,17 +27,19 @@ impl Season {
             current_round: 1,
             round_names: None,
             download_attempts: HashMap::new(),
-            popup: Vec::new(),
+            popups: Vec::new(),
+            warning: None,
         }
     }
     pub fn view(&self) -> Element<SeasonMessage> {
-        if !self.popup.is_empty() {
-            self.popup
+        if !self.popups.is_empty() {
+            self.popups
                 .last()
-                .unwrap()
+                .expect("IMPOSSIBLE: CHECKED THAT POPUPS IS NOT EMPTY")
                 .view()
                 .map(SeasonMessage::PopupMessage)
         } else {
+            let warning = widget::text!("{}", self.warning.as_ref().unwrap_or(&String::new()));
             let top = widget::text!(
                 "{}",
                 match self.season.get_status_at(self.current_round) {
@@ -133,6 +136,7 @@ impl Season {
             ];
 
             widget::column![
+                warning,
                 top,
                 round_row,
                 widget::Column::from_vec(leadership_col),
@@ -162,13 +166,13 @@ impl Season {
                     Task::none()
                 }
                 DraftChoice::RollOn => {
-                    self.popup.push(Popup::new_roll_on(
+                    self.popups.push(Popup::new_roll_on(
                         self.season.get_lineup_at(self.current_round - 1),
                     ));
                     Task::none()
                 }
                 DraftChoice::ReplaceAll => {
-                    self.popup.push(Popup::new_replace_all(
+                    self.popups.push(Popup::new_replace_all(
                         self.season.get_team_names(),
                         self.season.get_lineup_size() as usize,
                     ));
@@ -176,7 +180,9 @@ impl Season {
                 }
             },
             SeasonMessage::Score => {
-                self.season.score(self.current_round).unwrap();
+                if let Err(se) = self.season.score(self.current_round) {
+                    self.warning = Some(se.to_string())
+                }
                 Task::none()
             }
             SeasonMessage::ReplaceLineup => {
@@ -188,8 +194,10 @@ impl Season {
                         (team, lineup.iter().map(|num| num.to_string()).collect())
                     })
                     .collect();
-                self.season.delete_lineup(self.current_round).unwrap();
-                self.popup.push(Popup::replace_all_from(team_lineups));
+                self.season
+                    .delete_lineup(self.current_round)
+                    .expect("IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR");
+                self.popups.push(Popup::replace_all_from(team_lineups));
                 Task::none()
             }
             SeasonMessage::DownloadedResults(result) => {
@@ -202,11 +210,15 @@ impl Season {
                 Task::none()
             }
             SeasonMessage::DeleteLineup => {
-                self.season.delete_lineup(self.current_round).unwrap();
+                self.season
+                    .delete_lineup(self.current_round)
+                    .expect("IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR");
                 Task::none()
             }
             SeasonMessage::DeleteRound => {
-                self.season.delete_round(self.current_round).unwrap();
+                self.season
+                    .delete_round(self.current_round)
+                    .expect("IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR");
                 self.download_attempts.remove(&self.current_round);
                 Task::none()
             }
@@ -220,7 +232,11 @@ impl Season {
             ),
             SeasonMessage::PopupMessage(pm) => match pm {
                 PopupMessage::Close => {
-                    match self.popup.pop().unwrap() {
+                    match self
+                        .popups
+                        .pop()
+                        .expect("IMPOSSIBLE: PM.C CAN ONLY TRIGGER WHEN THERE IS A POPUP")
+                    {
                         Popup::RollOnDrafter(rod) => self
                             .season
                             .draft(self.current_round, &mut rod.get_drafter())
@@ -233,7 +249,10 @@ impl Season {
                     Task::none()
                 }
                 _ => {
-                    self.popup.last_mut().unwrap().update(pm);
+                    self.popups
+                        .last_mut()
+                        .expect("IMPOSSIBLE: PM.C CAN ONLY TRIGGER WHEN THERE IS A POPUP")
+                        .update(pm);
                     Task::none()
                 }
             },
