@@ -17,7 +17,7 @@ pub(super) struct Season {
     current_round: u8,
     round_names: Option<HashMap<u8, String>>,
     download_attempts: HashMap<u8, String>,
-    popup: Option<Popup>,
+    popup: Vec<Popup>,
 }
 
 impl Season {
@@ -27,122 +27,120 @@ impl Season {
             current_round: 1,
             round_names: None,
             download_attempts: HashMap::new(),
-            popup: None,
+            popup: Vec::new(),
         }
     }
     pub fn view(&self) -> Element<SeasonMessage> {
-        let top = widget::text!(
-            "{}",
-            match self.season.get_status_at(self.current_round) {
-                (_, true, _) => "round results downloaded",
-                (_, false, _) => match self.download_attempts.get(&self.current_round) {
-                    Some(msg) => msg,
-                    None => "round results not yet downloaded",
+        if !self.popup.is_empty() {
+            self.popup
+                .last()
+                .unwrap()
+                .view()
+                .map(SeasonMessage::PopupMessage)
+        } else {
+            let top = widget::text!(
+                "{}",
+                match self.season.get_status_at(self.current_round) {
+                    (_, true, _) => "round results downloaded",
+                    (_, false, _) => match self.download_attempts.get(&self.current_round) {
+                        Some(msg) => msg,
+                        None => "round results not yet downloaded",
+                    },
+                }
+            );
+            let round_row = widget::row![
+                widget::button("-").on_press_maybe(
+                    (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound)
+                ),
+                if let Some(string) = self
+                    .round_names
+                    .as_ref()
+                    .and_then(|hash| hash.get(&self.current_round))
+                {
+                    widget::text!("{}", string)
+                } else {
+                    widget::text!("{}", self.current_round)
                 },
-            }
-        );
-        let round_row = widget::row![
-            widget::button("-").on_press_maybe(
-                (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound)
-            ),
-            if let Some(string) = self
-                .round_names
-                .as_ref()
-                .and_then(|hash| hash.get(&self.current_round))
-            {
-                widget::text!("{}", string)
-            } else {
-                widget::text!("{}", self.current_round)
-            },
-            widget::button("+").on_press(SeasonMessage::IncrementRound),
-        ];
+                widget::button("+").on_press(SeasonMessage::IncrementRound),
+            ];
 
-        let leaderboard = self.season.get_points_by(self.current_round);
-        let round_points = self.season.get_points_at(self.current_round);
+            let leaderboard = self.season.get_points_by(self.current_round);
+            let round_points = self.season.get_points_at(self.current_round);
 
-        let leadership_col: Vec<_> = leaderboard
-            .into_iter()
-            .map(|tp| widget::text!("{:04}: {}", tp.1, tp.0).into())
-            .collect();
-
-        let round_col: Vec<_> = match round_points {
-            None => {
-                vec![widget::text!("round not yet scored").into()]
-            }
-            Some(vec) => vec
+            let leadership_col: Vec<_> = leaderboard
                 .into_iter()
                 .map(|tp| widget::text!("{:04}: {}", tp.1, tp.0).into())
-                .collect(),
-        };
+                .collect();
 
-        let prev_status = if self.current_round == 1 {
-            (true, true, true)
-        } else {
-            self.season.get_status_at(self.current_round - 1)
-        };
-        let status = self.season.get_status_at(self.current_round);
-        let next_status = self.season.get_status_at(self.current_round + 1);
+            let round_col: Vec<_> = match round_points {
+                None => {
+                    vec![widget::text!("round not yet scored").into()]
+                }
+                Some(vec) => vec
+                    .into_iter()
+                    .map(|tp| widget::text!("{:04}: {}", tp.1, tp.0).into())
+                    .collect(),
+            };
 
-        let add_button = match (prev_status, status) {
-            ((false, _, _), _) => widget::button("draft"),
-            ((true, _, _), (false, _, _)) => {
-                widget::button("draft").on_press(SeasonMessage::DraftStart)
+            let prev_status = if self.current_round == 1 {
+                (true, true, true)
+            } else {
+                self.season.get_status_at(self.current_round - 1)
+            };
+            let status = self.season.get_status_at(self.current_round);
+            let next_status = self.season.get_status_at(self.current_round + 1);
+
+            let add_button = match (prev_status, status) {
+                ((false, _, _), _) => widget::button("draft"),
+                ((true, _, _), (false, _, _)) => {
+                    widget::button("draft").on_press(SeasonMessage::DraftStart)
+                }
+                ((true, _, _), (true, false, _)) => widget::button("score"),
+                ((true, _, _), (true, true, false)) => {
+                    widget::button("score").on_press(SeasonMessage::Score)
+                }
+                ((true, _, _), (true, true, true)) => widget::button("scored"),
+            };
+
+            let delete_lineup_button = match (self.current_round, status, next_status) {
+                (1, _, _) => widget::button("delete lineup"),
+                (_, (true, _, false), (false, _, _)) => {
+                    widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup)
+                }
+                _ => widget::button("delete lineup"),
             }
-            ((true, _, _), (true, false, _)) => widget::button("score"),
-            ((true, _, _), (true, true, false)) => {
-                widget::button("score").on_press(SeasonMessage::Score)
+            .style(widget::button::danger);
+
+            let edit_lineup_button = match (self.current_round, status, next_status) {
+                (1, _, _) => widget::button("edit lineup"),
+                (_, (true, _, false), (false, _, _)) => {
+                    widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup)
+                }
+                _ => widget::button("edit lineup"),
             }
-            ((true, _, _), (true, true, true)) => widget::button("scored"),
-        };
+            .style(style::button::success);
 
-        let delete_lineup_button = match (self.current_round, status, next_status) {
-            (1, _, _) => widget::button("delete lineup"),
-            (_, (true, _, false), (false, _, _)) => {
-                widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup)
+            let delete_round_button = match status {
+                (_, true, _) => widget::button("delete round").on_press(SeasonMessage::DeleteRound),
+                _ => widget::button("delete round"),
             }
-            _ => widget::button("delete lineup"),
-        }
-        .style(widget::button::danger);
+            .style(style::button::danger);
 
-        let edit_lineup_button = match (self.current_round, status, next_status) {
-            (1, _, _) => widget::button("edit lineup"),
-            (_, (true, _, false), (false, _, _)) => {
-                widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup)
-            }
-            _ => widget::button("edit lineup"),
-        }
-        .style(style::button::success);
+            let bottom_row = widget::row![
+                add_button,
+                delete_lineup_button,
+                delete_round_button,
+                edit_lineup_button
+            ];
 
-        let delete_round_button = match status {
-            (_, true, _) => widget::button("delete round").on_press(SeasonMessage::DeleteRound),
-            _ => widget::button("delete round"),
-        }
-        .style(style::button::danger);
-
-        let bottom_row = widget::row![
-            add_button,
-            delete_lineup_button,
-            delete_round_button,
-            edit_lineup_button
-        ];
-
-        let base = widget::column![
-            top,
-            round_row,
-            widget::Column::from_vec(leadership_col),
-            widget::Column::from_vec(round_col),
-            bottom_row
-        ]
-        .into();
-
-        if let Some(draft_window) = &self.popup {
-            widget::stack(vec![
-                base,
-                draft_window.view().map(SeasonMessage::PopupMessage),
-            ])
+            widget::column![
+                top,
+                round_row,
+                widget::Column::from_vec(leadership_col),
+                widget::Column::from_vec(round_col),
+                bottom_row
+            ]
             .into()
-        } else {
-            base.into()
         }
     }
 
@@ -165,13 +163,13 @@ impl Season {
                     Task::none()
                 }
                 DraftChoice::RollOn => {
-                    self.popup = Some(Popup::new_roll_on(
+                    self.popup.push(Popup::new_roll_on(
                         self.season.get_lineup_at(self.current_round - 1),
                     ));
                     Task::none()
                 }
                 DraftChoice::ReplaceAll => {
-                    self.popup = Some(Popup::new_replace_all(
+                    self.popup.push(Popup::new_replace_all(
                         self.season.get_team_names(),
                         self.season.get_lineup_size() as usize,
                     ));
@@ -192,7 +190,7 @@ impl Season {
                     })
                     .collect();
                 self.season.delete_lineup(self.current_round).unwrap();
-                self.popup = Some(Popup::replace_all_from(team_lineups));
+                self.popup.push(Popup::replace_all_from(team_lineups));
                 Task::none()
             }
             SeasonMessage::DownloadedResults(result) => {
@@ -223,27 +221,22 @@ impl Season {
             ),
             SeasonMessage::PopupMessage(pm) => match pm {
                 PopupMessage::Close => {
-                    if let Some(window) = mem::take(&mut self.popup) {
-                        match window {
-                            Popup::RollOnDrafter(rod) => self
-                                .season
-                                .draft(self.current_round, &mut rod.get_drafter())
-                                .expect("TODO"),
-                            Popup::ReplaceAllDrafter(rad) => self
-                                .season
-                                .draft(self.current_round, &mut rad.get_drafter())
-                                .expect("TODO"),
-                        }
+                    match self.popup.pop().unwrap() {
+                        Popup::RollOnDrafter(rod) => self
+                            .season
+                            .draft(self.current_round, &mut rod.get_drafter())
+                            .expect("TODO"),
+                        Popup::ReplaceAllDrafter(rad) => self
+                            .season
+                            .draft(self.current_round, &mut rad.get_drafter())
+                            .expect("TODO"),
                     }
                     Task::none()
                 }
-                _ => match &mut self.popup {
-                    None => panic!("DWMessage passed when draft window doesn't exist"),
-                    Some(dw) => {
-                        dw.update(pm);
-                        Task::none()
-                    }
-                },
+                _ => {
+                    self.popup.last_mut().unwrap().update(pm);
+                    Task::none()
+                }
             },
         }
     }

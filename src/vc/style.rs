@@ -132,8 +132,8 @@ pub mod pick_list {
 }
 
 pub mod container {
-    use iced::{Background, border, Theme};
     use iced::widget::container::Style;
+    use iced::{border, Background, Theme};
 
     pub fn background(theme: &Theme) -> Style {
         let ep = theme.extended_palette();
@@ -147,7 +147,6 @@ pub mod container {
     }
 
     pub fn overlay(_: &Theme) -> Style {
-
         Style {
             text_color: None,
             background: Some(Background::Color(iced::color!(0, 0, 0, 0.5))),
