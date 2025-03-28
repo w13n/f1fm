@@ -145,13 +145,4 @@ pub mod container {
             shadow: Default::default(),
         }
     }
-
-    pub fn overlay(_: &Theme) -> Style {
-        Style {
-            text_color: None,
-            background: Some(Background::Color(iced::color!(0, 0, 0, 0.5))),
-            border: border::rounded(5),
-            shadow: Default::default(),
-        }
-    }
 }

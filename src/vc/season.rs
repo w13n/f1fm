@@ -8,7 +8,6 @@ use iced::Element;
 use iced::{widget, Task};
 use popup::{Popup, PopupMessage};
 use std::collections::HashMap;
-use std::mem;
 
 pub mod popup;
 

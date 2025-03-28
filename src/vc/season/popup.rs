@@ -1,5 +1,5 @@
 use crate::vc::style;
-use iced::{widget, Element, Length};
+use iced::{widget, Element};
 use replace_all_drafter::ReplaceAllDrafter;
 use roll_on_drafter::RollOnDrafter;
 use std::collections::HashMap;
