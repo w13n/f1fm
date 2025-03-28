@@ -54,12 +54,12 @@ impl Season {
                 widget::button("-").on_press_maybe(
                     (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound)
                 ),
-                if let Some(string) = self
+                if let Some(round_name) = self
                     .round_names
                     .as_ref()
                     .and_then(|hash| hash.get(&self.current_round))
                 {
-                    widget::text!("{}", string)
+                    widget::text!("{}", round_name)
                 } else {
                     widget::text!("{}", self.current_round)
                 },
@@ -94,14 +94,10 @@ impl Season {
 
             let add_button = match (prev_status, status) {
                 ((false, _, _), _) => widget::button("draft"),
-                ((true, _, _), (false, _, _)) => {
-                    widget::button("draft").on_press(SeasonMessage::DraftStart)
-                }
-                ((true, _, _), (true, false, _)) => widget::button("score"),
-                ((true, _, _), (true, true, false)) => {
-                    widget::button("score").on_press(SeasonMessage::Score)
-                }
-                ((true, _, _), (true, true, true)) => widget::button("scored"),
+                (_, (false, _, _)) => widget::button("draft").on_press(SeasonMessage::DraftStart),
+                (_, (true, false, _)) => widget::button("score"),
+                (_, (true, true, false)) => widget::button("score").on_press(SeasonMessage::Score),
+                (_, (true, true, true)) => widget::button("scored"),
             };
 
             let delete_lineup_button = match (self.current_round, status, next_status) {
