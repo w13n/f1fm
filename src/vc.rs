@@ -44,7 +44,7 @@ impl ViewController {
     }
 
     pub fn subscription(&self) -> Subscription<VCMessage> {
-        iced::time::every(Duration::from_secs(1)).map(|x| VCMessage::Save)
+        iced::time::every(Duration::from_secs(1)).map(|_| VCMessage::Save)
     }
 
     pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
