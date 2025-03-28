@@ -1,6 +1,6 @@
 use crate::vc::ViewController;
-use iced::theme::Palette;
 use iced::Theme;
+use iced::theme::Palette;
 use std::error::Error;
 
 mod api;

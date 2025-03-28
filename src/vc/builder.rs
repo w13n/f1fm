@@ -1,7 +1,7 @@
+use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
-use crate::fantasy_season::FantasySeason;
-use iced::{widget, Element};
+use iced::{Element, widget};
 use time::OffsetDateTime;
 
 const GRID_SIZE_DEFAULT: u8 = 20;

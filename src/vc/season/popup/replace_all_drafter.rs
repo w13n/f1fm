@@ -1,7 +1,7 @@
 use crate::fantasy_season::draft;
 use crate::vc::season::popup::PopupMessage;
 use crate::vc::style;
-use iced::{widget, Element};
+use iced::{Element, widget};
 use std::collections::HashMap;
 
 pub struct ReplaceAllDrafter {

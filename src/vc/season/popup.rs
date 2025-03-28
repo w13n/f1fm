@@ -1,6 +1,6 @@
 use crate::fantasy_season::draft::Drafter;
 use crate::vc::style;
-use iced::{widget, Element};
+use iced::{Element, widget};
 use replace_all_drafter::ReplaceAllDrafter;
 use roll_on_drafter::RollOnDrafter;
 use std::collections::HashMap;

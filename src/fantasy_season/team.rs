@@ -1,6 +1,6 @@
+use super::DriverResult;
 use super::draft::Drafter;
 use super::score::Scorer;
-use super::DriverResult;
 use crate::error::{DraftError, ScoreError};
 use std::cell::Cell;
 use std::cmp::Ordering;

@@ -1,9 +1,9 @@
 pub mod button {
-    use iced::theme::palette::Pair;
-    use iced::widget::button::{Status, Style};
     use iced::Color;
     use iced::Theme;
-    use iced::{border, Background, Shadow, Vector};
+    use iced::theme::palette::Pair;
+    use iced::widget::button::{Status, Style};
+    use iced::{Background, Shadow, Vector, border};
 
     fn style(background: Pair, shadow: bool) -> Style {
         Style {
@@ -69,7 +69,7 @@ pub mod button {
 pub mod text_input {
     use iced::theme::palette::Extended;
     use iced::widget::text_input::{Status, Style};
-    use iced::{border, Background, Color, Theme};
+    use iced::{Background, Color, Theme, border};
 
     fn style(ep: &Extended, border: Color) -> Style {
         Style {
@@ -97,7 +97,7 @@ pub mod pick_list {
     use iced::overlay::menu;
     use iced::theme::palette::{Extended, Pair};
     use iced::widget::pick_list::{Status, Style};
-    use iced::{border, Background, Theme};
+    use iced::{Background, Theme, border};
 
     fn style(ep: &Extended, background: Pair) -> Style {
         Style {
@@ -133,7 +133,7 @@ pub mod pick_list {
 
 pub mod container {
     use iced::widget::container::Style;
-    use iced::{border, Background, Theme};
+    use iced::{Background, Theme, border};
 
     pub fn background(theme: &Theme) -> Style {
         let ep = theme.extended_palette();
