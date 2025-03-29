@@ -9,7 +9,8 @@ use crate::vc::landing::{Landing, LandingMessage};
 use crate::vc::season::{Season, SeasonMessage};
 use directories_next::ProjectDirs;
 use iced::{Element, Subscription, Task};
-use std::io::Write;
+use std::fs::File;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -27,12 +28,21 @@ impl Default for ViewController {
 
 impl ViewController {
     pub(crate) fn new() -> ViewController {
-        let seasons = Vec::new();
-        let seasons_clone = Vec::new();
+        let save_path = PathBuf::from(ProjectDirs::from("com", "w13n", "F1FM").unwrap().data_dir());
+
+        let mut seasons_path = save_path.clone();
+        seasons_path.push("seasons_v1");
+        let mut seasons_file = Vec::with_capacity(100);
+        File::open(seasons_path)
+            .unwrap()
+            .read_to_end(&mut seasons_file)
+            .unwrap();
+        let seasons: Vec<FantasySeason> = postcard::from_bytes(&seasons_file).unwrap();
+
         ViewController {
-            seasons,
-            window: Window::Landing(Landing::new(seasons_clone)),
-            save_path: PathBuf::from(ProjectDirs::from("com", "w13n", "F1FM").unwrap().data_dir()),
+            seasons: Vec::new(),
+            window: Window::Landing(Landing::new(seasons)),
+            save_path,
         }
     }
     pub fn view(&self) -> Element<VCMessage> {
