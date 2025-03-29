@@ -38,10 +38,11 @@ impl ViewController {
             .read_to_end(&mut seasons_file)
             .unwrap();
         let seasons: Vec<FantasySeason> = postcard::from_bytes(&seasons_file).unwrap();
+        let season_names = seasons.iter().map(|s| String::from(s.get_name())).collect();
 
         ViewController {
-            seasons: Vec::new(),
-            window: Window::Landing(Landing::new(seasons)),
+            seasons,
+            window: Window::Landing(Landing::new(season_names)),
             save_path,
         }
     }
@@ -107,9 +108,10 @@ impl ViewController {
                 if std::fs::create_dir_all(&self.save_path).is_ok() {
                     let mut path = self.save_path.clone();
                     path.push("seasons_v1");
-                    let _ = std::fs::File::create(&path)
-                        .expect("TODO")
-                        .write_all(&postcard::to_allocvec(&all_seasons).unwrap());
+                    File::create(&path)
+                        .unwrap()
+                        .write_all(&postcard::to_stdvec(&all_seasons).unwrap())
+                        .unwrap();
                 }
                 Task::none()
             }
