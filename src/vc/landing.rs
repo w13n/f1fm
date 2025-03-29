@@ -9,8 +9,13 @@ impl Landing {
         Landing { season_names }
     }
 
-    pub fn update(&mut self, message: LandingMessage) -> Task<LandingMessage> {
-        panic!("unhandled landing message")
+    pub fn update(&mut self, message: LandingMessage) {
+        match message {
+            LandingMessage::Delete(usize) => {
+                self.season_names.remove(usize);
+            }
+            _ => panic!("LM funneled upstream improperly"),
+        }
     }
     pub fn view(&self) -> Element<LandingMessage> {
         let mut col = widget::Column::from_vec(
@@ -18,9 +23,13 @@ impl Landing {
                 .iter()
                 .enumerate()
                 .map(|(pos, name)| {
-                    widget::Button::new(widget::text!("{}", name))
-                        .on_press(LandingMessage::Pick(pos))
-                        .into()
+                    widget::row![
+                        widget::Button::new(widget::text!("{}", name))
+                            .on_press(LandingMessage::Pick(pos)),
+                        widget::Button::new(widget::text!("delete"))
+                            .on_press(LandingMessage::Delete(pos))
+                    ]
+                    .into()
                 })
                 .collect(),
         );
@@ -36,5 +45,6 @@ impl Landing {
 #[derive(Debug, Clone)]
 pub enum LandingMessage {
     Pick(usize),
+    Delete(usize),
     Build,
 }

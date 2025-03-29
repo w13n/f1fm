@@ -87,9 +87,18 @@ impl ViewController {
             VCMessage::Landing(lm) => {
                 match lm {
                     LandingMessage::Pick(idx) => {
-                        self.window = Window::Season(Season::new(self.seasons.remove(idx)))
+                        self.window = Window::Season(Season::new(self.seasons.remove(idx)));
                     }
                     LandingMessage::Build => self.window = Window::Builder(Builder::new()),
+                    LandingMessage::Delete(usize) => {
+                        self.seasons.remove(usize);
+                        match &mut self.window {
+                            Window::Landing(l) => {
+                                l.update(lm);
+                            }
+                            _ => panic!("LanderMessage created for non lander window"),
+                        }
+                    }
                 }
                 Task::none()
             }
