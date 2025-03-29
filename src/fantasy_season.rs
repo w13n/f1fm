@@ -11,7 +11,7 @@ use draft::Drafter;
 use race_results::{DriverResult, RaceResults};
 use serde::{Deserialize, Serialize};
 use status::Status;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use team::Team;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -149,13 +149,13 @@ impl FantasySeason {
         }
 
         if self.enforce_uniqueness {
-            let mut already_seen = Vec::new();
+            let mut already_seen = HashSet::new();
             for lineup in &lineups {
                 for driver in lineup {
                     if already_seen.contains(&driver) {
                         return Err(DraftError::RoundDraftNonUnique(round, *driver));
                     }
-                    already_seen.push(driver);
+                    already_seen.insert(driver);
                 }
             }
         }
