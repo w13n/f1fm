@@ -1,9 +1,10 @@
 use super::PopupMessage;
 use crate::fantasy_season::draft;
+use crate::utils::*;
 use crate::vc::style;
 use iced::Element;
 use iced::widget;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub struct RollOnDrafter {
     previous_lineup: HashMap<String, Vec<u8>>,
@@ -52,7 +53,7 @@ impl RollOnDrafter {
     pub(super) fn update(&mut self, message: ROMessage) {
         match message {
             ROMessage::ChangeDriverNumber(team, num) => {
-                if num.is_empty() || num.parse::<u8>().is_ok_and(|num| num < 100) {
+                if is_valid_driver_str(&num) {
                     self.drivers.insert(team, num);
                 }
             }
@@ -75,7 +76,7 @@ impl RollOnDrafter {
     fn can_draft(&self) -> bool {
         self.drivers
             .iter()
-            .all(|(_team, num)| num.parse::<u8>().is_ok_and(|num| num < 100))
+            .all(|(_team, num)| is_valid_driver_str(num))
     }
 }
 

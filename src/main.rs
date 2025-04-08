@@ -6,6 +6,7 @@ use std::error::Error;
 mod api;
 mod error;
 mod fantasy_season;
+mod utils;
 mod vc;
 
 fn main() -> Result<(), Box<dyn Error>> {

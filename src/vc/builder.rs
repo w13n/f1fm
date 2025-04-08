@@ -1,6 +1,7 @@
 use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
+use crate::utils::is_valid_driver_str;
 use iced::{Element, widget};
 use std::collections::HashSet;
 use time::OffsetDateTime;
@@ -60,7 +61,7 @@ impl Builder {
                 self.team_size -= 1;
             }
             BuilderMessage::ChangeDriverNum(team, index, new_driver) => {
-                if validate(&new_driver) {
+                if is_valid_driver_str(&new_driver) {
                     self.teams[team].change_driver(index, new_driver)
                 }
             }
@@ -297,10 +298,9 @@ impl TeamBuilder {
     }
 
     fn can_parse(&self) -> bool {
-        self.numbers
-            .iter()
-            .fold(true, |can_parse, cur_val| validate(cur_val) && can_parse)
-            && !self.name.is_empty()
+        self.numbers.iter().fold(true, |can_parse, cur_val| {
+            is_valid_driver_str(cur_val) && can_parse
+        }) && !self.name.is_empty()
     }
 
     fn parse(&self) -> Vec<u8> {
@@ -313,8 +313,4 @@ impl TeamBuilder {
             })
             .collect()
     }
-}
-
-fn validate(driver: &str) -> bool {
-    driver.parse::<u8>().is_ok_and(|val| val < 100)
 }
