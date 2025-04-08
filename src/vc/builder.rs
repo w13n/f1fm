@@ -1,9 +1,8 @@
 use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
-use crate::utils::is_valid_driver_str;
+use crate::utils::*;
 use iced::{Element, widget};
-use std::collections::HashSet;
 use time::OffsetDateTime;
 
 const GRID_SIZE_DEFAULT: u8 = 20;
@@ -61,7 +60,7 @@ impl Builder {
                 self.team_size -= 1;
             }
             BuilderMessage::ChangeDriverNum(team, index, new_driver) => {
-                if is_valid_driver_str(&new_driver) {
+                if is_valid_driver_input(&new_driver) {
                     self.teams[team].change_driver(index, new_driver)
                 }
             }
@@ -151,29 +150,11 @@ impl Builder {
 
         let create = widget::button("create team")
             .on_press_maybe(
-                if self
-                    .teams
-                    .iter()
-                    .fold(true, |carried, this| this.can_parse() && carried)
+                (self.teams.iter().all(|team| team.can_parse())
                     && !self.teams.is_empty()
-                {
-                    let mut valid = true;
-                    if self.enforce_uniqueness {
-                        let mut already_seen = HashSet::new();
-                        for team in &self.teams {
-                            for driver in team.parse() {
-                                valid = valid && already_seen.insert(driver);
-                            }
-                        }
-                    }
-                    if valid {
-                        Some(BuilderMessage::Create)
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                },
+                    && (!self.enforce_uniqueness
+                        || is_unique_lineups(self.teams.iter().flat_map(|x| x.iter()))))
+                .then_some(BuilderMessage::Create),
             )
             .style(super::style::button::primary);
 
@@ -298,9 +279,7 @@ impl TeamBuilder {
     }
 
     fn can_parse(&self) -> bool {
-        self.numbers.iter().fold(true, |can_parse, cur_val| {
-            is_valid_driver_str(cur_val) && can_parse
-        }) && !self.name.is_empty()
+        self.numbers.iter().all(|x| is_parsable_driver(x)) && !self.name.is_empty()
     }
 
     fn parse(&self) -> Vec<u8> {
@@ -312,5 +291,9 @@ impl TeamBuilder {
                     .expect("cannot call parse if can_parse is false")
             })
             .collect()
+    }
+
+    fn iter(&self) -> std::slice::Iter<'_, String> {
+        self.numbers.iter()
     }
 }

@@ -22,8 +22,11 @@ pub enum PopupMessage {
 }
 
 impl Popup {
-    pub fn new_roll_on(previous_lineup: HashMap<String, Vec<u8>>) -> Popup {
-        Popup::RollOnDrafter(RollOnDrafter::new(previous_lineup))
+    pub fn new_roll_on(
+        previous_lineup: HashMap<String, Vec<u8>>,
+        enforce_uniqueness: bool,
+    ) -> Popup {
+        Popup::RollOnDrafter(RollOnDrafter::new(previous_lineup, enforce_uniqueness))
     }
 
     pub fn new_replace_all(

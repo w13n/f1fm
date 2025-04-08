@@ -167,6 +167,7 @@ impl Season {
                 DraftChoice::RollOn => {
                     self.popups.push(Popup::new_roll_on(
                         self.season.get_lineup_at(self.current_round - 1),
+                        self.season.enforces_unique(),
                     ));
                     Task::none()
                 }

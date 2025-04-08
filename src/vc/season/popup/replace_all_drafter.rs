@@ -1,9 +1,9 @@
 use crate::fantasy_season::draft;
-use crate::utils::is_valid_driver_str;
+use crate::utils::*;
 use crate::vc::season::popup::PopupMessage;
 use crate::vc::style;
 use iced::{Element, widget};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub struct ReplaceAllDrafter {
     team_lineups: HashMap<String, Vec<String>>,
@@ -72,8 +72,8 @@ impl ReplaceAllDrafter {
 
     pub(super) fn update(&mut self, message: RAMessage) {
         match message {
-            RAMessage::ChangeDriverNumber(team, idx, mut num) => {
-                if is_valid_driver_str(&num) {
+            RAMessage::ChangeDriverNumber(team, idx, num) => {
+                if is_valid_driver_input(&num) {
                     let _ = std::mem::replace(
                         self.team_lineups
                             .get_mut(&team)
@@ -88,20 +88,13 @@ impl ReplaceAllDrafter {
     }
 
     fn can_draft(&self) -> bool {
-        if self.enforce_uniqueness {
-            let mut already_seen = HashSet::new();
-            for lineup in self.team_lineups.values() {
-                for driver in lineup {
-                    if !already_seen.insert(driver) {
-                        return false;
-                    }
-                }
-            }
+        if self.enforce_uniqueness && !is_unique_lineups(self.team_lineups.values().flatten()) {
+            return false;
         }
 
         self.team_lineups
             .iter()
-            .all(|(_team, lineup)| lineup.iter().all(|num| is_valid_driver_str(num)))
+            .all(|(_team, lineup)| lineup.iter().all(|num| is_parsable_driver(num)))
     }
 
     pub fn get_drafter(self) -> draft::ReplaceAll {

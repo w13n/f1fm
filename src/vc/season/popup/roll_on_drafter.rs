@@ -4,18 +4,23 @@ use crate::utils::*;
 use crate::vc::style;
 use iced::Element;
 use iced::widget;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub struct RollOnDrafter {
     previous_lineup: HashMap<String, Vec<u8>>,
     drivers: HashMap<String, String>,
+    enforce_uniqueness: bool,
 }
 
 impl RollOnDrafter {
-    pub(super) fn new(previous_lineup: HashMap<String, Vec<u8>>) -> RollOnDrafter {
+    pub(super) fn new(
+        previous_lineup: HashMap<String, Vec<u8>>,
+        enforce_uniqueness: bool,
+    ) -> RollOnDrafter {
         RollOnDrafter {
             previous_lineup,
             drivers: HashMap::new(),
+            enforce_uniqueness,
         }
     }
     pub(super) fn view(&self) -> Element<PopupMessage> {
@@ -53,7 +58,7 @@ impl RollOnDrafter {
     pub(super) fn update(&mut self, message: ROMessage) {
         match message {
             ROMessage::ChangeDriverNumber(team, num) => {
-                if is_valid_driver_str(&num) {
+                if is_valid_driver_input(&num) {
                     self.drivers.insert(team, num);
                 }
             }
@@ -74,9 +79,22 @@ impl RollOnDrafter {
     }
 
     fn can_draft(&self) -> bool {
+        if self.enforce_uniqueness
+            && !is_unique_lineups(
+                self.drivers.values().zip(
+                    self.previous_lineup
+                        .values()
+                        .flatten()
+                        .map(|n| n.to_string()),
+                ),
+            )
+        {
+            return false;
+        }
+
         self.drivers
             .iter()
-            .all(|(_team, num)| is_valid_driver_str(num))
+            .all(|(_team, num)| is_parsable_driver(num))
     }
 }
 
