@@ -84,24 +84,29 @@ impl ViewController {
                     panic!("BuilderMessage created for non builder")
                 }
             },
-            VCMessage::Landing(lm) => {
-                match lm {
-                    LandingMessage::Pick(idx) => {
-                        self.window = Window::Season(Season::new(self.seasons.remove(idx)));
-                    }
-                    LandingMessage::Build => self.window = Window::Builder(Builder::new()),
-                    LandingMessage::Delete(usize) => {
-                        self.seasons.remove(usize);
-                        match &mut self.window {
-                            Window::Landing(l) => {
-                                l.update(lm);
-                            }
-                            _ => panic!("LanderMessage created for non lander window"),
-                        }
-                    }
+            VCMessage::Landing(lm) => match lm {
+                LandingMessage::Pick(idx) => {
+                    self.window = Window::Season(Season::new(self.seasons.remove(idx)));
+                    Task::batch(vec![
+                        Task::done(VCMessage::Season(SeasonMessage::DownloadFirstRace)),
+                        Task::done(VCMessage::Season(SeasonMessage::DownloadRaceNames)),
+                    ])
                 }
-                Task::none()
-            }
+                LandingMessage::Build => {
+                    self.window = Window::Builder(Builder::new());
+                    Task::none()
+                }
+                LandingMessage::Delete(usize) => {
+                    self.seasons.remove(usize);
+                    match &mut self.window {
+                        Window::Landing(l) => {
+                            l.update(lm);
+                        }
+                        _ => panic!("LanderMessage created for non lander window"),
+                    }
+                    Task::none()
+                }
+            },
             VCMessage::Save => {
                 let first_season = match &self.window {
                     Window::Season(season) => {
