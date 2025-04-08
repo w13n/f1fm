@@ -214,15 +214,15 @@ impl Season {
                 Task::none()
             }
             SeasonMessage::DeleteLineup => {
-                self.season
-                    .delete_lineup(self.current_round)
-                    .expect("IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR");
+                self.season.delete_lineup(self.current_round).expect(
+                    "IMPOSSIBLE: UI PREVENTS THIS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR",
+                );
                 Task::none()
             }
             SeasonMessage::DeleteRound => {
-                self.season
-                    .delete_round(self.current_round)
-                    .expect("IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR");
+                self.season.delete_round(self.current_round).expect(
+                    "IMPOSSIBLE: UI PREVENTS THIS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR",
+                );
                 self.download_attempts.remove(&self.current_round);
                 Task::none()
             }
@@ -238,14 +238,14 @@ impl Season {
                 PopupMessage::Close => {
                     self.popups
                         .pop()
-                        .expect("IMPOSSIBLE: PM.C CAN ONLY TRIGGER WHEN THERE IS A POPUP");
+                        .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP");
                     Task::none()
                 }
                 PopupMessage::UpdateLineup => {
                     let mut drafter = self
                         .popups
                         .pop()
-                        .expect("IMPOSSIBLE: PM.C CAN ONLY TRIGGER WHEN THERE IS A POPUP")
+                        .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP")
                         .get_drafter();
                     self.season
                         .draft(self.current_round, &mut *drafter)
@@ -255,7 +255,7 @@ impl Season {
                 _ => {
                     self.popups
                         .last_mut()
-                        .expect("IMPOSSIBLE: PM.C CAN ONLY TRIGGER WHEN THERE IS A POPUP")
+                        .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP")
                         .update(pm);
                     Task::none()
                 }
