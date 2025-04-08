@@ -2,6 +2,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use iced::{Element, widget};
+use std::collections::HashSet;
 use time::OffsetDateTime;
 
 const GRID_SIZE_DEFAULT: u8 = 20;
@@ -157,11 +158,10 @@ impl Builder {
                 {
                     let mut valid = true;
                     if self.enforce_uniqueness {
-                        let mut already_seen = Vec::new();
+                        let mut already_seen = HashSet::new();
                         for team in &self.teams {
                             for driver in team.parse() {
-                                valid = valid && !already_seen.contains(&driver);
-                                already_seen.push(driver);
+                                valid = valid && already_seen.insert(driver);
                             }
                         }
                     }

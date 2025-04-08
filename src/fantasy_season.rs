@@ -271,4 +271,8 @@ impl FantasySeason {
             self.status.has_scored(round),
         )
     }
+
+    pub fn enforces_unique(&self) -> bool {
+        self.enforce_uniqueness
+    }
 }

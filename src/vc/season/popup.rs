@@ -26,12 +26,23 @@ impl Popup {
         Popup::RollOnDrafter(RollOnDrafter::new(previous_lineup))
     }
 
-    pub fn new_replace_all(team_names: Vec<String>, team_size: usize) -> Popup {
-        Popup::ReplaceAllDrafter(ReplaceAllDrafter::new(team_names, team_size))
+    pub fn new_replace_all(
+        team_names: Vec<String>,
+        team_size: usize,
+        enforce_uniqueness: bool,
+    ) -> Popup {
+        Popup::ReplaceAllDrafter(ReplaceAllDrafter::new(
+            team_names,
+            team_size,
+            enforce_uniqueness,
+        ))
     }
 
-    pub fn replace_all_from(team_lineups: HashMap<String, Vec<String>>) -> Popup {
-        Popup::ReplaceAllDrafter(ReplaceAllDrafter::from(team_lineups))
+    pub fn replace_all_from(
+        team_lineups: HashMap<String, Vec<String>>,
+        enforce_uniqueness: bool,
+    ) -> Popup {
+        Popup::ReplaceAllDrafter(ReplaceAllDrafter::from(team_lineups, enforce_uniqueness))
     }
 
     pub fn get_drafter(self) -> Box<dyn Drafter> {

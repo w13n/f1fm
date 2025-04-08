@@ -1,4 +1,4 @@
-use iced::{Element, Task, widget};
+use iced::{Element, widget};
 
 pub struct Landing {
     season_names: Vec<String>,

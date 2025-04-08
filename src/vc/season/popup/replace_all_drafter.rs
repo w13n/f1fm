@@ -2,24 +2,38 @@ use crate::fantasy_season::draft;
 use crate::vc::season::popup::PopupMessage;
 use crate::vc::style;
 use iced::{Element, widget};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub struct ReplaceAllDrafter {
     team_lineups: HashMap<String, Vec<String>>,
+    enforce_uniqueness: bool,
 }
 
 impl ReplaceAllDrafter {
-    pub(super) fn new(team_names: Vec<String>, team_size: usize) -> ReplaceAllDrafter {
+    pub(super) fn new(
+        team_names: Vec<String>,
+        team_size: usize,
+        enforce_uniqueness: bool,
+    ) -> ReplaceAllDrafter {
         let mut team_lineups = HashMap::new();
         for team in team_names {
             team_lineups.insert(team, vec![String::new(); team_size]);
         }
 
-        ReplaceAllDrafter { team_lineups }
+        ReplaceAllDrafter {
+            team_lineups,
+            enforce_uniqueness,
+        }
     }
 
-    pub(super) fn from(team_lineups: HashMap<String, Vec<String>>) -> ReplaceAllDrafter {
-        ReplaceAllDrafter { team_lineups }
+    pub(super) fn from(
+        team_lineups: HashMap<String, Vec<String>>,
+        enforce_uniqueness: bool,
+    ) -> ReplaceAllDrafter {
+        ReplaceAllDrafter {
+            team_lineups,
+            enforce_uniqueness,
+        }
     }
     pub(super) fn view(&self) -> Element<PopupMessage> {
         let mut draft_team = Vec::new();
@@ -73,6 +87,17 @@ impl ReplaceAllDrafter {
     }
 
     fn can_draft(&self) -> bool {
+        if self.enforce_uniqueness {
+            let mut already_seen = HashSet::new();
+            for lineup in &self.team_lineups.values() {
+                for driver in lineup {
+                    if !already_seen.insert(driver) {
+                        return false;
+                    }
+                }
+            }
+        }
+
         self.team_lineups.iter().all(|(_team, lineup)| {
             lineup
                 .iter()

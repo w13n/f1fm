@@ -174,6 +174,7 @@ impl Season {
                     self.popups.push(Popup::new_replace_all(
                         self.season.get_team_names(),
                         self.season.get_lineup_size() as usize,
+                        self.season.enforces_unique(),
                     ));
                     Task::none()
                 }
@@ -196,7 +197,10 @@ impl Season {
                 self.season
                     .delete_lineup(self.current_round)
                     .expect("IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR");
-                self.popups.push(Popup::replace_all_from(team_lineups));
+                self.popups.push(Popup::replace_all_from(
+                    team_lineups,
+                    self.season.enforces_unique(),
+                ));
                 Task::none()
             }
             SeasonMessage::DownloadedResults(result) => {
