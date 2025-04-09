@@ -5,7 +5,7 @@ mod style;
 
 use crate::fantasy_season::FantasySeason;
 use crate::vc::builder::{Builder, BuilderMessage};
-use crate::vc::landing::{Landing, LandingMessage};
+use crate::vc::landing::Landing;
 use crate::vc::season::{Season, SeasonMessage};
 use directories_next::ProjectDirs;
 use iced::{Element, Subscription, Task};
@@ -50,7 +50,7 @@ impl ViewController {
         match &self.window {
             Window::Season(season) => season.view(),
             Window::Builder(builder) => builder.view(),
-            Window::Landing(landing) => landing.view().map(VCMessage::Landing),
+            Window::Landing(landing) => landing.view(),
         }
     }
 
@@ -60,46 +60,24 @@ impl ViewController {
 
     pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
         match message {
-            VCMessage::Season(sm) => match &mut self.window {
-                Window::Season(s) => s.update(sm).map(VCMessage::Season),
-                _ => Task::none(), // Season message may come after the window is closed, so we ignore them
-            },
-            VCMessage::Builder(bm) => match &mut self.window {
-                Window::Builder(b) => {
+            VCMessage::Season(sm) => {
+                if let Window::Season(s) = &mut self.window {
+                    s.update(sm).map(VCMessage::Season)
+                } else {
+                    Task::none()
+                }
+            }
+            VCMessage::Builder(bm) => {
+                if let Window::Builder(b) = &mut self.window {
                     b.update(bm);
-                    Task::none()
                 }
-                _ => Task::none(), // Builder message may (in the future) come after the window is closed, so we ignore them
-            },
-            VCMessage::Landing(lm) => match lm {
-                LandingMessage::Pick(idx) => {
-                    self.window = Window::Season(Season::new(self.seasons.remove(idx)));
-                    Task::batch(vec![
-                        Task::done(VCMessage::Season(SeasonMessage::DownloadFirstRace)),
-                        Task::done(VCMessage::Season(SeasonMessage::DownloadRaceNames)),
-                    ])
-                }
-                LandingMessage::Build => {
-                    self.window = Window::Builder(Builder::new());
-                    Task::none()
-                }
-                LandingMessage::Delete(usize) => {
-                    self.seasons.remove(usize);
-                    match &mut self.window {
-                        Window::Landing(l) => {
-                            l.update(lm);
-                        }
-                        _ => panic!("LanderMessage created for non lander window"),
-                    }
-                    Task::none()
-                }
-            },
+                Task::none()
+            }
             VCMessage::Save => {
-                let first_season = match &self.window {
-                    Window::Season(season) => {
-                        vec![season.get_season()]
-                    }
-                    _ => Vec::new(),
+                let first_season = if let Window::Season(s) = &self.window {
+                    vec![s.get_season()]
+                } else {
+                    Vec::new()
                 };
                 let all_seasons: Vec<_> = first_season
                     .into_iter()
@@ -143,8 +121,26 @@ impl ViewController {
                         ));
                         Task::none()
                     }
-                    Window::Landing(l) => Task::none(), //  we cant close the landing
+                    Window::Landing(_l) => Task::none(), //  we cant close the landing
                 }
+            }
+            VCMessage::OpenSeason(idx) => {
+                self.window = Window::Season(Season::new(self.seasons.remove(idx)));
+                Task::batch(vec![
+                    Task::done(VCMessage::Season(SeasonMessage::DownloadFirstRace)),
+                    Task::done(VCMessage::Season(SeasonMessage::DownloadRaceNames)),
+                ])
+            }
+            VCMessage::DeleteSeason(idx) => {
+                self.seasons.remove(idx);
+                if let Window::Landing(l) = &mut self.window {
+                    l.delete(idx);
+                }
+                Task::none()
+            }
+            VCMessage::OpenBuilder => {
+                self.window = Window::Builder(Builder::new());
+                Task::none()
             }
             VCMessage::CreateFromBuilder => match &mut self.window {
                 Window::Builder(b) => {
@@ -172,8 +168,10 @@ enum Window {
 pub enum VCMessage {
     Season(SeasonMessage),
     Builder(BuilderMessage),
-    Landing(LandingMessage),
     Save,
     WindowExit,
+    OpenSeason(usize),
+    DeleteSeason(usize),
+    OpenBuilder,
     CreateFromBuilder,
 }

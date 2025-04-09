@@ -1,3 +1,4 @@
+use crate::vc::VCMessage;
 use iced::{Element, widget};
 
 pub struct Landing {
@@ -9,15 +10,10 @@ impl Landing {
         Landing { season_names }
     }
 
-    pub fn update(&mut self, message: LandingMessage) {
-        match message {
-            LandingMessage::Delete(usize) => {
-                self.season_names.remove(usize);
-            }
-            _ => panic!("LM funneled upstream improperly"),
-        }
+    pub fn delete(&mut self, element: usize) {
+        let _ = self.season_names.remove(element);
     }
-    pub fn view(&self) -> Element<LandingMessage> {
+    pub fn view(&self) -> Element<VCMessage> {
         let mut col = widget::Column::from_vec(
             self.season_names
                 .iter()
@@ -25,9 +21,9 @@ impl Landing {
                 .map(|(pos, name)| {
                     widget::row![
                         widget::Button::new(widget::text!("{}", name))
-                            .on_press(LandingMessage::Pick(pos)),
+                            .on_press(VCMessage::OpenSeason(pos)),
                         widget::Button::new(widget::text!("delete"))
-                            .on_press(LandingMessage::Delete(pos))
+                            .on_press(VCMessage::DeleteSeason(pos))
                     ]
                     .into()
                 })
@@ -35,16 +31,10 @@ impl Landing {
         );
 
         col = col.push(
-            widget::Button::new(widget::text!("Create New Season")).on_press(LandingMessage::Build),
+            widget::Button::new(widget::text!("Create New Season"))
+                .on_press(VCMessage::OpenBuilder),
         );
 
         col.into()
     }
-}
-
-#[derive(Debug, Clone)]
-pub enum LandingMessage {
-    Pick(usize),
-    Delete(usize),
-    Build,
 }
