@@ -56,7 +56,7 @@ impl Builder {
                 self.team_size += 1;
             }
             BuilderMessage::DecreaseTeamSize => {
-                self.teams.iter_mut().for_each(TeamBuilder::increase_size);
+                self.teams.iter_mut().for_each(TeamBuilder::decrease_size);
                 self.team_size -= 1;
             }
             BuilderMessage::ChangeDriverNum(team, index, new_driver) => {
