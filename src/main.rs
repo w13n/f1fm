@@ -2,7 +2,6 @@ use crate::vc::ViewController;
 use iced::font::Weight;
 use iced::theme::Palette;
 use iced::{Font, Theme};
-use std::error::Error;
 
 mod api;
 mod error;

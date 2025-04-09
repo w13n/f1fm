@@ -25,9 +25,9 @@ pub mod button {
         let palette = theme.extended_palette();
 
         match status {
-            Status::Active => style(palette.primary.base, true),
-            Status::Hovered => style(palette.primary.strong, true),
-            Status::Pressed => style(palette.primary.strong, false),
+            Status::Active => style(palette.primary.strong, true),
+            Status::Hovered => style(palette.primary.base, true),
+            Status::Pressed => style(palette.primary.base, false),
             Status::Disabled => style(palette.primary.weak, false),
         }
     }
@@ -36,9 +36,9 @@ pub mod button {
         let palette = theme.extended_palette();
 
         match status {
-            Status::Active => style(palette.secondary.base, true),
-            Status::Hovered => style(palette.secondary.strong, true),
-            Status::Pressed => style(palette.secondary.strong, false),
+            Status::Active => style(palette.secondary.strong, true),
+            Status::Hovered => style(palette.secondary.base, true),
+            Status::Pressed => style(palette.secondary.base, false),
             Status::Disabled => style(palette.secondary.weak, false),
         }
     }
@@ -47,9 +47,9 @@ pub mod button {
         let palette = theme.extended_palette();
 
         match status {
-            Status::Active => style(palette.success.base, true),
-            Status::Hovered => style(palette.success.strong, true),
-            Status::Pressed => style(palette.success.strong, false),
+            Status::Active => style(palette.success.strong, true),
+            Status::Hovered => style(palette.success.base, true),
+            Status::Pressed => style(palette.success.base, false),
             Status::Disabled => style(palette.success.weak, false),
         }
     }
