@@ -201,9 +201,6 @@ impl Season {
                         (team, lineup.iter().map(|num| num.to_string()).collect())
                     })
                     .collect();
-                self.season
-                    .delete_lineup(self.current_round)
-                    .expect("IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR");
                 self.popups.push(Popup::replace_all_from(
                     team_lineups,
                     self.season.enforces_unique(),
@@ -253,6 +250,9 @@ impl Season {
                         .pop()
                         .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP")
                         .get_drafter();
+                    self.season.delete_lineup(self.current_round).expect(
+                        "IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR",
+                    );
                     self.season
                         .draft(self.current_round, &mut *drafter)
                         .expect("IMPOSSIBLE: UI CANNOT CREATE AN INVALID DRAFTER");
