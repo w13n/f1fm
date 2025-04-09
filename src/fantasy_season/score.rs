@@ -23,7 +23,7 @@ impl Display for ScoreChoice {
             ScoreChoice::Improvement => String::from("Improvement"),
             ScoreChoice::Domination => String::from("Domination"),
         };
-        write!(f, "{}", str)
+        write!(f, "{str}")
     }
 }
 

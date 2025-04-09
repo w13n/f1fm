@@ -39,7 +39,7 @@ impl Team {
                 .iter()
                 .find(|dr| dr.driver == *driver)
                 .ok_or(ScoreError::DriverDidNotRace(*driver))?;
-            points += scorer.score(grid_size, driver_result)
+            points += scorer.score(grid_size, driver_result);
         }
         Ok(points)
     }

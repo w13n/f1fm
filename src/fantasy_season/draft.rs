@@ -18,7 +18,7 @@ impl Display for DraftChoice {
             DraftChoice::RollOn => String::from("Roll On"),
             DraftChoice::ReplaceAll => String::from("Replace All"),
         };
-        write!(f, "{}", str)
+        write!(f, "{str}")
     }
 }
 

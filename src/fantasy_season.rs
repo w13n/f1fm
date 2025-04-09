@@ -59,7 +59,7 @@ impl FantasySeason {
 
         let mut teams = Vec::with_capacity(team_count as usize);
         for (name, lineup) in starting_teams {
-            teams.push(Team::new(name, lineup))
+            teams.push(Team::new(name, lineup));
         }
 
         let results = Vec::new();
@@ -205,7 +205,7 @@ impl FantasySeason {
     }
 
     pub fn get_team_names(&self) -> Vec<String> {
-        self.teams.iter().map(|t| t.name()).collect()
+        self.teams.iter().map(Team::name).collect()
     }
 
     pub fn get_season(&self) -> u16 {

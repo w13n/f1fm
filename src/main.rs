@@ -9,7 +9,8 @@ mod fantasy_season;
 mod utils;
 mod vc;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[allow(clippy::unreadable_literal)]
+fn main() {
     iced::application("test", ViewController::update, ViewController::view)
         .theme(|_| {
             Theme::custom(
@@ -26,6 +27,4 @@ fn main() -> Result<(), Box<dyn Error>> {
         .subscription(ViewController::subscription)
         .run()
         .expect("TODO: panic message");
-
-    Ok(())
 }

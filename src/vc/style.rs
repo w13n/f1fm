@@ -17,7 +17,7 @@ pub mod button {
                     blur_radius: 1.0,
                 }
             } else {
-                Default::default()
+                Shadow::default()
             },
         }
     }
@@ -75,7 +75,7 @@ pub mod text_input {
         Style {
             background: Background::Color(ep.background.base.color),
             border: border::rounded(5).width(2).color(border),
-            icon: Default::default(),
+            icon: Color::default(),
             placeholder: ep.background.strong.color,
             value: ep.background.base.text,
             selection: ep.background.strong.color,
@@ -133,7 +133,7 @@ pub mod pick_list {
 
 pub mod container {
     use iced::widget::container::Style;
-    use iced::{Background, Theme, border};
+    use iced::{Background, Shadow, Theme, border};
 
     pub fn background(theme: &Theme) -> Style {
         let ep = theme.extended_palette();
@@ -142,7 +142,7 @@ pub mod container {
             text_color: None,
             background: Some(Background::Color(ep.background.base.color)),
             border: border::rounded(5),
-            shadow: Default::default(),
+            shadow: Shadow::default(),
         }
     }
 }

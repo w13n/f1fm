@@ -13,16 +13,16 @@ impl Display for ScoreError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ScoreError::DriverDidNotRace(driver) => {
-                write!(f, "driver {} is on a team but did not race", driver)
+                write!(f, "driver {driver} is on a team but did not race")
             }
             ScoreError::RoundLineupDoesNotExist(round) => {
-                write!(f, "lineup for round {} does not exist", round)
+                write!(f, "lineup for round {round} does not exist")
             }
             ScoreError::RoundResultsDoNotExist(round) => {
-                write!(f, "race results for round {} does not exist", round)
+                write!(f, "race results for round {round} does not exist")
             }
             ScoreError::RoundResultsAlreadyExist(round) => {
-                write!(f, "scores for {} round already exists", round)
+                write!(f, "scores for {round} round already exists")
             }
         }
     }
@@ -42,20 +42,17 @@ impl Display for DraftError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             DraftError::RoundLineupAlreadyExists(round) => {
-                write!(f, "lineup for round {} already exist", round)
+                write!(f, "lineup for round {round} already exist")
             }
             DraftError::PreviousRoundLineupDoesNotExist(prev_round) => write!(
                 f,
-                "lineup for the previous round ({})  does not exist",
-                prev_round
+                "lineup for the previous round ({prev_round})  does not exist",
             ),
-            DraftError::RoundDraftNonUnique(round, driver) => write!(
-                f,
-                "lineup for round {} has multiple drivers #{}",
-                round, driver
-            ),
+            DraftError::RoundDraftNonUnique(round, driver) => {
+                write!(f, "lineup for round {round} has multiple drivers #{driver}")
+            }
             DraftError::IncompleteDrafter => {
-                write!(f, "drafter was constructed with incomplete information",)
+                write!(f, "drafter was constructed with incomplete information")
             }
         }
     }
@@ -98,12 +95,11 @@ impl Display for ApiError {
             ApiError::CannotConnectToServer => write!(f, "cannot connect to server"),
             ApiError::CannotParseJsonRound(round) => write!(
                 f,
-                "results for round {} could not be parsed and may not exist",
-                round
+                "results for round {round} could not be parsed and may not exist"
             ),
-            ApiError::CannotParseJsonOther => write!(f, "api results could not be parsed",),
+            ApiError::CannotParseJsonOther => write!(f, "api results could not be parsed"),
             ApiError::RaceResultsNotYetAvailable(round) => {
-                write!(f, "results for round {} are not yet available", round)
+                write!(f, "results for round {round} are not yet available")
             }
         }
     }

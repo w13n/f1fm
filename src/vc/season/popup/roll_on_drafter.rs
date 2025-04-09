@@ -39,12 +39,12 @@ impl RollOnDrafter {
                     .into(),
             );
 
-            for driver in self.previous_lineup.get(team).unwrap().iter() {
-                row.push(widget::text! {"{:02}", driver}.into())
+            for driver in self.previous_lineup.get(team).unwrap() {
+                row.push(widget::text! {"{:02}", driver}.into());
             }
             row.pop();
 
-            draft_team.push(widget::Row::from_vec(row).into())
+            draft_team.push(widget::Row::from_vec(row).into());
         }
         draft_team.push(
             widget::button("Draft")

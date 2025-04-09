@@ -48,20 +48,20 @@ impl Builder {
             BuilderMessage::DeleteTeam(team) => {
                 self.teams.remove(team);
                 for team_id in team..self.teams.len() {
-                    self.teams[team_id].decrease_id()
+                    self.teams[team_id].decrease_id();
                 }
             }
             BuilderMessage::IncreaseTeamSize => {
-                self.teams.iter_mut().for_each(|team| team.increase_size());
+                self.teams.iter_mut().for_each(TeamBuilder::increase_size);
                 self.team_size += 1;
             }
             BuilderMessage::DecreaseTeamSize => {
-                self.teams.iter_mut().for_each(|team| team.decrease_size());
+                self.teams.iter_mut().for_each(TeamBuilder::increase_size);
                 self.team_size -= 1;
             }
             BuilderMessage::ChangeDriverNum(team, index, new_driver) => {
                 if is_valid_driver_input(&new_driver) {
-                    self.teams[team].change_driver(index, new_driver)
+                    self.teams[team].change_driver(index, new_driver);
                 }
             }
             BuilderMessage::ChangeSeason(season) => {
@@ -154,7 +154,7 @@ impl Builder {
 
         let create = widget::button("create team")
             .on_press_maybe(
-                (self.teams.iter().all(|team| team.can_parse())
+                (self.teams.iter().all(TeamBuilder::can_parse)
                     && !self.teams.is_empty()
                     && (!self.enforce_uniqueness
                         || is_unique_lineups(self.teams.iter().flat_map(|x| x.iter()))))
@@ -223,7 +223,7 @@ impl TeamBuilder {
     fn new(id: usize, team_size: u8) -> TeamBuilder {
         let mut vec = Vec::with_capacity(team_size as usize);
         for _ in 0..team_size {
-            vec.push(String::new())
+            vec.push(String::new());
         }
         TeamBuilder {
             id,
@@ -250,7 +250,7 @@ impl TeamBuilder {
                     .on_input(move |num| BuilderMessage::ChangeDriverNum(self.id, idx, num))
                     .width(50),
                 )
-                .spacing(5)
+                .spacing(5);
         }
 
         let delete = widget::button("delete")
@@ -273,7 +273,7 @@ impl TeamBuilder {
     }
 
     fn increase_size(&mut self) {
-        self.numbers.push(String::new())
+        self.numbers.push(String::new());
     }
 
     fn decrease_size(&mut self) {

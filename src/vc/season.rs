@@ -188,7 +188,7 @@ impl Season {
             },
             SeasonMessage::Score => {
                 if let Err(se) = self.season.score(self.current_round) {
-                    self.warning = Some(se.to_string())
+                    self.warning = Some(se.to_string());
                 }
                 Task::none()
             }
@@ -197,9 +197,7 @@ impl Season {
                     .season
                     .get_lineup_at(self.current_round)
                     .into_iter()
-                    .map(|(team, lineup)| {
-                        (team, lineup.iter().map(|num| num.to_string()).collect())
-                    })
+                    .map(|(team, lineup)| (team, lineup.iter().map(ToString::to_string).collect()))
                     .collect();
                 self.popups.push(Popup::replace_all_from(
                     team_lineups,
