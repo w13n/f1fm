@@ -3,7 +3,7 @@ use crate::error::{ApiError, DownloadError};
 use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
-use crate::vc::style;
+use crate::vc::{VCMessage, style};
 use iced::Element;
 use iced::{Task, widget};
 use popup::{Popup, PopupMessage};
@@ -38,15 +38,15 @@ impl Season {
             warning: None,
         }
     }
-    pub fn view(&self) -> Element<SeasonMessage> {
+    pub fn view(&self) -> Element<VCMessage> {
         if !self.popups.is_empty() {
             self.popups
                 .last()
                 .expect("IMPOSSIBLE: CHECKED THAT POPUPS IS NOT EMPTY")
                 .view()
-                .map(SeasonMessage::PopupMessage)
+                .map(|x| SeasonMessage::PopupMessage(x).to())
         } else {
-            let exit_button = widget::button("back").on_press(SeasonMessage::Exit);
+            let exit_button = widget::button("back").on_press(VCMessage::WindowExit);
             let warning = widget::text!("{}", self.warning.as_ref().unwrap_or(&String::new()));
             let top = widget::text!(
                 "{}",
@@ -60,7 +60,7 @@ impl Season {
             );
             let round_row = widget::row![
                 widget::button("-").on_press_maybe(
-                    (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound)
+                    (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound.to())
                 ),
                 if let Some(round_name) = self
                     .round_names
@@ -71,7 +71,7 @@ impl Season {
                 } else {
                     widget::text!("{}", self.current_round)
                 },
-                widget::button("+").on_press(SeasonMessage::IncrementRound),
+                widget::button("+").on_press(SeasonMessage::IncrementRound.to()),
             ];
 
             let leaderboard = self.season.get_points_by(self.current_round);
@@ -102,16 +102,20 @@ impl Season {
 
             let add_button = match (prev_status, status) {
                 ((false, _, _), _) => widget::button("draft"),
-                (_, (false, _, _)) => widget::button("draft").on_press(SeasonMessage::DraftStart),
+                (_, (false, _, _)) => {
+                    widget::button("draft").on_press(SeasonMessage::DraftStart.to())
+                }
                 (_, (true, false, _)) => widget::button("score"),
-                (_, (true, true, false)) => widget::button("score").on_press(SeasonMessage::Score),
+                (_, (true, true, false)) => {
+                    widget::button("score").on_press(SeasonMessage::Score.to())
+                }
                 (_, (true, true, true)) => widget::button("scored"),
             };
 
             let delete_lineup_button = match (self.current_round, status, next_status) {
                 (1, _, _) => widget::button("delete lineup"),
                 (_, (true, _, false), (false, _, _)) => {
-                    widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup)
+                    widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup.to())
                 }
                 _ => widget::button("delete lineup"),
             }
@@ -120,14 +124,16 @@ impl Season {
             let edit_lineup_button = match (self.current_round, status, next_status) {
                 (1, _, _) => widget::button("edit lineup"),
                 (_, (true, _, false), (false, _, _)) => {
-                    widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup)
+                    widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup.to())
                 }
                 _ => widget::button("edit lineup"),
             }
             .style(style::button::success);
 
             let delete_round_button = match status {
-                (_, true, _) => widget::button("delete round").on_press(SeasonMessage::DeleteRound),
+                (_, true, _) => {
+                    widget::button("delete round").on_press(SeasonMessage::DeleteRound.to())
+                }
                 _ => widget::button("delete round"),
             }
             .style(style::button::danger);
@@ -264,9 +270,6 @@ impl Season {
                     Task::none()
                 }
             },
-            SeasonMessage::Exit => {
-                panic!("exit message passed to season")
-            }
         }
     }
 
@@ -309,5 +312,10 @@ pub enum SeasonMessage {
     DownloadRaceNames,
     DownloadedRaceNames(Result<HashMap<u8, String>, ApiError>),
     PopupMessage(PopupMessage),
-    Exit,
+}
+
+impl SeasonMessage {
+    fn to(self) -> VCMessage {
+        VCMessage::Season(self)
+    }
 }

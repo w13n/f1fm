@@ -48,42 +48,21 @@ impl ViewController {
     }
     pub fn view(&self) -> Element<VCMessage> {
         match &self.window {
-            Window::Season(season) => season.view().map(VCMessage::Season),
+            Window::Season(season) => season.view(),
             Window::Builder(builder) => builder.view().map(VCMessage::Builder),
             Window::Landing(landing) => landing.view().map(VCMessage::Landing),
         }
     }
 
     pub fn subscription(&self) -> Subscription<VCMessage> {
-        iced::time::every(Duration::from_secs(1)).map(|_| VCMessage::Save)
+        iced::time::every(Duration::from_secs(5)).map(|_| VCMessage::Save)
     }
 
     pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
         match message {
             VCMessage::Season(sm) => match &mut self.window {
-                Window::Season(s) => match sm {
-                    SeasonMessage::Exit => {
-                        let mut names: Vec<_> = self
-                            .seasons
-                            .iter()
-                            .map(|s| String::from(s.get_name()))
-                            .collect();
-
-                        names.insert(0, s.get_season().get_name().to_string());
-                        if let Window::Season(s) = std::mem::replace(
-                            &mut self.window,
-                            Window::Landing(Landing::new(names)),
-                        ) {
-                            self.seasons.insert(0, s.take_season());
-                        }
-                        Task::none()
-                    }
-                    _ => s.update(sm).map(VCMessage::Season),
-                },
-                _ => {
-                    // season may have been closed since this task happened closed, so we do nothing
-                    Task::none()
-                }
+                Window::Season(s) => s.update(sm).map(VCMessage::Season),
+                _ => Task::none(), // Season message may come after the window is closed, so we ignore them
             },
             VCMessage::Builder(bm) => match &mut self.window {
                 Window::Builder(b) => match bm {
@@ -157,6 +136,36 @@ impl ViewController {
                 }
                 Task::none()
             }
+            VCMessage::WindowExit => {
+                match &mut self.window {
+                    Window::Season(s) => {
+                        let mut names: Vec<_> = self
+                            .seasons
+                            .iter()
+                            .map(|s| String::from(s.get_name()))
+                            .collect();
+
+                        names.insert(0, s.get_season().get_name().to_string());
+                        if let Window::Season(s) = std::mem::replace(
+                            &mut self.window,
+                            Window::Landing(Landing::new(names)),
+                        ) {
+                            self.seasons.insert(0, s.take_season());
+                        }
+                        Task::none()
+                    }
+                    Window::Builder(b) => {
+                        self.window = Window::Landing(Landing::new(
+                            self.seasons
+                                .iter()
+                                .map(|s| String::from(s.get_name()))
+                                .collect(),
+                        ));
+                        Task::none()
+                    }
+                    Window::Landing(l) => Task::none(), //  we cant close the landing
+                }
+            }
         }
     }
 }
@@ -169,8 +178,9 @@ enum Window {
 
 #[derive(Debug, Clone)]
 pub enum VCMessage {
-    Save,
     Season(SeasonMessage),
     Builder(BuilderMessage),
     Landing(LandingMessage),
+    Save,
+    WindowExit,
 }
