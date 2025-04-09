@@ -79,22 +79,18 @@ impl RollOnDrafter {
     }
 
     fn can_draft(&self) -> bool {
-        if self.enforce_uniqueness
-            && !is_unique_lineups(
-                self.drivers.values().zip(
-                    self.previous_lineup
-                        .values()
-                        .flatten()
-                        .map(|n| n.to_string()),
-                ),
-            )
-        {
-            return false;
-        }
-
         self.drivers
             .iter()
             .all(|(_team, num)| is_parsable_driver(num))
+            && self.drivers.len() == self.previous_lineup.len()
+            && (!self.enforce_uniqueness
+                || is_unique_lineups(
+                    self.previous_lineup
+                        .values()
+                        .flatten()
+                        .map(|x| *x)
+                        .chain(self.drivers.values().map(|x| x.parse::<u8>().unwrap())),
+                ))
     }
 }
 
