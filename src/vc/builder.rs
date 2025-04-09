@@ -83,10 +83,14 @@ impl Builder {
                 .get_mut(id)
                 .expect("id out of sync")
                 .set_name(name),
+            BuilderMessage::Exit => {
+                panic!("exit message passed to builder");
+            }
         }
     }
 
     pub fn view(&self) -> Element<BuilderMessage> {
+        let exit_button = widget::button("back").on_press(BuilderMessage::Exit);
         let name = widget::text_input("fantasy season name here", &self.name)
             .on_input(BuilderMessage::ChangeName)
             .style(super::style::text_input::default);
@@ -159,6 +163,7 @@ impl Builder {
             .style(super::style::button::primary);
 
         widget::column![
+            exit_button,
             name,
             team_sizes,
             add_team,
@@ -205,6 +210,7 @@ pub enum BuilderMessage {
     ChangeGridSize(String),
     ToggleEnforceUniqueness(bool),
     Create,
+    Exit,
 }
 
 struct TeamBuilder {

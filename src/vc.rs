@@ -75,6 +75,15 @@ impl ViewController {
                             Task::done(VCMessage::Season(SeasonMessage::DownloadRaceNames)),
                         ])
                     }
+                    BuilderMessage::Exit => {
+                        self.window = Window::Landing(Landing::new(
+                            self.seasons
+                                .iter()
+                                .map(|s| String::from(s.get_name()))
+                                .collect(),
+                        ));
+                        Task::none()
+                    }
                     _ => {
                         b.update(bm);
                         Task::none()
