@@ -7,25 +7,28 @@ use iced::widget;
 use std::collections::HashMap;
 
 pub struct RollOnDrafter {
-    previous_lineup: HashMap<String, Vec<u8>>,
+    returning_lineup: HashMap<String, Vec<u8>>,
     drivers: HashMap<String, String>,
     enforce_uniqueness: bool,
 }
 
 impl RollOnDrafter {
     pub(super) fn new(
-        previous_lineup: HashMap<String, Vec<u8>>,
+        mut previous_lineup: HashMap<String, Vec<u8>>,
         enforce_uniqueness: bool,
     ) -> RollOnDrafter {
+        previous_lineup.values_mut().for_each(|x| {
+            x.pop();
+        });
         RollOnDrafter {
-            previous_lineup,
+            returning_lineup: previous_lineup,
             drivers: HashMap::new(),
             enforce_uniqueness,
         }
     }
     pub(super) fn view(&self) -> Element<PopupMessage> {
         let mut draft_team = Vec::new();
-        for team in self.previous_lineup.keys() {
+        for team in self.returning_lineup.keys() {
             let mut row = Vec::new();
             row.push(widget::text!("{}", team).into());
 
@@ -39,10 +42,9 @@ impl RollOnDrafter {
                     .into(),
             );
 
-            for driver in self.previous_lineup.get(team).unwrap() {
+            for driver in self.returning_lineup.get(team).unwrap() {
                 row.push(widget::text! {"{:02}", driver}.into());
             }
-            row.pop();
 
             draft_team.push(widget::Row::from_vec(row).into());
         }
@@ -82,10 +84,10 @@ impl RollOnDrafter {
         self.drivers
             .iter()
             .all(|(_team, num)| is_parsable_driver(num))
-            && self.drivers.len() == self.previous_lineup.len()
+            && self.drivers.len() == self.returning_lineup.len()
             && (!self.enforce_uniqueness
                 || is_unique_lineups(
-                    self.previous_lineup
+                    self.returning_lineup
                         .values()
                         .flatten()
                         .copied()
