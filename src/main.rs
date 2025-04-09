@@ -9,7 +9,6 @@ mod fantasy_season;
 mod utils;
 mod vc;
 
-#[allow(clippy::unreadable_literal)]
 fn main() {
     iced::application("test", ViewController::update, ViewController::view)
         .theme(|_| {
