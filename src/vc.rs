@@ -14,6 +14,8 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::time::Duration;
 
+const PADDING: u16 = 7;
+
 pub(super) struct ViewController {
     window: Window,
     seasons: Vec<FantasySeason>,
@@ -47,11 +49,13 @@ impl ViewController {
         }
     }
     pub fn view(&self) -> Element<VCMessage> {
-        match &self.window {
+        iced::widget::container(match &self.window {
             Window::Season(season) => season.view(),
             Window::Builder(builder) => builder.view(),
             Window::Landing(landing) => landing.view(),
-        }
+        })
+        .padding(PADDING)
+        .into()
     }
 
     pub fn subscription(&self) -> Subscription<VCMessage> {
@@ -112,7 +116,7 @@ impl ViewController {
                         }
                         Task::none()
                     }
-                    Window::Builder(b) => {
+                    Window::Builder(_b) => {
                         self.window = Window::Landing(Landing::new(
                             self.seasons
                                 .iter()

@@ -7,7 +7,7 @@ edition = "2024"
 [dependencies]
 reqwest = { version = "0.12", features = ["json"] }
 ergast-rs = "0.3.2"
-iced = { version = "0.13", features = ["tokio"] }
+iced = { version = "0.13", features = ["tokio", "advanced"] }
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
 time = {version = "0.3"}
 directories-next = "2"
