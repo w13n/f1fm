@@ -1,6 +1,7 @@
 use crate::vc::ViewController;
-use iced::Theme;
+use iced::font::Weight;
 use iced::theme::Palette;
+use iced::{Font, Theme};
 use std::error::Error;
 
 mod api;
@@ -8,6 +9,9 @@ mod error;
 mod fantasy_season;
 mod utils;
 mod vc;
+
+const F1: &[u8] = include_bytes!("../assets/Formula1-Regular.ttf");
+const FONT: &[u8] = include_bytes!("../assets/IBMPlexMono-Bold.ttf");
 
 fn main() {
     iced::application("test", ViewController::update, ViewController::view)
@@ -24,6 +28,13 @@ fn main() {
             )
         })
         .subscription(ViewController::subscription)
+        .font(F1)
+        .font(FONT)
+        .default_font({
+            let mut font = Font::with_name("IBM Plex Mono Bold");
+            font.weight = Weight::Bold;
+            font
+        })
         .run()
         .expect("TODO: panic message");
 }
