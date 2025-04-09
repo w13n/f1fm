@@ -1108,7 +1108,6 @@ dependencies = [
  "postcard",
  "reqwest 0.12.15",
  "serde",
- "serde_json",
  "time",
  "tokio",
 ]
