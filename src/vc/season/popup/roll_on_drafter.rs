@@ -88,7 +88,7 @@ impl RollOnDrafter {
                     self.previous_lineup
                         .values()
                         .flatten()
-                        .map(|x| *x)
+                        .copied()
                         .chain(self.drivers.values().map(|x| x.parse::<u8>().unwrap())),
                 ))
     }
