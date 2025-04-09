@@ -61,9 +61,28 @@ impl ViewController {
     pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
         match message {
             VCMessage::Season(sm) => match &mut self.window {
-                Window::Season(s) => s.update(sm).map(VCMessage::Season),
+                Window::Season(s) => match sm {
+                    SeasonMessage::Exit => {
+                        let mut names: Vec<_> = self
+                            .seasons
+                            .iter()
+                            .map(|s| String::from(s.get_name()))
+                            .collect();
+
+                        names.insert(0, s.get_season().get_name().to_string());
+                        if let Window::Season(s) = std::mem::replace(
+                            &mut self.window,
+                            Window::Landing(Landing::new(names)),
+                        ) {
+                            self.seasons.insert(0, s.take_season());
+                        }
+                        Task::none()
+                    }
+                    _ => s.update(sm).map(VCMessage::Season),
+                },
                 _ => {
-                    panic!("SeasonMessage created for non season")
+                    // season may have been closed since this task happened closed, so we do nothing
+                    Task::none()
                 }
             },
             VCMessage::Builder(bm) => match &mut self.window {

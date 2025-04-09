@@ -24,6 +24,10 @@ impl Season {
     pub fn get_season(&self) -> &FantasySeason {
         &self.season
     }
+
+    pub fn take_season(self) -> FantasySeason {
+        self.season
+    }
     pub fn new(season: FantasySeason) -> Season {
         Season {
             season,
@@ -42,6 +46,7 @@ impl Season {
                 .view()
                 .map(SeasonMessage::PopupMessage)
         } else {
+            let exit_button = widget::button("back").on_press(SeasonMessage::Exit);
             let warning = widget::text!("{}", self.warning.as_ref().unwrap_or(&String::new()));
             let top = widget::text!(
                 "{}",
@@ -135,6 +140,7 @@ impl Season {
             ];
 
             widget::column![
+                exit_button,
                 warning,
                 top,
                 round_row,
@@ -260,6 +266,9 @@ impl Season {
                     Task::none()
                 }
             },
+            SeasonMessage::Exit => {
+                panic!("exit message passed to season")
+            }
         }
     }
 
@@ -302,4 +311,5 @@ pub enum SeasonMessage {
     DownloadRaceNames,
     DownloadedRaceNames(Result<HashMap<u8, String>, ApiError>),
     PopupMessage(PopupMessage),
+    Exit,
 }
