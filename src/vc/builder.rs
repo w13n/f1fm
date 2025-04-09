@@ -2,6 +2,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::utils::*;
+use crate::vc::VCMessage;
 use iced::{Element, widget};
 use time::OffsetDateTime;
 
@@ -75,42 +76,36 @@ impl Builder {
                 }
             }
             BuilderMessage::ToggleEnforceUniqueness(bool) => self.enforce_uniqueness = bool,
-            BuilderMessage::Create => {
-                panic!("create message passed to builder");
-            }
             BuilderMessage::ChangeTeamName(id, name) => self
                 .teams
                 .get_mut(id)
                 .expect("id out of sync")
                 .set_name(name),
-            BuilderMessage::Exit => {
-                panic!("exit message passed to builder");
-            }
         }
     }
 
-    pub fn view(&self) -> Element<BuilderMessage> {
-        let exit_button = widget::button("back").on_press(BuilderMessage::Exit);
+    pub fn view(&self) -> Element<VCMessage> {
+        let exit_button = widget::button("back").on_press(VCMessage::WindowExit);
         let name = widget::text_input("fantasy season name here", &self.name)
-            .on_input(BuilderMessage::ChangeName)
+            .on_input(|x| BuilderMessage::ChangeName(x).to())
             .style(super::style::text_input::default);
 
         let team_sizes = widget::row![
             widget::button("-")
                 .on_press_maybe(if self.team_size > 1 {
-                    Some(BuilderMessage::DecreaseTeamSize)
+                    Some(BuilderMessage::DecreaseTeamSize.to())
                 } else {
                     None
                 })
                 .style(super::style::button::secondary),
             widget::button("+")
-                .on_press(BuilderMessage::IncreaseTeamSize)
+                .on_press(BuilderMessage::IncreaseTeamSize.to())
                 .style(super::style::button::secondary),
         ]
         .spacing(10);
 
         let add_team = widget::button("add team")
-            .on_press(BuilderMessage::AddTeam)
+            .on_press(BuilderMessage::AddTeam.to())
             .style(super::style::button::secondary);
 
         let teams = widget::container(widget::scrollable(
@@ -126,7 +121,7 @@ impl Builder {
                 ScoreChoice::Domination,
             ],
             Some(self.score_choice),
-            BuilderMessage::ScoreChoiceSelected,
+            |x| BuilderMessage::ScoreChoiceSelected(x).to(),
         );
 
         let draft_choice = widget::pick_list(
@@ -136,21 +131,21 @@ impl Builder {
                 DraftChoice::ReplaceAll,
             ],
             Some(self.draft_choice),
-            BuilderMessage::DraftChoiceSelected,
+            |x| BuilderMessage::DraftChoiceSelected(x).to(),
         )
         .style(super::style::pick_list::default)
         .menu_style(super::style::pick_list::default_menu);
 
         let season = widget::text_input("season", &self.season)
-            .on_input(BuilderMessage::ChangeSeason)
+            .on_input(|x| BuilderMessage::ChangeSeason(x).to())
             .style(super::style::text_input::default);
 
         let grid_size = widget::text_input("grid size", &self.grid_size)
-            .on_input(BuilderMessage::ChangeGridSize)
+            .on_input(|x| BuilderMessage::ChangeGridSize(x).to())
             .style(super::style::text_input::default);
 
         let uniqueness = widget::toggler(self.enforce_uniqueness)
-            .on_toggle(BuilderMessage::ToggleEnforceUniqueness);
+            .on_toggle(|x| BuilderMessage::ToggleEnforceUniqueness(x).to());
 
         let create = widget::button("create team")
             .on_press_maybe(
@@ -158,7 +153,7 @@ impl Builder {
                     && !self.teams.is_empty()
                     && (!self.enforce_uniqueness
                         || is_unique_lineups(self.teams.iter().flat_map(|x| x.iter()))))
-                .then_some(BuilderMessage::Create),
+                .then_some(VCMessage::CreateFromBuilder),
             )
             .style(super::style::button::primary);
 
@@ -209,8 +204,12 @@ pub enum BuilderMessage {
     ChangeSeason(String),
     ChangeGridSize(String),
     ToggleEnforceUniqueness(bool),
-    Create,
-    Exit,
+}
+
+impl BuilderMessage {
+    fn to(self) -> VCMessage {
+        VCMessage::Builder(self)
+    }
 }
 
 struct TeamBuilder {
@@ -232,9 +231,9 @@ impl TeamBuilder {
         }
     }
 
-    fn view(&self) -> Element<BuilderMessage> {
+    fn view(&self) -> Element<VCMessage> {
         let name = widget::text_input("name of team", &self.name)
-            .on_input(|name| BuilderMessage::ChangeTeamName(self.id, name))
+            .on_input(|name| BuilderMessage::ChangeTeamName(self.id, name).to())
             .width(200)
             .style(super::style::text_input::default);
 
@@ -247,14 +246,14 @@ impl TeamBuilder {
                         self.numbers.get(idx).expect("cannot happen"),
                     )
                     .style(super::style::text_input::default)
-                    .on_input(move |num| BuilderMessage::ChangeDriverNum(self.id, idx, num))
+                    .on_input(move |num| BuilderMessage::ChangeDriverNum(self.id, idx, num).to())
                     .width(50),
                 )
                 .spacing(5);
         }
 
         let delete = widget::button("delete")
-            .on_press(BuilderMessage::DeleteTeam(self.id))
+            .on_press(BuilderMessage::DeleteTeam(self.id).to())
             .style(super::style::button::danger);
 
         widget::row![name, drivers, delete].spacing(10).into()

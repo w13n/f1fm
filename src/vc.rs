@@ -49,7 +49,7 @@ impl ViewController {
     pub fn view(&self) -> Element<VCMessage> {
         match &self.window {
             Window::Season(season) => season.view(),
-            Window::Builder(builder) => builder.view().map(VCMessage::Builder),
+            Window::Builder(builder) => builder.view(),
             Window::Landing(landing) => landing.view().map(VCMessage::Landing),
         }
     }
@@ -65,31 +65,11 @@ impl ViewController {
                 _ => Task::none(), // Season message may come after the window is closed, so we ignore them
             },
             VCMessage::Builder(bm) => match &mut self.window {
-                Window::Builder(b) => match bm {
-                    BuilderMessage::Create => {
-                        self.window = Window::Season(Season::new(b.create()));
-                        Task::batch(vec![
-                            Task::done(VCMessage::Season(SeasonMessage::DownloadFirstRace)),
-                            Task::done(VCMessage::Season(SeasonMessage::DownloadRaceNames)),
-                        ])
-                    }
-                    BuilderMessage::Exit => {
-                        self.window = Window::Landing(Landing::new(
-                            self.seasons
-                                .iter()
-                                .map(|s| String::from(s.get_name()))
-                                .collect(),
-                        ));
-                        Task::none()
-                    }
-                    _ => {
-                        b.update(bm);
-                        Task::none()
-                    }
-                },
-                _ => {
-                    panic!("BuilderMessage created for non builder")
+                Window::Builder(b) => {
+                    b.update(bm);
+                    Task::none()
                 }
+                _ => Task::none(), // Builder message may (in the future) come after the window is closed, so we ignore them
             },
             VCMessage::Landing(lm) => match lm {
                 LandingMessage::Pick(idx) => {
@@ -166,6 +146,18 @@ impl ViewController {
                     Window::Landing(l) => Task::none(), //  we cant close the landing
                 }
             }
+            VCMessage::CreateFromBuilder => match &mut self.window {
+                Window::Builder(b) => {
+                    self.window = Window::Season(Season::new(b.create()));
+                    Task::batch(vec![
+                        Task::done(VCMessage::Season(SeasonMessage::DownloadFirstRace)),
+                        Task::done(VCMessage::Season(SeasonMessage::DownloadRaceNames)),
+                    ])
+                }
+                _ => {
+                    panic!("IMPOSSIBLE: CFB MESSAGE PASSED WHEN NO BUILDER IS PRESENT")
+                }
+            },
         }
     }
 }
@@ -183,4 +175,5 @@ pub enum VCMessage {
     Landing(LandingMessage),
     Save,
     WindowExit,
+    CreateFromBuilder,
 }
