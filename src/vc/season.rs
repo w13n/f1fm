@@ -67,6 +67,7 @@ impl Season {
             }
             .align_x(Alignment::Center)
             .width(Length::Fill)
+            .size(20)
             .font(Font::with_name("Formula1"));
 
             let top_row = widget::row![
@@ -169,10 +170,28 @@ impl Season {
             let leaderboard = self.season.get_points_by(self.current_round);
             let round_points = self.season.get_points_at(self.current_round);
 
-            let leadership_col: Vec<_> = leaderboard
-                .into_iter()
-                .map(|tp| widget::text!("{:04}: {}", tp.1, tp.0).into())
-                .collect();
+            let digits = leaderboard
+                .iter()
+                .map(|(_, digit)| digit.checked_ilog10().unwrap_or_default())
+                .max()
+                .unwrap_or(1) as usize
+                + 1;
+
+            let leadership_col = widget::column![
+                widget::text("total points"),
+                table_view(vec![
+                    leaderboard
+                        .iter()
+                        .map(|(team, _)| widget::text!("{}", team).into())
+                        .collect(),
+                    leaderboard
+                        .iter()
+                        .map(|(_, points)| widget::text!("  {:0digits$}", points).into())
+                        .collect(),
+                ])
+            ]
+            .width(Length::Fill)
+            .align_x(Alignment::Center);
 
             let round_col: Vec<_> = match round_points {
                 None => {
@@ -184,13 +203,19 @@ impl Season {
                     .collect(),
             };
 
+            let middle_row = widget::row![
+                leadership_col,
+                widget::Column::from_vec(round_col),
+                widget::horizontal_space(),
+            ]
+            .width(Length::Fill);
+
             // end content.
 
             widget::column![
                 top_row,
                 warning_or_status,
-                widget::Column::from_vec(leadership_col),
-                widget::Column::from_vec(round_col),
+                middle_row,
                 widget::vertical_space(),
                 bottom_row
             ]
@@ -350,6 +375,16 @@ async fn build_with_round(round: u8, season: u16) -> (u8, Result<RaceResults, Do
 async fn download_race_names(season: u16) -> Result<HashMap<u8, String>, ApiError> {
     let api = Api::new();
     api.get_race_names(season).await
+}
+
+fn table_view(rows: Vec<Vec<Element<VCMessage>>>) -> Element<VCMessage> {
+    widget::container(widget::Row::from_iter(
+        rows.into_iter()
+            .map(|columns| widget::Column::from_vec(columns).into()),
+    ))
+    .padding(3)
+    .style(style::container::content)
+    .into()
 }
 
 #[derive(Debug, Clone)]

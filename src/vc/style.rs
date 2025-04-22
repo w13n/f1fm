@@ -132,16 +132,56 @@ pub mod pick_list {
 }
 
 pub mod container {
+    use iced::border::Radius;
     use iced::widget::container::Style;
-    use iced::{Background, Shadow, Theme, border};
+    use iced::{Background, Border, Shadow, Theme, border};
 
-    pub fn background(theme: &Theme) -> Style {
+    pub fn content(theme: &Theme) -> Style {
+        let ep = theme.extended_palette();
+
+        Style {
+            text_color: Some(ep.secondary.weak.text),
+            background: Some(Background::Color(ep.secondary.weak.color)),
+            border: border::rounded(5)
+                .width(2)
+                .color(ep.background.strong.color),
+            shadow: Shadow::default(),
+        }
+    }
+
+    pub fn row_even(theme: &Theme) -> Style {
+        let ep = theme.extended_palette();
+
+        Style {
+            text_color: Some(ep.background.strong.text),
+            background: Some(Background::Color(ep.background.strong.color)),
+            border: Border::default(),
+            shadow: Shadow::default(),
+        }
+    }
+
+    pub fn row_odd(theme: &Theme) -> Style {
+        let ep = theme.extended_palette();
+
+        Style {
+            text_color: Some(ep.background.weak.text),
+            background: Some(Background::Color(ep.background.weak.color)),
+            border: Border::default(),
+            shadow: Shadow::default(),
+        }
+    }
+
+    pub fn rows(theme: &Theme) -> Style {
         let ep = theme.extended_palette();
 
         Style {
             text_color: None,
-            background: Some(Background::Color(ep.background.base.color)),
-            border: border::rounded(5),
+            background: None,
+            border: Border {
+                color: ep.secondary.base.color,
+                width: 3.,
+                radius: Radius::default(),
+            },
             shadow: Shadow::default(),
         }
     }
