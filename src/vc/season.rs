@@ -5,12 +5,13 @@ use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::vc::style::container::content_title;
 use crate::vc::{PADDING, VCMessage, style};
-use iced::widget::text::{Wrapping, danger, secondary};
+use iced::widget::text::{danger, secondary};
 use iced::{Alignment, Element, Font, Length};
 use iced::{Task, widget};
 use popup::{Popup, PopupMessage};
 use std::collections::HashMap;
 use std::time::Duration;
+use unicode_width::UnicodeWidthStr;
 
 pub mod popup;
 
@@ -172,39 +173,24 @@ impl Season {
             let round_points = self.season.get_points_at(self.current_round);
 
             let leadership_col = table_view(
-                widget::text("total points").into(),
+                "total points",
+                leaderboard.iter().map(|(team, _)| team.as_str()).collect(),
                 leaderboard
                     .iter()
-                    .map(|(team, _)| widget::text!("{}", team).wrapping(Wrapping::None).into())
-                    .collect(),
-                leaderboard
-                    .iter()
-                    .map(|(_, points)| widget::text!("{}", points).wrapping(Wrapping::None).into())
+                    .map(|(_, points)| points.to_string())
                     .collect(),
             );
 
             let round_col: Element<VCMessage> = match round_points {
                 None => table_view(
-                    widget::text("points this round").into(),
-                    leaderboard
-                        .iter()
-                        .map(|(team, _)| widget::text!("{}", team).wrapping(Wrapping::None).into())
-                        .collect(),
-                    leaderboard
-                        .iter()
-                        .map(|_| widget::text!("0").into())
-                        .collect(),
+                    "points this round",
+                    leaderboard.iter().map(|(team, _)| team.as_str()).collect(),
+                    leaderboard.iter().map(|_| "0".to_string()).collect(),
                 ),
                 Some(vec) => table_view(
-                    widget::text("points this round").into(),
-                    vec.iter()
-                        .map(|(team, _)| widget::text!("{}", team).wrapping(Wrapping::None).into())
-                        .collect(),
-                    vec.iter()
-                        .map(|(_, points)| {
-                            widget::text!("{}", points).wrapping(Wrapping::None).into()
-                        })
-                        .collect(),
+                    "points this round",
+                    vec.iter().map(|(team, _)| team.as_str()).collect(),
+                    vec.iter().map(|(_, points)| points.to_string()).collect(),
                 ),
             };
 
@@ -386,19 +372,25 @@ async fn download_race_names(season: u16) -> Result<HashMap<u8, String>, ApiErro
     api.get_race_names(season).await
 }
 
-fn table_view<'a>(
-    title: Element<'a, VCMessage>,
-    teams: Vec<Element<'a, VCMessage>>,
-    data: Vec<Element<'a, VCMessage>>,
-) -> Element<'a, VCMessage> {
+fn table_view<'a>(title: &str, teams: Vec<&str>, data: Vec<String>) -> Element<'a, VCMessage> {
+    let table_width = title.width() + 2;
+    let data_width_max = data.iter().map(|x| x.width()).max().unwrap_or_default();
+    let title_width = (table_width - data_width_max).max(0);
+
     widget::container(
         widget::column![
-            title,
+            widget::text!("{}", title),
             widget::container(
                 widget::row![
-                    widget::Column::from_vec(teams),
-                    widget::horizontal_space(),
-                    widget::Column::from_vec(data).align_x(Alignment::End),
+                    widget::Column::from_iter(
+                        teams
+                            .into_iter()
+                            .map(|x| widget::text!("{x:title_width$}").into())
+                    ),
+                    widget::Column::from_iter(
+                        data.into_iter().map(|x| widget::text!("{x}").into())
+                    )
+                    .align_x(Alignment::End),
                 ]
                 .spacing(PADDING * 2)
             )
