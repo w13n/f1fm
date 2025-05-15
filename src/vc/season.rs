@@ -172,33 +172,61 @@ impl Season {
             let leaderboard = self.season.get_points_by(self.current_round);
             let round_points = self.season.get_points_at(self.current_round);
 
-            let leadership_col = table_view(
-                "total points",
-                leaderboard.iter().map(|(team, _)| team.as_str()).collect(),
-                leaderboard
-                    .iter()
-                    .map(|(_, points)| points.to_string())
-                    .collect(),
-            );
+            let data_col = leaderboard
+                .iter()
+                .map(|(_, points)| points.to_string())
+                .collect();
+            let team_col: Vec<_> = leaderboard.into_iter().map(|(team, _)| team).collect();
+            let leadership_col = table_view("total points", team_col.clone(), data_col);
 
             let round_col: Element<VCMessage> = match round_points {
-                None => table_view(
-                    "points this round",
-                    leaderboard.iter().map(|(team, _)| team.as_str()).collect(),
-                    leaderboard.iter().map(|_| "0".to_string()).collect(),
-                ),
-                Some(vec) => table_view(
-                    "points this round",
-                    vec.iter().map(|(team, _)| team.as_str()).collect(),
-                    vec.iter().map(|(_, points)| points.to_string()).collect(),
-                ),
+                None => {
+                    let data_col = round_points.iter().map(|_| "0".to_string()).collect();
+                    table_view("points this round", team_col, data_col)
+                }
+                Some(vec) => {
+                    let data_col = vec.iter().map(|(_, points)| points.to_string()).collect();
+                    table_view(
+                        "points this round",
+                        vec.into_iter().map(|(team, _)| team).collect(),
+                        data_col,
+                    )
+                }
             };
+
+            let (team_col, data_col) = if self.season.get_status_at(self.current_round).0 {
+                let mut round_lineup: Vec<_> = self
+                    .season
+                    .get_lineup_at(self.current_round)
+                    .into_iter()
+                    .collect();
+                round_lineup.sort();
+
+                let data_col = round_lineup
+                    .iter()
+                    .map(|(_, points)| {
+                        points.iter().fold(String::new(), |mut x, y| {
+                            x.push(' ');
+                            x.push_str(&y.to_string());
+                            x
+                        })
+                    })
+                    .collect();
+                (round_lineup.into_iter().map(|x| x.0).collect(), data_col)
+            } else {
+                let mut teams = self.season.get_team_names();
+                teams.sort();
+                let size = teams.len();
+                (teams, vec![String::from("not yet drafted"); size])
+            };
+
+            let lineup_table = table_view("lineup this round", team_col, data_col);
 
             let middle_row = widget::row![
                 widget::horizontal_space(),
                 leadership_col,
                 round_col,
-                widget::horizontal_space(),
+                lineup_table,
                 widget::horizontal_space(),
             ]
             .width(Length::Fill)
@@ -372,7 +400,7 @@ async fn download_race_names(season: u16) -> Result<HashMap<u8, String>, ApiErro
     api.get_race_names(season).await
 }
 
-fn table_view<'a>(title: &str, teams: Vec<&str>, data: Vec<String>) -> Element<'a, VCMessage> {
+fn table_view<'a>(title: &str, teams: Vec<String>, data: Vec<String>) -> Element<'a, VCMessage> {
     let table_width = title.width() + 2;
     let data_width_max = data.iter().map(|x| x.width()).max().unwrap_or_default();
     let title_width = (table_width - data_width_max).max(0);
