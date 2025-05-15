@@ -142,46 +142,18 @@ pub mod container {
         Style {
             text_color: Some(ep.secondary.weak.text),
             background: Some(Background::Color(ep.secondary.weak.color)),
-            border: border::rounded(5)
-                .width(2)
-                .color(ep.background.strong.color),
+            border: border::rounded(5).width(2).color(ep.secondary.strong.color),
             shadow: Shadow::default(),
         }
     }
 
-    pub fn row_even(theme: &Theme) -> Style {
+    pub fn content_title(theme: &Theme) -> Style {
         let ep = theme.extended_palette();
 
         Style {
-            text_color: Some(ep.background.strong.text),
-            background: Some(Background::Color(ep.background.strong.color)),
-            border: Border::default(),
-            shadow: Shadow::default(),
-        }
-    }
-
-    pub fn row_odd(theme: &Theme) -> Style {
-        let ep = theme.extended_palette();
-
-        Style {
-            text_color: Some(ep.background.weak.text),
-            background: Some(Background::Color(ep.background.weak.color)),
-            border: Border::default(),
-            shadow: Shadow::default(),
-        }
-    }
-
-    pub fn rows(theme: &Theme) -> Style {
-        let ep = theme.extended_palette();
-
-        Style {
-            text_color: None,
-            background: None,
-            border: Border {
-                color: ep.secondary.base.color,
-                width: 3.,
-                radius: Radius::default(),
-            },
+            text_color: Some(ep.secondary.strong.text),
+            background: Some(Background::Color(ep.secondary.strong.color)),
+            border: border::rounded(5),
             shadow: Shadow::default(),
         }
     }

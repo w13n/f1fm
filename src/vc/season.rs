@@ -3,8 +3,9 @@ use crate::error::{ApiError, DownloadError};
 use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
+use crate::vc::style::container::content_title;
 use crate::vc::{PADDING, VCMessage, style};
-use iced::widget::text::{danger, secondary};
+use iced::widget::text::{Wrapping, danger, secondary};
 use iced::{Alignment, Element, Font, Length};
 use iced::{Task, widget};
 use popup::{Popup, PopupMessage};
@@ -170,51 +171,59 @@ impl Season {
             let leaderboard = self.season.get_points_by(self.current_round);
             let round_points = self.season.get_points_at(self.current_round);
 
-            let digits = leaderboard
-                .iter()
-                .map(|(_, digit)| digit.checked_ilog10().unwrap_or_default())
-                .max()
-                .unwrap_or(1) as usize
-                + 1;
-
-            let leadership_col = widget::column![
-                widget::text("total points"),
-                table_view(vec![
-                    leaderboard
-                        .iter()
-                        .map(|(team, _)| widget::text!("{}", team).into())
-                        .collect(),
-                    leaderboard
-                        .iter()
-                        .map(|(_, points)| widget::text!("  {:0digits$}", points).into())
-                        .collect(),
-                ])
-            ]
-            .width(Length::Fill)
-            .align_x(Alignment::Center);
-
-            let round_col: Vec<_> = match round_points {
-                None => {
-                    vec![widget::text!("round not yet scored").into()]
-                }
-                Some(vec) => vec
-                    .into_iter()
-                    .map(|tp| widget::text!("{:04}: {}", tp.1, tp.0).into())
+            let leadership_col = table_view(
+                widget::text("total points").into(),
+                leaderboard
+                    .iter()
+                    .map(|(team, _)| widget::text!("{}", team).wrapping(Wrapping::None).into())
                     .collect(),
+                leaderboard
+                    .iter()
+                    .map(|(_, points)| widget::text!("{}", points).wrapping(Wrapping::None).into())
+                    .collect(),
+            );
+
+            let round_col: Element<VCMessage> = match round_points {
+                None => table_view(
+                    widget::text("points this round").into(),
+                    leaderboard
+                        .iter()
+                        .map(|(team, _)| widget::text!("{}", team).wrapping(Wrapping::None).into())
+                        .collect(),
+                    leaderboard
+                        .iter()
+                        .map(|_| widget::text!("0").into())
+                        .collect(),
+                ),
+                Some(vec) => table_view(
+                    widget::text("points this round").into(),
+                    vec.iter()
+                        .map(|(team, _)| widget::text!("{}", team).wrapping(Wrapping::None).into())
+                        .collect(),
+                    vec.iter()
+                        .map(|(_, points)| {
+                            widget::text!("{}", points).wrapping(Wrapping::None).into()
+                        })
+                        .collect(),
+                ),
             };
 
             let middle_row = widget::row![
+                widget::horizontal_space(),
                 leadership_col,
-                widget::Column::from_vec(round_col),
+                round_col,
+                widget::horizontal_space(),
                 widget::horizontal_space(),
             ]
-            .width(Length::Fill);
+            .width(Length::Fill)
+            .spacing(PADDING);
 
             // end content.
 
             widget::column![
                 top_row,
                 warning_or_status,
+                widget::vertical_space(),
                 middle_row,
                 widget::vertical_space(),
                 bottom_row
@@ -377,13 +386,29 @@ async fn download_race_names(season: u16) -> Result<HashMap<u8, String>, ApiErro
     api.get_race_names(season).await
 }
 
-fn table_view(rows: Vec<Vec<Element<VCMessage>>>) -> Element<VCMessage> {
-    widget::container(widget::Row::from_iter(
-        rows.into_iter()
-            .map(|columns| widget::Column::from_vec(columns).into()),
-    ))
-    .padding(3)
-    .style(style::container::content)
+fn table_view<'a>(
+    title: Element<'a, VCMessage>,
+    teams: Vec<Element<'a, VCMessage>>,
+    data: Vec<Element<'a, VCMessage>>,
+) -> Element<'a, VCMessage> {
+    widget::container(
+        widget::column![
+            title,
+            widget::container(
+                widget::row![
+                    widget::Column::from_vec(teams),
+                    widget::horizontal_space(),
+                    widget::Column::from_vec(data).align_x(Alignment::End),
+                ]
+                .spacing(PADDING * 2)
+            )
+            .padding(3)
+            .style(style::container::content)
+        ]
+        .width(Length::Shrink)
+        .align_x(Alignment::Center),
+    )
+    .style(content_title)
     .into()
 }
 
