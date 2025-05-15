@@ -35,11 +35,11 @@ impl ViewController {
         let mut seasons_path = save_path.clone();
         seasons_path.push("seasons_v1");
         let mut seasons_file = Vec::with_capacity(100);
-        File::open(seasons_path)
-            .unwrap()
-            .read_to_end(&mut seasons_file)
-            .unwrap();
-        let seasons: Vec<FantasySeason> = postcard::from_bytes(&seasons_file).unwrap();
+        if let Ok(mut file) = File::open(seasons_path) {
+            file.read_to_end(&mut seasons_file).unwrap();
+        }
+
+        let seasons: Vec<FantasySeason> = postcard::from_bytes(&seasons_file).unwrap_or_default();
         let season_names = seasons.iter().map(|s| String::from(s.get_name())).collect();
 
         ViewController {
