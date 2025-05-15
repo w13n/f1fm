@@ -132,9 +132,8 @@ pub mod pick_list {
 }
 
 pub mod container {
-    use iced::border::Radius;
     use iced::widget::container::Style;
-    use iced::{Background, Border, Shadow, Theme, border};
+    use iced::{Background, Shadow, Theme, border};
 
     pub fn content(theme: &Theme) -> Style {
         let ep = theme.extended_palette();
