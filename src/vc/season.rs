@@ -52,198 +52,237 @@ impl Season {
                 .view()
                 .map(|x| SeasonMessage::PopupMessage(x).to())
         } else {
-            // top row start
-            let exit_button = widget::button(widget::text!["exit"].align_x(Alignment::Center))
-                .on_press(VCMessage::WindowExit)
-                .style(style::button::secondary)
-                .width(Length::Fixed(75.));
-
-            let round_name = if let Some(round_name) = self
-                .round_names
-                .as_ref()
-                .and_then(|hash| hash.get(&self.current_round))
-            {
-                widget::text!("{}", round_name)
-            } else {
-                widget::text!("Round {}", self.current_round)
-            }
-            .align_x(Alignment::Center)
-            .width(Length::Fill)
-            .size(20)
-            .font(Font::with_name("Formula1"));
-
-            let top_row = widget::row![
-                exit_button,
-                round_name,
-                widget::horizontal_space().width(Length::Fixed(75.))
-            ];
-
-            // top row end. secondary row start
-            let warning_or_status = if let Some(text) = &self.warning {
-                widget::text!("{}", text).style(danger)
-            } else {
-                widget::text!(
-                    "{}",
-                    match self.season.get_status_at(self.current_round) {
-                        (_, true, _) => "round results downloaded",
-                        (_, false, _) => match self.download_attempts.get(&self.current_round) {
-                            Some(msg) => msg,
-                            None => "round results not yet downloaded",
-                        },
-                    }
-                )
-                .style(secondary)
-            }
-            .align_x(Alignment::Center)
-            .width(Length::Fill);
-
-            // end secondary row. start bottom row.
-
-            let prev_status = if self.current_round == 1 {
-                (true, true, true)
-            } else {
-                self.season.get_status_at(self.current_round - 1)
-            };
-            let status = self.season.get_status_at(self.current_round);
-            let next_status = self.season.get_status_at(self.current_round + 1);
-
-            let add_button = match (prev_status, status) {
-                ((false, _, _), _) => widget::button("draft"),
-                (_, (false, _, _)) => {
-                    widget::button("draft").on_press(SeasonMessage::DraftStart.to())
-                }
-                (_, (true, false, _)) => widget::button("score"),
-                (_, (true, true, false)) => {
-                    widget::button("score").on_press(SeasonMessage::Score.to())
-                }
-                (_, (true, true, true)) => widget::button("scored"),
-            }
-            .style(style::button::primary);
-
-            let edit_lineup_button = match (self.current_round, status, next_status) {
-                (1, _, _) => widget::button("edit lineup"),
-                (_, (true, _, false), (false, _, _)) => {
-                    widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup.to())
-                }
-                _ => widget::button("edit lineup"),
-            }
-            .style(style::button::secondary);
-
-            let delete_lineup_button = match (self.current_round, status, next_status) {
-                (1, _, _) => widget::button("delete lineup"),
-                (_, (true, _, false), (false, _, _)) => {
-                    widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup.to())
-                }
-                _ => widget::button("delete lineup"),
-            }
-            .style(style::button::danger);
-
-            let delete_round_button = match status {
-                (_, true, _) => {
-                    widget::button("delete round").on_press(SeasonMessage::DeleteRound.to())
-                }
-                _ => widget::button("delete round"),
-            }
-            .style(style::button::danger);
-
-            let left_button = widget::button("<-")
-                .on_press_maybe(
-                    (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound.to()),
-                )
-                .style(style::button::secondary);
-
-            let right_button = widget::button("->")
-                .on_press(SeasonMessage::IncrementRound.to())
-                .style(style::button::secondary);
-
-            let bottom_row = widget::row![
-                left_button,
-                widget::horizontal_space(),
-                add_button,
-                edit_lineup_button,
-                delete_lineup_button,
-                delete_round_button,
-                widget::horizontal_space(),
-                right_button,
-            ]
-            .spacing(PADDING);
-
-            // end bottom row. start content.
-            let leaderboard = self.season.get_points_by(self.current_round);
-            let round_points = self.season.get_points_at(self.current_round);
-
-            let data_col = leaderboard
-                .iter()
-                .map(|(_, points)| points.to_string())
-                .collect();
-            let team_col: Vec<_> = leaderboard.into_iter().map(|(team, _)| team).collect();
-            let leadership_col = table_view("total points", team_col.clone(), data_col);
-
-            let round_col: Element<VCMessage> = match round_points {
-                None => {
-                    let data_col = round_points.iter().map(|_| "0".to_string()).collect();
-                    table_view("points this round", team_col, data_col)
-                }
-                Some(vec) => {
-                    let data_col = vec.iter().map(|(_, points)| points.to_string()).collect();
-                    table_view(
-                        "points this round",
-                        vec.into_iter().map(|(team, _)| team).collect(),
-                        data_col,
-                    )
-                }
-            };
-
-            let (team_col, data_col) = if self.season.get_status_at(self.current_round).0 {
-                let mut round_lineup: Vec<_> = self
-                    .season
-                    .get_lineup_at(self.current_round)
-                    .into_iter()
-                    .collect();
-                round_lineup.sort();
-
-                let data_col = round_lineup
-                    .iter()
-                    .map(|(_, points)| {
-                        points.iter().fold(String::new(), |mut x, y| {
-                            x.push(' ');
-                            x.push_str(&y.to_string());
-                            x
-                        })
-                    })
-                    .collect();
-                (round_lineup.into_iter().map(|x| x.0).collect(), data_col)
-            } else {
-                let mut teams = self.season.get_team_names();
-                teams.sort();
-                let size = teams.len();
-                (teams, vec![String::from("not yet drafted"); size])
-            };
-
-            let lineup_table = table_view("lineup this round", team_col, data_col);
-
-            let middle_row = widget::row![
-                widget::horizontal_space(),
-                leadership_col,
-                round_col,
-                lineup_table,
-                widget::horizontal_space(),
-            ]
-            .width(Length::Fill)
-            .spacing(PADDING);
-
-            // end content.
+            let top_row = self.view_top_row();
+            let secondary_row = self.view_status_text();
+            let bottom_row = self.view_bottom_row();
+            let content_area = self.view_content_rows();
 
             widget::column![
                 top_row,
-                warning_or_status,
+                secondary_row,
                 widget::vertical_space(),
-                middle_row,
+                content_area,
                 widget::vertical_space(),
                 bottom_row
             ]
+            .width(Length::Fill)
+            .align_x(Alignment::Center)
             .into()
         }
+    }
+    fn view_top_row(&self) -> widget::Row<VCMessage> {
+        let exit_button = widget::button(widget::text!["exit"].align_x(Alignment::Center))
+            .on_press(VCMessage::WindowExit)
+            .style(style::button::secondary)
+            .width(Length::Fixed(75.));
+
+        let round_name = if let Some(round_name) = self
+            .round_names
+            .as_ref()
+            .and_then(|hash| hash.get(&self.current_round))
+        {
+            widget::text!("{}", round_name)
+        } else {
+            widget::text!("Round {}", self.current_round)
+        }
+        .align_x(Alignment::Center)
+        .width(Length::Fill)
+        .size(20)
+        .font(Font::with_name("Formula1"));
+
+        widget::row![
+            exit_button,
+            round_name,
+            widget::horizontal_space().width(Length::Fixed(75.))
+        ]
+    }
+
+    fn view_status_text(&self) -> widget::Text {
+        if let Some(text) = &self.warning {
+            widget::text!("{}", text).style(danger)
+        } else {
+            widget::text!(
+                "{}",
+                match self.season.get_status_at(self.current_round) {
+                    (_, true, _) => "round results downloaded",
+                    (_, false, _) => match self.download_attempts.get(&self.current_round) {
+                        Some(msg) => msg,
+                        None => "round results not yet downloaded",
+                    },
+                }
+            )
+            .style(secondary)
+        }
+    }
+
+    fn view_content_rows(&self) -> widget::Column<VCMessage> {
+        let points_by = self.season.get_points_by(self.current_round);
+        let data_points_by = points_by
+            .iter()
+            .map(|(_, points)| points.to_string())
+            .collect();
+        let teams_points_by: Vec<_> = points_by.into_iter().map(|(team, _)| team).collect();
+        let points_by_table =
+            Self::table_view("total points", teams_points_by.clone(), data_points_by);
+
+        let points_at = self.season.get_points_at(self.current_round);
+        let points_at_table: Element<VCMessage> = match points_at {
+            None => {
+                let data_col = teams_points_by.iter().map(|_| "0".to_string()).collect();
+                Self::table_view("points this round", teams_points_by, data_col)
+            }
+            Some(vec) => {
+                let data_col = vec.iter().map(|(_, points)| points.to_string()).collect();
+                Self::table_view(
+                    "points this round",
+                    vec.into_iter().map(|(team, _)| team).collect(),
+                    data_col,
+                )
+            }
+        };
+
+        let lineup_table = if self.season.get_status_at(self.current_round).0 {
+            let mut round_lineup: Vec<_> = self
+                .season
+                .get_lineup_at(self.current_round)
+                .into_iter()
+                .collect();
+            round_lineup.sort();
+
+            let data_col = round_lineup
+                .iter()
+                .map(|(_, points)| {
+                    points.iter().fold(String::new(), |mut x, y| {
+                        x.push_str(&format!(" {y:0>2}"));
+                        x
+                    })
+                })
+                .collect();
+            Self::table_view(
+                "lineup this round",
+                round_lineup.into_iter().map(|x| x.0).collect(),
+                data_col,
+            )
+        } else {
+            let mut teams = self.season.get_team_names();
+            teams.sort();
+            let size = teams.len();
+            Self::table_view(
+                "lineup this round",
+                teams,
+                vec![String::from("not yet drafted"); size],
+            )
+        };
+
+        widget::column![
+            widget::row![points_at_table, points_by_table].spacing(PADDING),
+            widget::row![lineup_table].spacing(PADDING),
+        ]
+        .spacing(PADDING)
+        .align_x(Alignment::Center)
+    }
+
+    fn view_bottom_row(&self) -> widget::Row<VCMessage> {
+        let prev_status = if self.current_round == 1 {
+            (true, true, true)
+        } else {
+            self.season.get_status_at(self.current_round - 1)
+        };
+        let status = self.season.get_status_at(self.current_round);
+        let next_status = self.season.get_status_at(self.current_round + 1);
+
+        let add_button = match (prev_status, status) {
+            ((false, _, _), _) => widget::button("draft"),
+            (_, (false, _, _)) => widget::button("draft").on_press(SeasonMessage::DraftStart.to()),
+            (_, (true, false, _)) => widget::button("score"),
+            (_, (true, true, false)) => widget::button("score").on_press(SeasonMessage::Score.to()),
+            (_, (true, true, true)) => widget::button("scored"),
+        }
+        .style(style::button::primary);
+
+        let edit_lineup_button = match (self.current_round, status, next_status) {
+            (1, _, _) => widget::button("edit lineup"),
+            (_, (true, _, false), (false, _, _)) => {
+                widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup.to())
+            }
+            _ => widget::button("edit lineup"),
+        }
+        .style(style::button::secondary);
+
+        let delete_lineup_button = match (self.current_round, status, next_status) {
+            (1, _, _) => widget::button("delete lineup"),
+            (_, (true, _, false), (false, _, _)) => {
+                widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup.to())
+            }
+            _ => widget::button("delete lineup"),
+        }
+        .style(style::button::danger);
+
+        let delete_round_button = match status {
+            (_, true, _) => {
+                widget::button("delete round").on_press(SeasonMessage::DeleteRound.to())
+            }
+            _ => widget::button("delete round"),
+        }
+        .style(style::button::danger);
+
+        let left_button = widget::button("<-")
+            .on_press_maybe(
+                (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound.to()),
+            )
+            .style(style::button::secondary);
+
+        let right_button = widget::button("->")
+            .on_press(SeasonMessage::IncrementRound.to())
+            .style(style::button::secondary);
+
+        widget::row![
+            left_button,
+            widget::horizontal_space(),
+            add_button,
+            edit_lineup_button,
+            delete_lineup_button,
+            delete_round_button,
+            widget::horizontal_space(),
+            right_button,
+        ]
+        .spacing(PADDING)
+    }
+
+    fn view_table<'a>(
+        title: &str,
+        teams: Vec<String>,
+        data: Vec<String>,
+    ) -> Element<'a, VCMessage> {
+        let table_width = title.width() + 2;
+        let data_width_max = data.iter().map(|x| x.width()).max().unwrap_or_default();
+        let title_width = (table_width - data_width_max).max(0);
+
+        widget::container(
+            widget::column![
+                widget::text!("{}", title),
+                widget::container(
+                    widget::row![
+                        widget::Column::from_iter(
+                            teams
+                                .into_iter()
+                                .map(|x| widget::text!("{x:title_width$}").into())
+                        ),
+                        widget::Column::from_iter(
+                            data.into_iter().map(|x| widget::text!("{x}").into())
+                        )
+                        .align_x(Alignment::End),
+                    ]
+                    .spacing(PADDING * 2)
+                )
+                .padding(3)
+                .style(style::container::content)
+            ]
+            .width(Length::Shrink)
+            .align_x(Alignment::Center),
+        )
+        .style(content_title)
+        .into()
     }
 
     pub fn update(&mut self, message: SeasonMessage) -> Task<SeasonMessage> {
@@ -398,38 +437,6 @@ async fn build_with_round(round: u8, season: u16) -> (u8, Result<RaceResults, Do
 async fn download_race_names(season: u16) -> Result<HashMap<u8, String>, ApiError> {
     let api = Api::new();
     api.get_race_names(season).await
-}
-
-fn table_view<'a>(title: &str, teams: Vec<String>, data: Vec<String>) -> Element<'a, VCMessage> {
-    let table_width = title.width() + 2;
-    let data_width_max = data.iter().map(|x| x.width()).max().unwrap_or_default();
-    let title_width = (table_width - data_width_max).max(0);
-
-    widget::container(
-        widget::column![
-            widget::text!("{}", title),
-            widget::container(
-                widget::row![
-                    widget::Column::from_iter(
-                        teams
-                            .into_iter()
-                            .map(|x| widget::text!("{x:title_width$}").into())
-                    ),
-                    widget::Column::from_iter(
-                        data.into_iter().map(|x| widget::text!("{x}").into())
-                    )
-                    .align_x(Alignment::End),
-                ]
-                .spacing(PADDING * 2)
-            )
-            .padding(3)
-            .style(style::container::content)
-        ]
-        .width(Length::Shrink)
-        .align_x(Alignment::Center),
-    )
-    .style(content_title)
-    .into()
 }
 
 #[derive(Debug, Clone)]
