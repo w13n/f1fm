@@ -9,14 +9,14 @@ mod fantasy_season;
 mod utils;
 mod vc;
 
-const F1: &[u8] = include_bytes!("../assets/Formula1-Regular.ttf");
-const FONT: &[u8] = include_bytes!("../assets/IBMPlexMono-Bold.ttf");
+const F1_FONT: &[u8] = include_bytes!("../assets/Formula1-Regular.ttf");
+const MONOSPACE_FONT: &[u8] = include_bytes!("../assets/IBMPlexMono-Bold.ttf");
 
 fn main() {
     iced::application("test", ViewController::update, ViewController::view)
         .theme(|_| {
             Theme::custom(
-                String::from("Eunomia"),
+                String::from("Classic West"),
                 Palette {
                     background: iced::color!(0x423E3B),
                     text: iced::color!(0xFCF7F8),
@@ -27,8 +27,8 @@ fn main() {
             )
         })
         .subscription(ViewController::subscription)
-        .font(F1)
-        .font(FONT)
+        .font(F1_FONT)
+        .font(MONOSPACE_FONT)
         .default_font({
             let mut font = Font::with_name("IBM Plex Mono Bold");
             font.weight = Weight::Bold;
