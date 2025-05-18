@@ -123,17 +123,17 @@ impl Season {
             .collect();
         let teams_points_by: Vec<_> = points_by.into_iter().map(|(team, _)| team).collect();
         let points_by_table =
-            Self::table_view("total points", teams_points_by.clone(), data_points_by);
+            Self::view_table("total points", teams_points_by.clone(), data_points_by);
 
         let points_at = self.season.get_points_at(self.current_round);
         let points_at_table: Element<VCMessage> = match points_at {
             None => {
                 let data_col = teams_points_by.iter().map(|_| "0".to_string()).collect();
-                Self::table_view("points this round", teams_points_by, data_col)
+                Self::view_table("points this round", teams_points_by, data_col)
             }
             Some(vec) => {
                 let data_col = vec.iter().map(|(_, points)| points.to_string()).collect();
-                Self::table_view(
+                Self::view_table(
                     "points this round",
                     vec.into_iter().map(|(team, _)| team).collect(),
                     data_col,
@@ -158,7 +158,7 @@ impl Season {
                     })
                 })
                 .collect();
-            Self::table_view(
+            Self::view_table(
                 "lineup this round",
                 round_lineup.into_iter().map(|x| x.0).collect(),
                 data_col,
@@ -167,7 +167,7 @@ impl Season {
             let mut teams = self.season.get_team_names();
             teams.sort();
             let size = teams.len();
-            Self::table_view(
+            Self::view_table(
                 "lineup this round",
                 teams,
                 vec![String::from("not yet drafted"); size],
