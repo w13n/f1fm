@@ -1,5 +1,6 @@
 use crate::fantasy_season::draft::Drafter;
-use iced::{Element, widget};
+use crate::vc::style;
+use iced::{Alignment, Element, Length, widget};
 use replace_all_drafter::ReplaceAllDrafter;
 use roll_on_drafter::RollOnDrafter;
 use std::collections::HashMap;
@@ -54,7 +55,10 @@ impl Popup {
         }
     }
     pub fn view(&self) -> Element<PopupMessage> {
-        let button = widget::button("<- back").on_press(PopupMessage::Close);
+        let button = widget::button(widget::text!["exit"].align_x(Alignment::Center))
+            .on_press(PopupMessage::Close)
+            .style(style::button::secondary)
+            .width(Length::Fixed(75.));
         let main = widget::container(match self {
             Popup::RollOnDrafter(ro) => ro.view(),
             Popup::ReplaceAllDrafter(ra) => ra.view(),
