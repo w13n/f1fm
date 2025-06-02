@@ -38,53 +38,33 @@ impl ReplaceAllDrafter {
         }
     }
     pub(super) fn view(&self) -> Element<PopupMessage> {
-        let mut team_section = Vec::new();
+        let content = self
+            .team_lineups
+            .iter()
+            .map(|(team_name, drivers)| {
+                let mut row = Vec::new();
 
-        let mut length = 0;
+                for (idx, num) in drivers.iter().enumerate() {
+                    row.push(
+                        widget::text_input(&format!("#{}", idx + 1), num)
+                            .style(style::text_input::default)
+                            .on_input(move |num| {
+                                PopupMessage::ReplaceAll(RAMessage::ChangeDriverNumber(
+                                    team_name.to_string(),
+                                    idx,
+                                    num,
+                                ))
+                            })
+                            .width(50)
+                            .into(),
+                    );
+                }
 
-        for team_name in self.team_lineups.keys() {
-            length = length.max(team_name.len());
-        }
+                (team_name.clone(), row)
+            })
+            .collect();
 
-        for (team_name, lineup) in &self.team_lineups {
-            let mut row = Vec::new();
-            row.push(
-                widget::text!("{:>length$}", team_name)
-                    .align_y(Alignment::Center)
-                    .height(30)
-                    .into(),
-            );
-
-            for (idx, num) in lineup.iter().enumerate() {
-                row.push(
-                    widget::text_input(&format!("#{}", idx + 1), num)
-                        .style(style::text_input::default)
-                        .on_input(move |num| {
-                            PopupMessage::ReplaceAll(RAMessage::ChangeDriverNumber(
-                                team_name.to_string(),
-                                idx,
-                                num,
-                            ))
-                        })
-                        .width(50)
-                        .into(),
-                );
-            }
-
-            team_section.push(widget::Row::from_vec(row).spacing(PADDING).into())
-        }
-
-        widget::column![
-            widget::vertical_space(),
-            widget::Column::from_vec(team_section).spacing(PADDING),
-            widget::vertical_space(),
-            widget::button("Save")
-                .on_press_maybe(self.can_draft().then_some(PopupMessage::UpdateLineup))
-                .style(style::button::primary),
-        ]
-        .width(Length::Fill)
-        .align_x(Alignment::Center)
-        .into()
+        super::lineup_view(content, self.can_draft())
     }
 
     pub(super) fn update(&mut self, message: RAMessage) {

@@ -1,4 +1,5 @@
 use crate::fantasy_season::draft::Drafter;
+use crate::vc::PADDING;
 use crate::vc::style;
 use iced::{Alignment, Element, Length, widget};
 use replace_all_drafter::ReplaceAllDrafter;
@@ -82,4 +83,43 @@ impl Popup {
             }
         }
     }
+}
+
+fn lineup_view(
+    mut content: Vec<(String, Vec<Element<PopupMessage>>)>,
+    can_draft: bool,
+) -> Element<PopupMessage> {
+    let mut team_section = Vec::new();
+
+    let mut length = 0;
+
+    for (team_name, _) in &content {
+        length = length.max(team_name.len());
+    }
+
+    for (team_name, elements) in &mut content {
+        let mut row = Vec::new();
+
+        row.push(
+            widget::text!("{:>length$}", team_name)
+                .align_y(Alignment::Center)
+                .height(30)
+                .into(),
+        );
+
+        row.append(elements);
+        team_section.push(widget::Row::from_vec(row).spacing(PADDING).into());
+    }
+
+    widget::column![
+        widget::vertical_space(),
+        widget::Column::from_vec(team_section).spacing(PADDING),
+        widget::vertical_space(),
+        widget::button("Save")
+            .on_press_maybe(can_draft.then_some(PopupMessage::UpdateLineup))
+            .style(style::button::primary),
+    ]
+    .width(Length::Fill)
+    .align_x(Alignment::Center)
+    .into()
 }

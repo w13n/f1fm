@@ -1,9 +1,11 @@
 use super::PopupMessage;
 use crate::fantasy_season::draft;
 use crate::utils::*;
+use crate::vc::PADDING;
+use crate::vc::season::popup::replace_all_drafter::RAMessage;
 use crate::vc::style;
-use iced::Element;
 use iced::widget;
+use iced::{Alignment, Element, Length};
 use std::collections::HashMap;
 
 pub struct RollOnDrafter {
@@ -27,34 +29,42 @@ impl RollOnDrafter {
         }
     }
     pub(super) fn view(&self) -> Element<PopupMessage> {
-        let mut draft_team = Vec::new();
-        for team in self.returning_lineup.keys() {
-            let mut row = Vec::new();
-            row.push(widget::text!("{}", team).into());
+        let content = self
+            .returning_lineup
+            .iter()
+            .map(|(team_name, drivers)| {
+                let mut row = Vec::new();
 
-            row.push(
-                widget::text_input("#1", self.drivers.get(team).unwrap_or(&String::from("")))
+                row.push(
+                    widget::text_input(
+                        "#1",
+                        self.drivers.get(team_name).unwrap_or(&String::from("")),
+                    )
                     .style(style::text_input::default)
                     .on_input(move |num| {
-                        PopupMessage::RollOn(ROMessage::ChangeDriverNumber(team.to_string(), num))
+                        PopupMessage::RollOn(ROMessage::ChangeDriverNumber(
+                            team_name.to_string(),
+                            num,
+                        ))
                     })
                     .width(50)
                     .into(),
-            );
+                );
 
-            for driver in self.returning_lineup.get(team).unwrap() {
-                row.push(widget::text! {"{:02}", driver}.into());
-            }
+                for driver in self.returning_lineup.get(team_name).unwrap() {
+                    row.push(
+                        widget::text! {"{:02}", driver}
+                            .align_y(Alignment::Center)
+                            .height(30)
+                            .into(),
+                    );
+                }
 
-            draft_team.push(widget::Row::from_vec(row).into());
-        }
-        draft_team.push(
-            widget::button("Draft")
-                .on_press_maybe(self.can_draft().then_some(PopupMessage::UpdateLineup))
-                .into(),
-        );
+                (team_name.clone(), row)
+            })
+            .collect();
 
-        widget::Column::from_vec(draft_team).into()
+        super::lineup_view(content, self.can_draft())
     }
 
     pub(super) fn update(&mut self, message: ROMessage) {
