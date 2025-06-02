@@ -200,7 +200,10 @@ impl FantasySeason {
         }
 
         self.teams.iter_mut().for_each(|t| t.delete_round(round));
-        self.status.toggle_drafted(round);
+        if self.status.has_drafted(round) {
+            self.status.toggle_drafted(round);
+        }
+
         Ok(())
     }
 
