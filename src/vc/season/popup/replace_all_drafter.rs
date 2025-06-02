@@ -1,8 +1,9 @@
 use crate::fantasy_season::draft;
 use crate::utils::*;
+use crate::vc::PADDING;
 use crate::vc::season::popup::PopupMessage;
 use crate::vc::style;
-use iced::{Element, widget};
+use iced::{Alignment, Element, Length, widget};
 use std::collections::HashMap;
 
 pub struct ReplaceAllDrafter {
@@ -37,18 +38,30 @@ impl ReplaceAllDrafter {
         }
     }
     pub(super) fn view(&self) -> Element<PopupMessage> {
-        let mut draft_team = Vec::new();
-        for team in self.team_lineups.keys() {
-            let mut row = Vec::new();
-            row.push(widget::text!("{}", team).into());
+        let mut team_section = Vec::new();
 
-            for (idx, num) in self.team_lineups.get(team).unwrap().iter().enumerate() {
+        let mut length = 0;
+
+        for team_name in self.team_lineups.keys() {
+            length = length.max(team_name.len());
+        }
+
+        for (team_name, lineup) in &self.team_lineups {
+            let mut row = Vec::new();
+            row.push(
+                widget::text!("{:>length$}", team_name)
+                    .align_y(Alignment::Center)
+                    .height(30)
+                    .into(),
+            );
+
+            for (idx, num) in lineup.iter().enumerate() {
                 row.push(
                     widget::text_input(&format!("#{}", idx + 1), num)
                         .style(style::text_input::default)
                         .on_input(move |num| {
                             PopupMessage::ReplaceAll(RAMessage::ChangeDriverNumber(
-                                team.to_string(),
+                                team_name.to_string(),
                                 idx,
                                 num,
                             ))
@@ -58,16 +71,20 @@ impl ReplaceAllDrafter {
                 );
             }
 
-            draft_team.push(widget::Row::from_vec(row).into())
+            team_section.push(widget::Row::from_vec(row).spacing(PADDING).into())
         }
 
-        draft_team.push(
-            widget::button("Draft")
+        widget::column![
+            widget::vertical_space(),
+            widget::Column::from_vec(team_section).spacing(PADDING),
+            widget::vertical_space(),
+            widget::button("Save")
                 .on_press_maybe(self.can_draft().then_some(PopupMessage::UpdateLineup))
-                .into(),
-        );
-
-        widget::Column::from_vec(draft_team).into()
+                .style(style::button::primary),
+        ]
+        .width(Length::Fill)
+        .align_x(Alignment::Center)
+        .into()
     }
 
     pub(super) fn update(&mut self, message: RAMessage) {
