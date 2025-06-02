@@ -1,7 +1,6 @@
 use super::PopupMessage;
 use crate::fantasy_season::draft;
 use crate::utils::*;
-use crate::vc::PADDING;
 use crate::vc::season::popup::replace_all_drafter::RAMessage;
 use crate::vc::style;
 use iced::widget;
