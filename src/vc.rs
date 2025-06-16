@@ -33,10 +33,18 @@ impl ViewController {
         let save_path = PathBuf::from(ProjectDirs::from("com", "w13n", "F1FM").unwrap().data_dir());
 
         let mut seasons_path = save_path.clone();
-        seasons_path.push("seasons_v1");
+        seasons_path.push("seasons_v1n");
         let mut seasons_file = Vec::with_capacity(100);
-        if let Ok(mut file) = File::open(seasons_path) {
+
+        if std::fs::exists(&seasons_path).unwrap_or_default() {
+            let mut file = File::open(seasons_path).unwrap();
             file.read_to_end(&mut seasons_file).unwrap();
+        } else {
+            seasons_path.pop();
+            seasons_path.push("seasons_v1");
+            if let Ok(mut file) = File::open(seasons_path) {
+                file.read_to_end(&mut seasons_file).unwrap();
+            }
         }
 
         let seasons: Vec<FantasySeason> = postcard::from_bytes(&seasons_file).unwrap_or_default();
@@ -89,12 +97,18 @@ impl ViewController {
                     .collect();
 
                 if std::fs::create_dir_all(&self.save_path).is_ok() {
+                    let mut n_path = self.save_path.clone();
                     let mut path = self.save_path.clone();
+
+                    n_path.push("seasons_v1n");
                     path.push("seasons_v1");
-                    File::create(&path)
+
+                    File::create(&n_path)
                         .unwrap()
                         .write_all(&postcard::to_stdvec(&all_seasons).unwrap())
                         .unwrap();
+
+                    let _ = std::fs::rename(n_path, path);
                 }
                 Task::none()
             }
