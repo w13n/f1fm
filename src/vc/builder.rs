@@ -117,7 +117,7 @@ impl Builder {
         .width(Length::Shrink)
         .align_x(Alignment::Center);
 
-        let create = widget::button("create team")
+        let create = widget::button("Create Season")
             .on_press_maybe(self.can_create().then_some(VCMessage::CreateFromBuilder))
             .style(super::style::button::primary);
 
