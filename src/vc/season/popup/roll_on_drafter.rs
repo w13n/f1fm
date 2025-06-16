@@ -1,10 +1,9 @@
 use super::PopupMessage;
 use crate::fantasy_season::draft;
 use crate::utils::*;
-use crate::vc::season::popup::replace_all_drafter::RAMessage;
 use crate::vc::style;
 use iced::widget;
-use iced::{Alignment, Element, Length};
+use iced::{Alignment, Element};
 use std::collections::HashMap;
 
 pub struct RollOnDrafter {
@@ -31,7 +30,7 @@ impl RollOnDrafter {
         let content = self
             .returning_lineup
             .iter()
-            .map(|(team_name, drivers)| {
+            .map(|(team_name, _)| {
                 let mut row = Vec::new();
 
                 row.push(
