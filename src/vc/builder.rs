@@ -139,7 +139,7 @@ impl Builder {
             .style(style::button::secondary)
             .width(Length::Fixed(75.));
 
-        let title = widget::text!("Create New Season")
+        let title = widget::text!("create new season")
             .align_x(Alignment::Center)
             .width(Length::Fill)
             .size(20);

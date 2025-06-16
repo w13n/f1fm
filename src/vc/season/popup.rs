@@ -115,7 +115,7 @@ fn lineup_view(
         widget::vertical_space(),
         widget::Column::from_vec(team_section).spacing(PADDING),
         widget::vertical_space(),
-        widget::button("Finish")
+        widget::button("finish")
             .on_press_maybe(can_draft.then_some(PopupMessage::UpdateLineup))
             .style(style::button::primary),
     ]

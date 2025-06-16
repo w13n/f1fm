@@ -44,7 +44,7 @@ impl Landing {
                 .height(20 + PADDING * 4)
                 .align_y(Alignment::Center),
             content.height(Length::Fill),
-            widget::Button::new(widget::text!("create new season"))
+            widget::Button::new(widget::text!("build new season"))
                 .on_press(VCMessage::OpenBuilder)
                 .style(style::button::primary)
         ]
