@@ -102,7 +102,7 @@ pub mod pick_list {
     fn style(ep: &Extended, background: Pair) -> Style {
         Style {
             text_color: background.text,
-            placeholder_color: ep.secondary.weak.color,
+            placeholder_color: ep.background.base.text,
             handle_color: ep.background.base.color,
             background: Background::Color(background.color),
             border: border::rounded(5),
