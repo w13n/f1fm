@@ -3,6 +3,7 @@ use ergast_rs::apis::race_table::{QualifyingResult, Race, RaceResult};
 use ergast_rs::apis::response::Response;
 use reqwest::Client;
 use std::collections::HashMap;
+use std::time::Duration;
 
 pub struct Api {
     client: Client,
@@ -11,7 +12,10 @@ pub struct Api {
 impl Api {
     pub fn new() -> Api {
         Api {
-            client: Client::new(),
+            client: Client::builder()
+                .timeout(Duration::from_secs(1))
+                .build()
+                .unwrap(),
         }
     }
     pub async fn get_race_names(&self, season: u16) -> Result<HashMap<u8, String>, ApiError> {
