@@ -2,8 +2,8 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::utils::*;
-use crate::vc::VCMessage;
-use iced::{Element, widget};
+use crate::vc::{PADDING, VCMessage, style};
+use iced::{Alignment, Element, Length, widget};
 use time::OffsetDateTime;
 
 const GRID_SIZE_DEFAULT: u8 = 20;
@@ -12,8 +12,8 @@ const TEAM_SIZE_DEFAULT: u8 = 2;
 pub(super) struct Builder {
     name: String,
     teams: Vec<TeamBuilder>,
-    score_choice: ScoreChoice,
-    draft_choice: DraftChoice,
+    score_choice: Option<ScoreChoice>,
+    draft_choice: Option<DraftChoice>,
     season: String,
     grid_size: String,
     team_size: u8,
@@ -29,8 +29,8 @@ impl Builder {
                 TeamBuilder::new(1, TEAM_SIZE_DEFAULT),
                 TeamBuilder::new(2, TEAM_SIZE_DEFAULT),
             ],
-            score_choice: ScoreChoice::default(),
-            draft_choice: DraftChoice::default(),
+            score_choice: None,
+            draft_choice: None,
             season: (OffsetDateTime::now_utc().year() as u16).to_string(),
             grid_size: GRID_SIZE_DEFAULT.to_string(),
             team_size: TEAM_SIZE_DEFAULT,
@@ -41,8 +41,8 @@ impl Builder {
     pub fn update(&mut self, message: BuilderMessage) {
         match message {
             BuilderMessage::ChangeName(name) => self.name = name,
-            BuilderMessage::ScoreChoiceSelected(choice) => self.score_choice = choice,
-            BuilderMessage::DraftChoiceSelected(choice) => self.draft_choice = choice,
+            BuilderMessage::ScoreChoiceSelected(choice) => self.score_choice = Some(choice),
+            BuilderMessage::DraftChoiceSelected(choice) => self.draft_choice = Some(choice),
             BuilderMessage::AddTeam => self
                 .teams
                 .push(TeamBuilder::new(self.teams.len(), self.team_size)),
@@ -85,100 +85,152 @@ impl Builder {
     }
 
     pub fn view(&self) -> Element<VCMessage> {
-        let exit_button = widget::button("back").on_press(VCMessage::WindowExit);
-        let name = widget::text_input("fantasy season name here", &self.name)
-            .on_input(|x| BuilderMessage::ChangeName(x).to())
-            .style(super::style::text_input::default);
+        let top_row = self.view_top_row();
 
-        let team_sizes = widget::row![
+        let team_settings = self.view_team_settings();
+        let teams = widget::container(widget::scrollable(
+            widget::Column::from_vec(self.teams.iter().map(|t| t.view()).collect()).spacing(10),
+        ))
+        .max_height(300);
+        let modes = self.view_modes();
+        let season_and_grid_size = self.view_season_and_grid_size();
+        let uniqueness = widget::row![
+            widget::toggler(self.enforce_uniqueness)
+                .label("Enforce Uniqueness")
+                .on_toggle(|x| BuilderMessage::ToggleEnforceUniqueness(x).to())
+        ]
+        .height(Length::Shrink);
+        let name = widget::text_input("fantasy season name", &self.name)
+            .on_input(|x| BuilderMessage::ChangeName(x).to())
+            .style(style::text_input::default);
+        let content = widget::column![
+            team_settings,
+            teams,
+            widget::vertical_space().height(PADDING),
+            modes,
+            season_and_grid_size,
+            uniqueness,
+            widget::vertical_space().height(PADDING),
+            name,
+        ]
+        .spacing(PADDING)
+        .width(Length::Shrink)
+        .align_x(Alignment::Center);
+
+        let create = widget::button("create team")
+            .on_press_maybe(self.can_create().then_some(VCMessage::CreateFromBuilder))
+            .style(super::style::button::primary);
+
+        widget::column![
+            top_row,
+            widget::vertical_space(),
+            content,
+            widget::vertical_space(),
+            create,
+        ]
+        .width(Length::Fill)
+        .align_x(Alignment::Center)
+        .into()
+    }
+
+    fn view_top_row(&self) -> widget::Row<VCMessage> {
+        let exit_button = widget::button(widget::text!["exit"].align_x(Alignment::Center))
+            .on_press(VCMessage::WindowExit)
+            .style(style::button::secondary)
+            .width(Length::Fixed(75.));
+
+        let title = widget::text!("Create New Season")
+            .align_x(Alignment::Center)
+            .width(Length::Fill)
+            .size(20);
+
+        widget::row![
+            exit_button,
+            title,
+            widget::horizontal_space().width(Length::Fixed(75.))
+        ]
+    }
+
+    fn view_team_settings(&self) -> widget::Row<VCMessage> {
+        widget::row![
             widget::button("-")
                 .on_press_maybe(if self.team_size > 1 {
                     Some(BuilderMessage::DecreaseTeamSize.to())
                 } else {
                     None
                 })
-                .style(super::style::button::secondary),
+                .style(style::button::secondary),
+            widget::text! {"{} drivers per team", self.team_size}
+                .height(Length::Fill)
+                .align_y(Alignment::Center),
             widget::button("+")
                 .on_press(BuilderMessage::IncreaseTeamSize.to())
-                .style(super::style::button::secondary),
+                .style(style::button::secondary),
+            widget::horizontal_space().width(PADDING),
+            widget::button("add a team")
+                .on_press(BuilderMessage::AddTeam.to())
+                .style(style::button::secondary)
         ]
-        .spacing(10);
+        .spacing(10)
+        .height(Length::Shrink)
+    }
 
-        let add_team = widget::button("add team")
-            .on_press(BuilderMessage::AddTeam.to())
-            .style(super::style::button::secondary);
-
-        let teams = widget::container(widget::scrollable(
-            widget::Column::from_vec(self.teams.iter().map(|t| t.view()).collect()).spacing(10),
-        ))
-        .max_height(400);
-
-        let score_coice = widget::pick_list(
+    fn view_modes(&self) -> widget::Row<VCMessage> {
+        let score_mode = widget::pick_list(
             vec![
                 ScoreChoice::FormulaOne,
                 ScoreChoice::RacePosition,
                 ScoreChoice::Improvement,
                 ScoreChoice::Domination,
             ],
-            Some(self.score_choice),
+            self.score_choice,
             |x| BuilderMessage::ScoreChoiceSelected(x).to(),
-        );
+        )
+        .placeholder("Score Mode")
+        .style(style::pick_list::default)
+        .menu_style(style::pick_list::default_menu);
 
-        let draft_choice = widget::pick_list(
+        let draft_mode = widget::pick_list(
             vec![
                 DraftChoice::Skip,
                 DraftChoice::RollOn,
                 DraftChoice::ReplaceAll,
             ],
-            Some(self.draft_choice),
+            self.draft_choice,
             |x| BuilderMessage::DraftChoiceSelected(x).to(),
         )
+        .placeholder("Draft Mode")
         .style(super::style::pick_list::default)
         .menu_style(super::style::pick_list::default_menu);
 
-        let season = widget::text_input("season", &self.season)
-            .on_input(|x| BuilderMessage::ChangeSeason(x).to())
-            .style(super::style::text_input::default);
+        widget::row![score_mode, draft_mode,]
+            .spacing(PADDING)
+            .height(Length::Shrink)
+    }
 
-        let grid_size = widget::text_input("grid size", &self.grid_size)
-            .on_input(|x| BuilderMessage::ChangeGridSize(x).to())
-            .style(super::style::text_input::default);
-
-        let uniqueness = widget::toggler(self.enforce_uniqueness)
-            .on_toggle(|x| BuilderMessage::ToggleEnforceUniqueness(x).to());
-
-        let create = widget::button("create team")
-            .on_press_maybe(
-                (self.teams.iter().all(TeamBuilder::can_parse)
-                    && !self.teams.is_empty()
-                    && (!self.enforce_uniqueness
-                        || is_unique_lineups(self.teams.iter().flat_map(|x| x.iter()))))
-                .then_some(VCMessage::CreateFromBuilder),
-            )
-            .style(super::style::button::primary);
-
-        widget::column![
-            exit_button,
-            name,
-            team_sizes,
-            add_team,
-            teams,
-            score_coice,
-            draft_choice,
-            season,
-            grid_size,
-            uniqueness,
-            create
+    fn view_season_and_grid_size(&self) -> widget::Row<VCMessage> {
+        widget::row![
+            widget::text_input("grid size", &self.grid_size)
+                .on_input(|x| BuilderMessage::ChangeGridSize(x).to())
+                .align_x(Alignment::End)
+                .style(style::text_input::default)
+                .width(35),
+            widget::text!(" Drivers in ")
+                .height(Length::Fill)
+                .align_y(Alignment::Center),
+            widget::text_input("season", &self.season)
+                .on_input(|x| BuilderMessage::ChangeSeason(x).to())
+                .style(super::style::text_input::default)
+                .width(60),
         ]
-        .spacing(10)
-        .into()
+        .height(Length::Shrink)
     }
 
     pub fn create(&mut self) -> FantasySeason {
         FantasySeason::new(
             self.name.clone(),
-            self.score_choice,
-            self.draft_choice,
+            self.score_choice.unwrap(),
+            self.draft_choice.unwrap(),
             self.teams
                 .iter()
                 .map(|team| (team.get_name(), team.parse()))
@@ -187,6 +239,15 @@ impl Builder {
             self.grid_size.parse::<u8>().expect("cannot call create"),
             self.enforce_uniqueness,
         )
+    }
+
+    fn can_create(&self) -> bool {
+        self.teams.iter().all(TeamBuilder::can_parse)
+            && !self.teams.is_empty()
+            && (!self.enforce_uniqueness
+                || is_unique_lineups(self.teams.iter().flat_map(|x| x.iter())))
+            && self.score_choice.is_some()
+            && self.draft_choice.is_some()
     }
 }
 
