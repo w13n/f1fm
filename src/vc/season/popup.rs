@@ -1,6 +1,7 @@
 use crate::fantasy_season::draft::Drafter;
-use crate::vc::PADDING;
-use crate::vc::style;
+use crate::vc::TITLE;
+use crate::vc::{CONTENT, PADDING};
+use crate::vc::{CONTENT_INPUT_PADDED, style};
 use iced::{Alignment, Element, Length, widget};
 use replace_all_drafter::ReplaceAllDrafter;
 use roll_on_drafter::RollOnDrafter;
@@ -88,6 +89,7 @@ impl Popup {
 fn lineup_view(
     mut content: Vec<(String, Vec<Element<PopupMessage>>)>,
     can_draft: bool,
+    title: String,
 ) -> Element<PopupMessage> {
     let mut team_section = Vec::new();
 
@@ -102,8 +104,9 @@ fn lineup_view(
 
         row.push(
             widget::text!("{:>length$}", team_name)
+                .size(CONTENT)
                 .align_y(Alignment::Center)
-                .height(30)
+                .height(CONTENT_INPUT_PADDED)
                 .into(),
         );
 
@@ -113,6 +116,7 @@ fn lineup_view(
 
     widget::column![
         widget::vertical_space(),
+        widget::text!["{}", title].size(TITLE),
         widget::Column::from_vec(team_section).spacing(PADDING),
         widget::vertical_space(),
         widget::button("finish")
@@ -121,5 +125,6 @@ fn lineup_view(
     ]
     .width(Length::Fill)
     .align_x(Alignment::Center)
+    .spacing(PADDING)
     .into()
 }

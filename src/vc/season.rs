@@ -4,7 +4,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::vc::style::container::content_title;
-use crate::vc::{PADDING, VCMessage, style};
+use crate::vc::{CONTENT, PADDING, TITLE, VCMessage, style};
 use iced::widget::text::{danger, secondary};
 use iced::{Alignment, Element, Font, Length};
 use iced::{Task, widget};
@@ -87,7 +87,7 @@ impl Season {
         }
         .align_x(Alignment::Center)
         .width(Length::Fill)
-        .size(20)
+        .size(TITLE)
         .font(Font::with_name("Formula1"));
 
         widget::row![
@@ -260,16 +260,17 @@ impl Season {
 
         widget::container(
             widget::column![
-                widget::text!("{}", title),
+                widget::text!("{}", title).size(CONTENT),
                 widget::container(
                     widget::row![
                         widget::Column::from_iter(
                             teams
                                 .into_iter()
-                                .map(|x| widget::text!("{x:title_width$}").into())
+                                .map(|x| widget::text!("{x:title_width$}").size(CONTENT).into())
                         ),
                         widget::Column::from_iter(
-                            data.into_iter().map(|x| widget::text!("{x}").into())
+                            data.into_iter()
+                                .map(|x| widget::text!("{x}").size(CONTENT).into())
                         )
                         .align_x(Alignment::End),
                     ]

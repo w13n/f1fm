@@ -1,8 +1,8 @@
 use crate::fantasy_season::draft;
 use crate::utils::*;
 use crate::vc::season::popup::PopupMessage;
-use crate::vc::style;
-use iced::{Element, widget};
+use crate::vc::{CONTENT, CONTENT_INPUT_PADDED, style};
+use iced::{Alignment, Element, widget};
 use std::collections::HashMap;
 
 pub struct ReplaceAllDrafter {
@@ -46,6 +46,7 @@ impl ReplaceAllDrafter {
                 for (idx, num) in drivers.iter().enumerate() {
                     row.push(
                         widget::text_input(&format!("#{}", idx + 1), num)
+                            .size(CONTENT)
                             .style(style::text_input::default)
                             .on_input(move |num| {
                                 PopupMessage::ReplaceAll(RAMessage::ChangeDriverNumber(
@@ -63,7 +64,7 @@ impl ReplaceAllDrafter {
             })
             .collect();
 
-        super::lineup_view(content, self.can_draft())
+        super::lineup_view(content, self.can_draft(), "Edit Lineup".to_string())
     }
 
     pub(super) fn update(&mut self, message: RAMessage) {

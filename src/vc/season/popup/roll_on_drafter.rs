@@ -1,7 +1,7 @@
 use super::PopupMessage;
 use crate::fantasy_season::draft;
 use crate::utils::*;
-use crate::vc::style;
+use crate::vc::{CONTENT, CONTENT_INPUT_PADDED, style};
 use iced::widget;
 use iced::{Alignment, Element};
 use std::collections::HashMap;
@@ -38,6 +38,7 @@ impl RollOnDrafter {
                         "#1",
                         self.drivers.get(team_name).unwrap_or(&String::from("")),
                     )
+                    .size(CONTENT)
                     .style(style::text_input::default)
                     .on_input(move |num| {
                         PopupMessage::RollOn(ROMessage::ChangeDriverNumber(
@@ -51,9 +52,10 @@ impl RollOnDrafter {
 
                 for driver in self.returning_lineup.get(team_name).unwrap() {
                     row.push(
-                        widget::text! {"{:02}", driver}
+                        widget::text!("{:02}", driver)
+                            .size(CONTENT)
                             .align_y(Alignment::Center)
-                            .height(30)
+                            .height(CONTENT_INPUT_PADDED)
                             .into(),
                     );
                 }
@@ -62,7 +64,7 @@ impl RollOnDrafter {
             })
             .collect();
 
-        super::lineup_view(content, self.can_draft())
+        super::lineup_view(content, self.can_draft(), "Draft Drivers".to_string())
     }
 
     pub(super) fn update(&mut self, message: ROMessage) {

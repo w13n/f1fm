@@ -15,6 +15,9 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 const PADDING: u16 = 7;
+const TITLE: u16 = 24;
+const CONTENT: u16 = 20;
+const CONTENT_INPUT_PADDED: u16 = (CONTENT as f64 * 1.7) as u16;
 
 pub(super) struct ViewController {
     window: Window,
