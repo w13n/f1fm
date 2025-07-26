@@ -8,7 +8,9 @@ use crate::vc::builder::{Builder, BuilderMessage};
 use crate::vc::landing::Landing;
 use crate::vc::season::{Season, SeasonMessage};
 use directories_next::ProjectDirs;
-use iced::{Element, Subscription, Task};
+use iced::font::Weight;
+use iced::{Alignment, Element, Font, Length, Subscription, Task, widget};
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -18,6 +20,14 @@ const PADDING: u16 = 7;
 const TITLE: u16 = 24;
 const CONTENT: u16 = 20;
 const CONTENT_INPUT_PADDED: u16 = (CONTENT as f64 * 1.7) as u16;
+
+const EXIT_BUTTON_SPACING: f32 = 75.0;
+const MONO_FONT: Font = {
+    let mut font = Font::with_name("IBM Plex Mono Bold");
+    font.weight = Weight::Bold;
+    font
+};
+const F1_FONT: Font = Font::with_name("Formula1");
 
 pub(super) struct ViewController {
     window: Window,
@@ -195,4 +205,24 @@ pub enum VCMessage {
     DeleteSeason(usize),
     OpenBuilder,
     CreateFromBuilder,
+}
+
+fn top_row<T: Debug + Clone + 'static>(title: String, font: Font, exit: T) -> Element<'static, T> {
+    let exit_button = widget::button(widget::text!["exit"].align_x(Alignment::Center))
+        .on_press(exit)
+        .style(style::button::secondary)
+        .width(Length::Fixed(EXIT_BUTTON_SPACING));
+
+    let title = widget::text!("{}", title)
+        .align_x(Alignment::Center)
+        .width(Length::Fill)
+        .size(TITLE)
+        .font(font);
+
+    widget::row![
+        exit_button,
+        title,
+        widget::horizontal_space().width(Length::Fixed(EXIT_BUTTON_SPACING))
+    ]
+    .into()
 }

@@ -2,7 +2,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::utils::*;
-use crate::vc::{PADDING, VCMessage, style};
+use crate::vc::{MONO_FONT, PADDING, VCMessage, style};
 use iced::{Alignment, Element, Length, widget};
 use time::OffsetDateTime;
 
@@ -85,7 +85,11 @@ impl Builder {
     }
 
     pub fn view(&self) -> Element<VCMessage> {
-        let top_row = self.view_top_row();
+        let top_row = crate::vc::top_row(
+            "Create New Season".to_string(),
+            MONO_FONT,
+            VCMessage::WindowExit,
+        );
 
         let team_settings = self.view_team_settings();
         let teams = widget::container(widget::scrollable(
@@ -132,25 +136,6 @@ impl Builder {
         .align_x(Alignment::Center)
         .into()
     }
-
-    fn view_top_row(&self) -> widget::Row<VCMessage> {
-        let exit_button = widget::button(widget::text!["exit"].align_x(Alignment::Center))
-            .on_press(VCMessage::WindowExit)
-            .style(style::button::secondary)
-            .width(Length::Fixed(75.));
-
-        let title = widget::text!("create new season")
-            .align_x(Alignment::Center)
-            .width(Length::Fill)
-            .size(20);
-
-        widget::row![
-            exit_button,
-            title,
-            widget::horizontal_space().width(Length::Fixed(75.))
-        ]
-    }
-
     fn view_team_settings(&self) -> widget::Row<VCMessage> {
         widget::row![
             widget::button("-")

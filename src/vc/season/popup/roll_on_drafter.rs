@@ -64,7 +64,7 @@ impl RollOnDrafter {
             })
             .collect();
 
-        super::lineup_view(content, self.can_draft(), "Draft Drivers".to_string())
+        super::lineup_view(content, self.can_draft())
     }
 
     pub(super) fn update(&mut self, message: ROMessage) {

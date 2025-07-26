@@ -4,7 +4,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::vc::style::container::content_title;
-use crate::vc::{CONTENT, PADDING, TITLE, VCMessage, style};
+use crate::vc::{CONTENT, F1_FONT, PADDING, TITLE, VCMessage, style};
 use iced::widget::text::{danger, secondary};
 use iced::{Alignment, Element, Font, Length};
 use iced::{Task, widget};
@@ -70,31 +70,18 @@ impl Season {
             .into()
         }
     }
-    fn view_top_row(&self) -> widget::Row<VCMessage> {
-        let exit_button = widget::button(widget::text!["exit"].align_x(Alignment::Center))
-            .on_press(VCMessage::WindowExit)
-            .style(style::button::secondary)
-            .width(Length::Fixed(75.));
-
+    fn view_top_row(&self) -> Element<VCMessage> {
         let round_name = if let Some(round_name) = self
             .round_names
             .as_ref()
             .and_then(|hash| hash.get(&self.current_round))
         {
-            widget::text!("{}", round_name)
+            format!("{}", round_name)
         } else {
-            widget::text!("Round {}", self.current_round)
-        }
-        .align_x(Alignment::Center)
-        .width(Length::Fill)
-        .size(TITLE)
-        .font(Font::with_name("Formula1"));
+            format!("Round {}", self.current_round)
+        };
 
-        widget::row![
-            exit_button,
-            round_name,
-            widget::horizontal_space().width(Length::Fixed(75.))
-        ]
+        crate::vc::top_row(round_name, F1_FONT, VCMessage::WindowExit)
     }
 
     fn view_status_text(&self) -> widget::Text {

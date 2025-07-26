@@ -1,3 +1,4 @@
+use crate::vc::TITLE;
 use iced::{Alignment, Element, Length, widget};
 
 use crate::vc::{PADDING, VCMessage, style};
@@ -40,8 +41,8 @@ impl Landing {
 
         widget::column![
             widget::text!["Welcome to F1FM: the Formula One Fantasy Manager"]
-                .size(20)
-                .height(20 + PADDING * 4)
+                .size(TITLE)
+                .height(TITLE + PADDING * 4)
                 .align_y(Alignment::Center),
             content.height(Length::Fill),
             widget::Button::new(widget::text!("build new season"))
