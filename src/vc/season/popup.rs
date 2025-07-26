@@ -1,11 +1,13 @@
 use crate::fantasy_season::draft::Drafter;
 use crate::vc::MONO_FONT;
+use crate::vc::season::SeasonAction;
 use crate::vc::{CONTENT, PADDING};
 use crate::vc::{CONTENT_INPUT_PADDED, style};
 use iced::{Alignment, Element, Length, widget};
 use replace_all_drafter::ReplaceAllDrafter;
 use roll_on_drafter::RollOnDrafter;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 pub mod replace_all_drafter;
 pub mod roll_on_drafter;
@@ -24,8 +26,12 @@ enum PopupKind {
 pub enum PopupMessage {
     RollOn(roll_on_drafter::ROMessage),
     ReplaceAll(replace_all_drafter::RAMessage),
-    UpdateLineup,
     Close,
+}
+
+pub enum PopupAction {
+    UpdateLineup,
+    None,
 }
 
 impl Popup {
@@ -77,34 +83,46 @@ impl Popup {
         let top = crate::vc::top_row(self.title.clone(), MONO_FONT, PopupMessage::Close);
 
         let main = widget::container(match &self.kind {
-            PopupKind::RollOnDrafter(ro) => ro.view(),
-            PopupKind::ReplaceAllDrafter(ra) => ra.view(),
+            PopupKind::RollOnDrafter(ro) => ro.view().map(PopupMessage::RollOn),
+            PopupKind::ReplaceAllDrafter(ra) => ra.view().map(PopupMessage::ReplaceAll),
         });
 
         widget::column![top, main].into()
     }
 
-    pub fn update(&mut self, message: PopupMessage) {
+    pub fn update(&mut self, message: PopupMessage) -> SeasonAction {
         match message {
             PopupMessage::RollOn(msg) => match &mut self.kind {
-                PopupKind::RollOnDrafter(ro) => ro.update(msg),
+                PopupKind::RollOnDrafter(ro) => {
+                    let action = ro.update(msg);
+                    self.handle_action(action)
+                }
                 PopupKind::ReplaceAllDrafter(_) => panic!("RollOn msg passed to ReplaceAll"),
             },
             PopupMessage::ReplaceAll(msg) => match &mut self.kind {
                 PopupKind::RollOnDrafter(_) => panic!("ReplaceAll msg passed to ReplaceAll"),
-                PopupKind::ReplaceAllDrafter(ra) => ra.update(msg),
+                PopupKind::ReplaceAllDrafter(ra) => {
+                    let action = ra.update(msg);
+                    self.handle_action(action)
+                }
             },
-            PopupMessage::Close | PopupMessage::UpdateLineup => {
-                panic!("draft msg passed to draft window")
-            }
+            PopupMessage::Close => SeasonAction::ClosePopup,
+        }
+    }
+
+    fn handle_action(&mut self, action: PopupAction) -> SeasonAction {
+        match action {
+            PopupAction::UpdateLineup => SeasonAction::UpdateLineup,
+            PopupAction::None => SeasonAction::None,
         }
     }
 }
 
-fn lineup_view(
-    mut content: Vec<(String, Vec<Element<PopupMessage>>)>,
+fn lineup_view<T: Debug + Clone + 'static>(
+    mut content: Vec<(String, Vec<Element<T>>)>,
     can_draft: bool,
-) -> Element<PopupMessage> {
+    message: T,
+) -> Element<T> {
     let mut team_section = Vec::new();
 
     let mut length = 0;
@@ -135,7 +153,7 @@ fn lineup_view(
         widget::Column::from_vec(team_section).spacing(PADDING),
         widget::vertical_space(),
         widget::button("finish")
-            .on_press_maybe(can_draft.then_some(PopupMessage::UpdateLineup))
+            .on_press_maybe(can_draft.then_some(message))
             .style(style::button::primary),
     ]
     .width(Length::Fill)

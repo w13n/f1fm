@@ -5,7 +5,7 @@ mod style;
 
 use crate::fantasy_season::FantasySeason;
 use crate::vc::builder::{Builder, BuilderMessage};
-use crate::vc::landing::Landing;
+use crate::vc::landing::{Landing, LandingMessage};
 use crate::vc::season::{Season, SeasonMessage};
 use directories_next::ProjectDirs;
 use iced::font::Weight;
@@ -77,9 +77,9 @@ impl ViewController {
     }
     pub fn view(&self) -> Element<VCMessage> {
         iced::widget::container(match &self.window {
-            Window::Season(season) => season.view(),
-            Window::Builder(builder) => builder.view(),
-            Window::Landing(landing) => landing.view(),
+            Window::Season(season) => season.view().map(VCMessage::Season),
+            Window::Builder(builder) => builder.view().map(VCMessage::Builder),
+            Window::Landing(landing) => landing.view().map(VCMessage::Landing),
         })
         .padding(PADDING)
         .into()
@@ -91,19 +91,6 @@ impl ViewController {
 
     pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
         match message {
-            VCMessage::Season(sm) => {
-                if let Window::Season(s) = &mut self.window {
-                    s.update(sm).map(VCMessage::Season)
-                } else {
-                    Task::none()
-                }
-            }
-            VCMessage::Builder(bm) => {
-                if let Window::Builder(b) = &mut self.window {
-                    b.update(bm);
-                }
-                Task::none()
-            }
             VCMessage::Save => {
                 let first_season = if let Window::Season(s) = &self.window {
                     vec![s.get_season()]
@@ -131,7 +118,36 @@ impl ViewController {
                 }
                 Task::none()
             }
-            VCMessage::WindowExit => {
+            VCMessage::Season(sm) => {
+                if let Window::Season(s) = &mut self.window {
+                    let action = s.update(sm);
+                    self.handle_action(action)
+                } else {
+                    Task::none()
+                }
+            }
+            VCMessage::Builder(bm) => {
+                if let Window::Builder(b) = &mut self.window {
+                    let action = b.update(bm);
+                    self.handle_action(action)
+                } else {
+                    Task::none()
+                }
+            }
+            VCMessage::Landing(lm) => {
+                if let Window::Landing(l) = &mut self.window {
+                    let action = l.update(lm);
+                    self.handle_action(action)
+                } else {
+                    Task::none()
+                }
+            }
+        }
+    }
+
+    fn handle_action(&mut self, action: VCAction) -> Task<VCMessage> {
+        match action {
+            VCAction::WindowExit => {
                 match &mut self.window {
                     Window::Season(s) => {
                         let mut names: Vec<_> = self
@@ -161,25 +177,25 @@ impl ViewController {
                     Window::Landing(_l) => Task::none(), //  we cant close the landing
                 }
             }
-            VCMessage::OpenSeason(idx) => {
+            VCAction::OpenSeason(idx) => {
                 self.window = Window::Season(Season::new(self.seasons.remove(idx)));
                 Task::batch(vec![
                     Task::done(VCMessage::Season(SeasonMessage::DownloadFirstRace)),
                     Task::done(VCMessage::Season(SeasonMessage::DownloadRaceNames)),
                 ])
             }
-            VCMessage::DeleteSeason(idx) => {
+            VCAction::DeleteSeason(idx) => {
                 self.seasons.remove(idx);
                 if let Window::Landing(l) = &mut self.window {
                     l.delete(idx);
                 }
                 Task::none()
             }
-            VCMessage::OpenBuilder => {
+            VCAction::OpenBuilder => {
                 self.window = Window::Builder(Builder::new());
                 Task::none()
             }
-            VCMessage::CreateFromBuilder => match &mut self.window {
+            VCAction::CreateFromBuilder => match &mut self.window {
                 Window::Builder(b) => {
                     self.window = Window::Season(Season::new(b.create()));
                     Task::batch(vec![
@@ -191,6 +207,8 @@ impl ViewController {
                     panic!("IMPOSSIBLE: CFB MESSAGE PASSED WHEN NO BUILDER IS PRESENT")
                 }
             },
+            VCAction::None => Task::none(),
+            VCAction::Task(task) => task,
         }
     }
 }
@@ -203,14 +221,20 @@ enum Window {
 
 #[derive(Debug, Clone)]
 pub enum VCMessage {
+    Save,
     Season(SeasonMessage),
     Builder(BuilderMessage),
-    Save,
+    Landing(LandingMessage),
+}
+
+pub enum VCAction {
     WindowExit,
     OpenSeason(usize),
     DeleteSeason(usize),
     OpenBuilder,
     CreateFromBuilder,
+    Task(Task<VCMessage>),
+    None,
 }
 
 fn top_row<T: Debug + Clone + 'static>(title: String, font: Font, exit: T) -> Element<'static, T> {

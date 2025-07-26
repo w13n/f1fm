@@ -4,7 +4,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::vc::style::container::content_title;
-use crate::vc::{CONTENT, F1_FONT, PADDING, SYMB_FONT, VCMessage, style};
+use crate::vc::{CONTENT, F1_FONT, PADDING, SYMB_FONT, VCAction, VCMessage, style};
 use iced::widget::text::{danger, secondary};
 use iced::{Alignment, Element, Length};
 use iced::{Task, widget};
@@ -44,13 +44,13 @@ impl Season {
             warning_count: 0,
         }
     }
-    pub fn view(&self) -> Element<VCMessage> {
+    pub fn view(&self) -> Element<SeasonMessage> {
         if !self.popups.is_empty() {
             self.popups
                 .last()
                 .expect("IMPOSSIBLE: CHECKED THAT POPUPS IS NOT EMPTY")
                 .view()
-                .map(|x| SeasonMessage::PopupMessage(x).to())
+                .map(SeasonMessage::PopupMessage)
         } else {
             let top_row = self.view_top_row();
             let secondary_row = self.view_status_text();
@@ -70,7 +70,7 @@ impl Season {
             .into()
         }
     }
-    fn view_top_row(&self) -> Element<VCMessage> {
+    fn view_top_row(&self) -> Element<SeasonMessage> {
         let round_name = if let Some(round_name) = self
             .round_names
             .as_ref()
@@ -81,7 +81,7 @@ impl Season {
             format!("Round {}", self.current_round)
         };
 
-        crate::vc::top_row(round_name, F1_FONT, VCMessage::WindowExit)
+        crate::vc::top_row(round_name, F1_FONT, SeasonMessage::Exit)
     }
 
     fn view_status_text(&self) -> widget::Text {
@@ -102,7 +102,7 @@ impl Season {
         }
     }
 
-    fn view_content_rows(&self) -> widget::Column<VCMessage> {
+    fn view_content_rows(&self) -> widget::Column<SeasonMessage> {
         let points_by = self.season.get_points_by(self.current_round);
         let data_points_by = points_by
             .iter()
@@ -113,7 +113,7 @@ impl Season {
             Self::view_table("total points", teams_points_by.clone(), data_points_by);
 
         let points_at = self.season.get_points_at(self.current_round);
-        let points_at_table: Element<VCMessage> = match points_at {
+        let points_at_table: Element<SeasonMessage> = match points_at {
             None => {
                 let data_col = teams_points_by.iter().map(|_| "0".to_string()).collect();
                 Self::view_table("points this round", teams_points_by, data_col)
@@ -169,7 +169,7 @@ impl Season {
         .align_x(Alignment::Center)
     }
 
-    fn view_bottom_row(&self) -> widget::Row<VCMessage> {
+    fn view_bottom_row(&self) -> widget::Row<SeasonMessage> {
         let prev_status = if self.current_round == 1 {
             (true, true, true)
         } else {
@@ -180,9 +180,9 @@ impl Season {
 
         let add_button = match (prev_status, status) {
             ((false, _, _), _) => widget::button("draft"),
-            (_, (false, _, _)) => widget::button("draft").on_press(SeasonMessage::DraftStart.to()),
+            (_, (false, _, _)) => widget::button("draft").on_press(SeasonMessage::DraftStart),
             (_, (true, false, _)) => widget::button("score"),
-            (_, (true, true, false)) => widget::button("score").on_press(SeasonMessage::Score.to()),
+            (_, (true, true, false)) => widget::button("score").on_press(SeasonMessage::Score),
             (_, (true, true, true)) => widget::button("scored"),
         }
         .style(style::button::primary);
@@ -190,7 +190,7 @@ impl Season {
         let edit_lineup_button = match (self.current_round, status, next_status) {
             (1, _, _) => widget::button("edit lineup"),
             (_, (true, _, false), (false, _, _)) => {
-                widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup.to())
+                widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup)
             }
             _ => widget::button("edit lineup"),
         }
@@ -199,29 +199,25 @@ impl Season {
         let delete_lineup_button = match (self.current_round, status, next_status) {
             (1, _, _) => widget::button("delete lineup"),
             (_, (true, _, false), (false, _, _)) => {
-                widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup.to())
+                widget::button("delete lineup").on_press(SeasonMessage::DeleteLineup)
             }
             _ => widget::button("delete lineup"),
         }
         .style(style::button::danger);
 
         let delete_round_button = match status {
-            (_, true, _) => {
-                widget::button("delete round").on_press(SeasonMessage::DeleteRound.to())
-            }
+            (_, true, _) => widget::button("delete round").on_press(SeasonMessage::DeleteRound),
             _ => widget::button("delete round"),
         }
         .style(style::button::danger);
 
         let left_button = widget::button(widget::text!("\u{e5c4}").font(SYMB_FONT))
             .style(widget::button::text)
-            .on_press_maybe(
-                (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound.to()),
-            );
+            .on_press_maybe((!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound));
 
         let right_button = widget::button(widget::text!("\u{e5c8}").font(SYMB_FONT))
             .style(widget::button::text)
-            .on_press(SeasonMessage::IncrementRound.to());
+            .on_press(SeasonMessage::IncrementRound);
 
         widget::row![
             left_button,
@@ -240,7 +236,7 @@ impl Season {
         title: &str,
         teams: Vec<String>,
         data: Vec<String>,
-    ) -> Element<'a, VCMessage> {
+    ) -> Element<'a, SeasonMessage> {
         let table_width = title.width() + 2;
         let data_width_max = data.iter().map(|x| x.width()).max().unwrap_or_default();
         let title_width = (table_width - data_width_max).max(0);
@@ -273,30 +269,38 @@ impl Season {
         .into()
     }
 
-    pub fn update(&mut self, message: SeasonMessage) -> Task<SeasonMessage> {
+    pub fn update(&mut self, message: SeasonMessage) -> VCAction {
         match message {
+            SeasonMessage::PopupMessage(pm) => {
+                let action = self
+                    .popups
+                    .last_mut()
+                    .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP")
+                    .update(pm);
+                return self.handle_action(action);
+            }
             SeasonMessage::IncrementRound => {
                 self.current_round += 1;
-                self.download_task()
+                return VCAction::Task(self.download_task().map(VCMessage::Season));
             }
             SeasonMessage::DecrementRound => {
                 self.current_round -= 1;
-                self.download_task()
+                return VCAction::Task(self.download_task().map(VCMessage::Season));
             }
-            SeasonMessage::DownloadFirstRace => self.download_task(),
+            SeasonMessage::DownloadFirstRace => {
+                return VCAction::Task(self.download_task().map(VCMessage::Season));
+            }
             SeasonMessage::DraftStart => match self.season.get_draft_choice() {
                 DraftChoice::Skip => {
                     self.season
                         .draft(self.current_round, &mut Skip::new())
                         .expect("TODO");
-                    Task::none()
                 }
                 DraftChoice::RollOn => {
                     self.popups.push(Popup::new_roll_on(
                         self.season.get_lineup_at(self.current_round - 1),
                         self.season.enforces_unique(),
                     ));
-                    Task::none()
                 }
                 DraftChoice::ReplaceAll => {
                     self.popups.push(Popup::new_replace_all(
@@ -304,19 +308,19 @@ impl Season {
                         self.season.get_lineup_size() as usize,
                         self.season.enforces_unique(),
                     ));
-                    Task::none()
                 }
             },
             SeasonMessage::Score => {
                 if let Err(se) = self.season.score(self.current_round) {
                     self.warning = Some(se.to_string());
                     self.warning_count += 1;
-                    Task::perform(
-                        async { tokio::time::sleep(Duration::from_secs(5)).await },
-                        |_| SeasonMessage::RemoveWarning,
-                    )
-                } else {
-                    Task::none()
+                    return VCAction::Task(
+                        Task::perform(
+                            async { tokio::time::sleep(Duration::from_secs(5)).await },
+                            |_| SeasonMessage::RemoveWarning,
+                        )
+                        .map(VCMessage::Season),
+                    );
                 }
             }
             SeasonMessage::ReplaceLineup => {
@@ -330,7 +334,6 @@ impl Season {
                     team_lineups,
                     self.season.enforces_unique(),
                 ));
-                Task::none()
             }
             SeasonMessage::DownloadedResults(result) => {
                 if let Ok(rr) = result.1 {
@@ -339,67 +342,66 @@ impl Season {
                 } else if let Err(err) = result.1 {
                     self.download_attempts.insert(result.0, err.to_string());
                 }
-                Task::none()
             }
             SeasonMessage::DeleteLineup => {
                 self.season.delete_lineup(self.current_round).expect(
                     "IMPOSSIBLE: UI PREVENTS THIS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR",
                 );
-                Task::none()
             }
             SeasonMessage::DeleteRound => {
                 self.season.delete_round(self.current_round).expect(
                     "IMPOSSIBLE: UI PREVENTS THIS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR",
                 );
                 self.download_attempts.remove(&self.current_round);
-                Task::none()
             }
             SeasonMessage::DownloadedRaceNames(results) => {
                 self.round_names = results.ok();
-                Task::none()
             }
-            SeasonMessage::DownloadRaceNames => Task::perform(
-                download_race_names(self.season.get_season()),
-                SeasonMessage::DownloadedRaceNames,
-            ),
-            SeasonMessage::PopupMessage(pm) => match pm {
-                PopupMessage::Close => {
-                    self.popups
-                        .pop()
-                        .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP");
-                    Task::none()
-                }
-                PopupMessage::UpdateLineup => {
-                    let mut drafter = self
-                        .popups
-                        .pop()
-                        .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP")
-                        .get_drafter();
-                    self.season.delete_lineup(self.current_round).expect(
-                        "IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR",
-                    );
-                    self.season
-                        .draft(self.current_round, &mut *drafter)
-                        .expect("IMPOSSIBLE: UI CANNOT CREATE AN INVALID DRAFTER");
-                    Task::none()
-                }
-                _ => {
-                    self.popups
-                        .last_mut()
-                        .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP")
-                        .update(pm);
-                    Task::none()
-                }
-            },
+            SeasonMessage::DownloadRaceNames => {
+                return VCAction::Task(
+                    Task::perform(
+                        download_race_names(self.season.get_season()),
+                        SeasonMessage::DownloadedRaceNames,
+                    )
+                    .map(VCMessage::Season),
+                );
+            }
             SeasonMessage::RemoveWarning => {
                 self.warning_count -= 1;
                 if self.warning_count == 0 {
                     self.warning = None;
                 }
-
-                Task::none()
             }
+            SeasonMessage::Exit => return VCAction::WindowExit,
         }
+
+        VCAction::None
+    }
+
+    fn handle_action(&mut self, action: SeasonAction) -> VCAction {
+        match action {
+            SeasonAction::UpdateLineup => {
+                let mut drafter = self
+                    .popups
+                    .pop()
+                    .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP")
+                    .get_drafter();
+                self.season
+                    .delete_lineup(self.current_round)
+                    .expect("IMPOSSIBLE: UI PREVENTS FROM BEING TRIGGERED WHEN METHOD WOULD ERROR");
+                self.season
+                    .draft(self.current_round, &mut *drafter)
+                    .expect("IMPOSSIBLE: UI CANNOT CREATE AN INVALID DRAFTER");
+            }
+            SeasonAction::ClosePopup => {
+                self.popups
+                    .pop()
+                    .expect("IMPOSSIBLE: PM CAN ONLY TRIGGER WHEN THERE IS A POPUP");
+            }
+            SeasonAction::None => {}
+        }
+
+        VCAction::None
     }
 
     fn download_task(&mut self) -> Task<SeasonMessage> {
@@ -429,6 +431,7 @@ async fn download_race_names(season: u16) -> Result<HashMap<u8, String>, ApiErro
 
 #[derive(Debug, Clone)]
 pub enum SeasonMessage {
+    PopupMessage(PopupMessage),
     IncrementRound,
     DecrementRound,
     DownloadFirstRace,
@@ -440,12 +443,12 @@ pub enum SeasonMessage {
     DeleteRound,
     DownloadRaceNames,
     DownloadedRaceNames(Result<HashMap<u8, String>, ApiError>),
-    PopupMessage(PopupMessage),
     RemoveWarning,
+    Exit,
 }
 
-impl SeasonMessage {
-    fn to(self) -> VCMessage {
-        VCMessage::Season(self)
-    }
+pub enum SeasonAction {
+    UpdateLineup,
+    ClosePopup,
+    None,
 }

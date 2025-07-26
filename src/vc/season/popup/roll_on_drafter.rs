@@ -1,4 +1,4 @@
-use super::PopupMessage;
+use super::PopupAction;
 use crate::fantasy_season::draft;
 use crate::utils::*;
 use crate::vc::{CONTENT, CONTENT_INPUT_PADDED, style};
@@ -26,7 +26,7 @@ impl RollOnDrafter {
             enforce_uniqueness,
         }
     }
-    pub(super) fn view(&self) -> Element<PopupMessage> {
+    pub(super) fn view(&self) -> Element<ROMessage> {
         let content = self
             .returning_lineup
             .keys()
@@ -40,12 +40,7 @@ impl RollOnDrafter {
                     )
                     .size(CONTENT)
                     .style(style::text_input::default)
-                    .on_input(move |num| {
-                        PopupMessage::RollOn(ROMessage::ChangeDriverNumber(
-                            team_name.to_string(),
-                            num,
-                        ))
-                    })
+                    .on_input(move |num| ROMessage::ChangeDriverNumber(team_name.to_string(), num))
                     .width(50)
                     .into(),
                 );
@@ -64,17 +59,20 @@ impl RollOnDrafter {
             })
             .collect();
 
-        super::lineup_view(content, self.can_draft())
+        super::lineup_view(content, self.can_draft(), ROMessage::UpdateLineup)
     }
 
-    pub(super) fn update(&mut self, message: ROMessage) {
+    pub(super) fn update(&mut self, message: ROMessage) -> PopupAction {
         match message {
             ROMessage::ChangeDriverNumber(team, num) => {
                 if is_valid_driver_input(&num) {
                     self.drivers.insert(team, num);
                 }
             }
+            ROMessage::UpdateLineup => return PopupAction::UpdateLineup,
         }
+
+        PopupAction::None
     }
 
     pub fn get_drafter(self) -> draft::RollOn {
@@ -109,4 +107,5 @@ impl RollOnDrafter {
 #[derive(Clone, Debug)]
 pub enum ROMessage {
     ChangeDriverNumber(String, String),
+    UpdateLineup,
 }

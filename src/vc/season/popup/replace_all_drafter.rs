@@ -1,6 +1,6 @@
 use crate::fantasy_season::draft;
 use crate::utils::*;
-use crate::vc::season::popup::PopupMessage;
+use crate::vc::season::popup::PopupAction;
 use crate::vc::{CONTENT, style};
 use iced::{Element, widget};
 use std::collections::HashMap;
@@ -36,7 +36,7 @@ impl ReplaceAllDrafter {
             enforce_uniqueness,
         }
     }
-    pub(super) fn view(&self) -> Element<PopupMessage> {
+    pub(super) fn view(&self) -> Element<RAMessage> {
         let content = self
             .team_lineups
             .iter()
@@ -49,11 +49,7 @@ impl ReplaceAllDrafter {
                             .size(CONTENT)
                             .style(style::text_input::default)
                             .on_input(move |num| {
-                                PopupMessage::ReplaceAll(RAMessage::ChangeDriverNumber(
-                                    team_name.to_string(),
-                                    idx,
-                                    num,
-                                ))
+                                RAMessage::ChangeDriverNumber(team_name.to_string(), idx, num)
                             })
                             .width(50)
                             .into(),
@@ -64,10 +60,10 @@ impl ReplaceAllDrafter {
             })
             .collect();
 
-        super::lineup_view(content, self.can_draft())
+        super::lineup_view(content, self.can_draft(), RAMessage::UpdateLineup)
     }
 
-    pub(super) fn update(&mut self, message: RAMessage) {
+    pub(super) fn update(&mut self, message: RAMessage) -> PopupAction {
         match message {
             RAMessage::ChangeDriverNumber(team, idx, num) => {
                 if is_valid_driver_input(&num) {
@@ -81,7 +77,10 @@ impl ReplaceAllDrafter {
                     );
                 }
             }
+            RAMessage::UpdateLineup => return PopupAction::UpdateLineup,
         }
+
+        PopupAction::None
     }
 
     fn can_draft(&self) -> bool {
@@ -111,4 +110,5 @@ impl ReplaceAllDrafter {
 #[derive(Clone, Debug)]
 pub enum RAMessage {
     ChangeDriverNumber(String, usize, String),
+    UpdateLineup,
 }
