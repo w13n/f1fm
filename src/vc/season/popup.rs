@@ -1,7 +1,7 @@
 use crate::fantasy_season::draft::Drafter;
+use crate::vc::MONO_FONT;
 use crate::vc::{CONTENT, PADDING};
 use crate::vc::{CONTENT_INPUT_PADDED, style};
-use crate::vc::{F1_FONT, MONO_FONT, TITLE};
 use iced::{Alignment, Element, Length, widget};
 use replace_all_drafter::ReplaceAllDrafter;
 use roll_on_drafter::RollOnDrafter;
@@ -34,7 +34,7 @@ impl Popup {
         enforce_uniqueness: bool,
     ) -> Popup {
         Popup {
-            title: "Draft New Drivers".to_string(),
+            title: "draft new drivers".to_string(),
             kind: PopupKind::RollOnDrafter(RollOnDrafter::new(previous_lineup, enforce_uniqueness)),
         }
     }
@@ -45,7 +45,7 @@ impl Popup {
         enforce_uniqueness: bool,
     ) -> Popup {
         Popup {
-            title: "Draft New Drivers".to_string(),
+            title: "draft new drivers".to_string(),
             kind: PopupKind::ReplaceAllDrafter(ReplaceAllDrafter::new(
                 team_names,
                 team_size,
@@ -59,7 +59,7 @@ impl Popup {
         enforce_uniqueness: bool,
     ) -> Popup {
         Popup {
-            title: "Edit Lineup".to_string(),
+            title: "edit lineup".to_string(),
             kind: PopupKind::ReplaceAllDrafter(ReplaceAllDrafter::from(
                 team_lineups,
                 enforce_uniqueness,

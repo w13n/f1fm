@@ -4,9 +4,9 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::vc::style::container::content_title;
-use crate::vc::{CONTENT, F1_FONT, PADDING, TITLE, VCMessage, style};
+use crate::vc::{CONTENT, F1_FONT, PADDING, VCMessage, style};
 use iced::widget::text::{danger, secondary};
-use iced::{Alignment, Element, Font, Length};
+use iced::{Alignment, Element, Length};
 use iced::{Task, widget};
 use popup::{Popup, PopupMessage};
 use std::collections::HashMap;
@@ -76,7 +76,7 @@ impl Season {
             .as_ref()
             .and_then(|hash| hash.get(&self.current_round))
         {
-            format!("{}", round_name)
+            round_name.clone()
         } else {
             format!("Round {}", self.current_round)
         };

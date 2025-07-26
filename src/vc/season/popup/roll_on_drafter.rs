@@ -29,8 +29,8 @@ impl RollOnDrafter {
     pub(super) fn view(&self) -> Element<PopupMessage> {
         let content = self
             .returning_lineup
-            .iter()
-            .map(|(team_name, _)| {
+            .keys()
+            .map(|team_name| {
                 let mut row = Vec::new();
 
                 row.push(

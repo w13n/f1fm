@@ -1,4 +1,4 @@
-use crate::vc::TITLE;
+use crate::vc::{CONTENT, TITLE};
 use iced::{Alignment, Element, Length, widget};
 
 use crate::vc::{PADDING, VCMessage, style};
@@ -23,10 +23,10 @@ impl Landing {
                     .enumerate()
                     .map(|(pos, name)| {
                         widget::row![
-                            widget::Button::new(widget::text!("{}", name))
+                            widget::Button::new(widget::text!("{}", name).size(CONTENT))
                                 .on_press(VCMessage::OpenSeason(pos))
                                 .style(style::button::success),
-                            widget::Button::new(widget::text!("delete"))
+                            widget::Button::new(widget::text!("delete").size(CONTENT))
                                 .on_press(VCMessage::DeleteSeason(pos))
                                 .style(style::button::danger)
                         ]
@@ -40,12 +40,12 @@ impl Landing {
         );
 
         widget::column![
-            widget::text!["Welcome to F1FM: the Formula One Fantasy Manager"]
+            widget::text!["welcome to F1FM: the formula one fantasy manager"]
                 .size(TITLE)
                 .height(TITLE + PADDING * 4)
                 .align_y(Alignment::Center),
             content.height(Length::Fill),
-            widget::Button::new(widget::text!("build new season"))
+            widget::Button::new(widget::text!("build new season").size(CONTENT))
                 .on_press(VCMessage::OpenBuilder)
                 .style(style::button::primary)
         ]

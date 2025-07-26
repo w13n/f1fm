@@ -2,7 +2,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::utils::*;
-use crate::vc::{MONO_FONT, PADDING, VCMessage, style};
+use crate::vc::{CONTENT, MONO_FONT, PADDING, VCMessage, style};
 use iced::{Alignment, Element, Length, widget};
 use time::OffsetDateTime;
 
@@ -86,7 +86,7 @@ impl Builder {
 
     pub fn view(&self) -> Element<VCMessage> {
         let top_row = crate::vc::top_row(
-            "Create New Season".to_string(),
+            "build new season".to_string(),
             MONO_FONT,
             VCMessage::WindowExit,
         );
@@ -102,10 +102,13 @@ impl Builder {
             widget::toggler(self.enforce_uniqueness)
                 .label("Enforce Uniqueness")
                 .on_toggle(|x| BuilderMessage::ToggleEnforceUniqueness(x).to())
+                .text_size(CONTENT)
+                .size(CONTENT)
         ]
         .height(Length::Shrink);
         let name = widget::text_input("fantasy season name", &self.name)
             .on_input(|x| BuilderMessage::ChangeName(x).to())
+            .size(CONTENT)
             .style(style::text_input::default);
         let content = widget::column![
             team_settings,
@@ -121,9 +124,9 @@ impl Builder {
         .width(Length::Shrink)
         .align_x(Alignment::Center);
 
-        let create = widget::button("Create Season")
+        let create = widget::button(widget::text!["build season"].size(CONTENT))
             .on_press_maybe(self.can_create().then_some(VCMessage::CreateFromBuilder))
-            .style(super::style::button::primary);
+            .style(style::button::primary);
 
         widget::column![
             top_row,
@@ -138,7 +141,7 @@ impl Builder {
     }
     fn view_team_settings(&self) -> widget::Row<VCMessage> {
         widget::row![
-            widget::button("-")
+            widget::button(widget::text!["-"].size(CONTENT))
                 .on_press_maybe(if self.team_size > 1 {
                     Some(BuilderMessage::DecreaseTeamSize.to())
                 } else {
@@ -147,16 +150,17 @@ impl Builder {
                 .style(style::button::secondary),
             widget::text! {"{} drivers per team", self.team_size}
                 .height(Length::Fill)
+                .size(CONTENT)
                 .align_y(Alignment::Center),
-            widget::button("+")
+            widget::button(widget::text!["+"].size(CONTENT))
                 .on_press(BuilderMessage::IncreaseTeamSize.to())
                 .style(style::button::secondary),
             widget::horizontal_space().width(PADDING),
-            widget::button("add a team")
+            widget::button(widget::text!["add a team"].size(CONTENT))
                 .on_press(BuilderMessage::AddTeam.to())
                 .style(style::button::secondary)
         ]
-        .spacing(10)
+        .spacing(PADDING)
         .height(Length::Shrink)
     }
 
@@ -173,7 +177,8 @@ impl Builder {
         )
         .placeholder("Score Mode")
         .style(style::pick_list::default)
-        .menu_style(style::pick_list::default_menu);
+        .menu_style(style::pick_list::default_menu)
+        .text_size(CONTENT);
 
         let draft_mode = widget::pick_list(
             vec![
@@ -185,8 +190,9 @@ impl Builder {
             |x| BuilderMessage::DraftChoiceSelected(x).to(),
         )
         .placeholder("Draft Mode")
-        .style(super::style::pick_list::default)
-        .menu_style(super::style::pick_list::default_menu);
+        .style(style::pick_list::default)
+        .menu_style(style::pick_list::default_menu)
+        .text_size(CONTENT);
 
         widget::row![score_mode, draft_mode,]
             .spacing(PADDING)
@@ -199,14 +205,17 @@ impl Builder {
                 .on_input(|x| BuilderMessage::ChangeGridSize(x).to())
                 .align_x(Alignment::End)
                 .style(style::text_input::default)
+                .size(CONTENT)
                 .width(35),
             widget::text!(" Drivers in ")
                 .height(Length::Fill)
+                .size(CONTENT)
                 .align_y(Alignment::Center),
             widget::text_input("season", &self.season)
                 .on_input(|x| BuilderMessage::ChangeSeason(x).to())
-                .style(super::style::text_input::default)
-                .width(60),
+                .style(style::text_input::default)
+                .size(CONTENT)
+                .width(65),
         ]
         .height(Length::Shrink)
     }
@@ -281,7 +290,8 @@ impl TeamBuilder {
         let name = widget::text_input("name of team", &self.name)
             .on_input(|name| BuilderMessage::ChangeTeamName(self.id, name).to())
             .width(200)
-            .style(super::style::text_input::default);
+            .size(CONTENT)
+            .style(style::text_input::default);
 
         let mut drivers = widget::Row::with_capacity(self.numbers.len());
         for idx in 0..self.numbers.len() {
@@ -291,16 +301,17 @@ impl TeamBuilder {
                         &format!("#{}", idx + 1),
                         self.numbers.get(idx).expect("cannot happen"),
                     )
-                    .style(super::style::text_input::default)
+                    .style(style::text_input::default)
+                    .size(CONTENT)
                     .on_input(move |num| BuilderMessage::ChangeDriverNum(self.id, idx, num).to())
                     .width(50),
                 )
                 .spacing(5);
         }
 
-        let delete = widget::button("delete")
+        let delete = widget::button(widget::text!["delete"].size(CONTENT))
             .on_press(BuilderMessage::DeleteTeam(self.id).to())
-            .style(super::style::button::danger);
+            .style(style::button::danger);
 
         widget::row![name, drivers, delete].spacing(10).into()
     }
