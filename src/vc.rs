@@ -21,13 +21,19 @@ const TITLE: u16 = 24;
 const CONTENT: u16 = 20;
 const CONTENT_INPUT_PADDED: u16 = (CONTENT as f64 * 1.7) as u16;
 
-const EXIT_BUTTON_SPACING: f32 = 75.0;
+const EXIT_BUTTON_SPACING: f32 = 30.0;
 const MONO_FONT: Font = {
     let mut font = Font::with_name("IBM Plex Mono Bold");
     font.weight = Weight::Bold;
     font
 };
 const F1_FONT: Font = Font::with_name("Formula1");
+
+const SYMB_FONT: Font = {
+    let mut font = Font::with_name("Material Symbols Rounded");
+    font.weight = Weight::Bold;
+    font
+};
 
 pub(super) struct ViewController {
     window: Window,
@@ -208,10 +214,14 @@ pub enum VCMessage {
 }
 
 fn top_row<T: Debug + Clone + 'static>(title: String, font: Font, exit: T) -> Element<'static, T> {
-    let exit_button = widget::button(widget::text!["exit"].align_x(Alignment::Center))
-        .on_press(exit)
-        .style(style::button::secondary)
-        .width(Length::Fixed(EXIT_BUTTON_SPACING));
+    let exit_button = widget::button(
+        widget::text!("\u{e9ba}")
+            .align_x(Alignment::Center)
+            .font(SYMB_FONT),
+    )
+    .on_press(exit)
+    .style(widget::button::text)
+    .width(Length::Fixed(EXIT_BUTTON_SPACING));
 
     let title = widget::text!("{}", title)
         .align_x(Alignment::Center)
@@ -222,7 +232,7 @@ fn top_row<T: Debug + Clone + 'static>(title: String, font: Font, exit: T) -> El
     widget::row![
         exit_button,
         title,
-        widget::horizontal_space().width(Length::Fixed(EXIT_BUTTON_SPACING))
+        widget::horizontal_space().width(Length::Fixed(EXIT_BUTTON_SPACING)),
     ]
     .into()
 }

@@ -2,7 +2,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::DraftChoice;
 use crate::fantasy_season::score::ScoreChoice;
 use crate::utils::*;
-use crate::vc::{CONTENT, MONO_FONT, PADDING, VCMessage, style};
+use crate::vc::{CONTENT, MONO_FONT, PADDING, SYMB_FONT, VCMessage, style};
 use iced::{Alignment, Element, Length, widget};
 use time::OffsetDateTime;
 
@@ -309,7 +309,7 @@ impl TeamBuilder {
                 .spacing(5);
         }
 
-        let delete = widget::button(widget::text!["delete"].size(CONTENT))
+        let delete = widget::button(widget::text!["\u{e872}"].size(CONTENT).font(SYMB_FONT))
             .on_press(BuilderMessage::DeleteTeam(self.id).to())
             .style(style::button::danger);
 

@@ -4,7 +4,7 @@ use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::vc::style::container::content_title;
-use crate::vc::{CONTENT, F1_FONT, PADDING, VCMessage, style};
+use crate::vc::{CONTENT, F1_FONT, PADDING, SYMB_FONT, VCMessage, style};
 use iced::widget::text::{danger, secondary};
 use iced::{Alignment, Element, Length};
 use iced::{Task, widget};
@@ -213,15 +213,15 @@ impl Season {
         }
         .style(style::button::danger);
 
-        let left_button = widget::button("<-")
+        let left_button = widget::button(widget::text!("\u{e5c4}").font(SYMB_FONT))
+            .style(widget::button::text)
             .on_press_maybe(
                 (!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound.to()),
-            )
-            .style(style::button::secondary);
+            );
 
-        let right_button = widget::button("->")
-            .on_press(SeasonMessage::IncrementRound.to())
-            .style(style::button::secondary);
+        let right_button = widget::button(widget::text!("\u{e5c8}").font(SYMB_FONT))
+            .style(widget::button::text)
+            .on_press(SeasonMessage::IncrementRound.to());
 
         widget::row![
             left_button,

@@ -1,4 +1,4 @@
-use crate::vc::{CONTENT, TITLE};
+use crate::vc::{CONTENT, SYMB_FONT, TITLE};
 use iced::{Alignment, Element, Length, widget};
 
 use crate::vc::{PADDING, VCMessage, style};
@@ -26,9 +26,11 @@ impl Landing {
                             widget::Button::new(widget::text!("{}", name).size(CONTENT))
                                 .on_press(VCMessage::OpenSeason(pos))
                                 .style(style::button::success),
-                            widget::Button::new(widget::text!("delete").size(CONTENT))
-                                .on_press(VCMessage::DeleteSeason(pos))
-                                .style(style::button::danger)
+                            widget::Button::new(
+                                widget::text!("\u{e872}").font(SYMB_FONT).size(CONTENT)
+                            )
+                            .on_press(VCMessage::DeleteSeason(pos))
+                            .style(style::button::danger)
                         ]
                         .spacing(PADDING)
                         .into()

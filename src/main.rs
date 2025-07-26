@@ -12,6 +12,8 @@ mod vc;
 const F1_FONT: &[u8] = include_bytes!("../assets/Formula1-Regular.ttf");
 const MONOSPACE_FONT: &[u8] = include_bytes!("../assets/IBMPlexMono-Bold.ttf");
 
+const SYMBOLS_FONT: &[u8] = include_bytes!("../assets/MaterialSymbolsRounded-Bold.ttf");
+
 fn main() {
     iced::application("test", ViewController::update, ViewController::view)
         .theme(|_| {
@@ -29,6 +31,7 @@ fn main() {
         .subscription(ViewController::subscription)
         .font(F1_FONT)
         .font(MONOSPACE_FONT)
+        .font(SYMBOLS_FONT)
         .default_font({
             let mut font = Font::with_name("IBM Plex Mono Bold");
             font.weight = Weight::Bold;
