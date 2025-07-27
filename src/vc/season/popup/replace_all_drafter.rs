@@ -1,6 +1,6 @@
 use crate::fantasy_season::draft;
-use crate::utils::*;
 use crate::vc::season::popup::PopupAction;
+use crate::vc::utils::*;
 use crate::vc::{CONTENT, style};
 use iced::{Element, widget};
 use std::collections::HashMap;

@@ -1,10 +1,10 @@
-use crate::api::Api;
-use crate::error::{ApiError, DownloadError};
+use super::api::Api;
+use super::style::container::content_title;
+use super::{CONTENT, F1_FONT, PADDING, SYMB_FONT, VCAction, VCMessage, style};
 use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
+use crate::fantasy_season::error::{ApiError, DownloadError};
 use crate::fantasy_season::race_results::RaceResults;
-use crate::vc::style::container::content_title;
-use crate::vc::{CONTENT, F1_FONT, PADDING, SYMB_FONT, VCAction, VCMessage, style};
 use iced::keyboard;
 use iced::widget::text::{danger, secondary};
 use iced::{Alignment, Element, Length, Subscription};

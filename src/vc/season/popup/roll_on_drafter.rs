@@ -1,6 +1,6 @@
 use super::PopupAction;
 use crate::fantasy_season::draft;
-use crate::utils::*;
+use crate::vc::utils::*;
 use crate::vc::{CONTENT, CONTENT_INPUT_PADDED, style};
 use iced::widget;
 use iced::{Alignment, Element};

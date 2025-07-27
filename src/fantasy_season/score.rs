@@ -1,4 +1,4 @@
-use crate::fantasy_season::race_results::DriverResult;
+use super::race_results::DriverResult;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 

@@ -1,5 +1,5 @@
-use crate::api::Api;
-use crate::error::DownloadError;
+use super::error::DownloadError;
+use crate::vc::api::Api;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 

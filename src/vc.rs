@@ -1,15 +1,17 @@
+pub mod api;
 mod builder;
 mod landing;
 mod season;
 mod style;
+mod utils;
 
 use crate::fantasy_season::FantasySeason;
-use crate::vc::builder::{Builder, BuilderMessage};
-use crate::vc::landing::{Landing, LandingMessage};
-use crate::vc::season::{Season, SeasonMessage};
+use builder::{Builder, BuilderMessage};
 use directories_next::ProjectDirs;
 use iced::font::Weight;
 use iced::{Alignment, Element, Font, Length, Subscription, Task, widget};
+use landing::{Landing, LandingMessage};
+use season::{Season, SeasonMessage};
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::{Read, Write};

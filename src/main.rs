@@ -3,10 +3,7 @@ use iced::font::Weight;
 use iced::theme::Palette;
 use iced::{Font, Theme};
 
-mod api;
-mod error;
 mod fantasy_season;
-mod utils;
 mod vc;
 
 const F1_FONT: &[u8] = include_bytes!("../assets/Formula1-Regular.ttf");

@@ -1,4 +1,4 @@
-use crate::error::ApiError;
+use crate::fantasy_season::error::ApiError;
 use ergast_rs::apis::race_table::{QualifyingResult, Race, RaceResult};
 use ergast_rs::apis::response::Response;
 use reqwest::Client;

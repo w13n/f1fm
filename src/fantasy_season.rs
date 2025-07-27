@@ -1,14 +1,14 @@
 pub mod draft;
+pub mod error;
 pub mod race_results;
 pub mod score;
 mod status;
 mod team;
 
-use crate::error::{DeleteError, DownloadError, DraftError, ScoreError};
-use crate::fantasy_season::draft::DraftChoice;
-use crate::fantasy_season::score::ScoreChoice;
-use draft::Drafter;
+use draft::{DraftChoice, Drafter};
+use error::{DeleteError, DownloadError, DraftError, ScoreError};
 use race_results::{DriverResult, RaceResults};
+use score::ScoreChoice;
 use serde::{Deserialize, Serialize};
 use status::Status;
 use std::collections::{HashMap, HashSet};

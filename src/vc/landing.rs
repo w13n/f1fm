@@ -1,7 +1,7 @@
-use crate::vc::{CONTENT, SYMB_FONT, TITLE, VCAction};
+use super::{CONTENT, SYMB_FONT, TITLE, VCAction};
 use iced::{Alignment, Element, Length, widget};
 
-use crate::vc::{PADDING, style};
+use super::{PADDING, style};
 
 pub struct Landing {
     season_names: Vec<String>,

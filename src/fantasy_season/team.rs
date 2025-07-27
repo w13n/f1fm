@@ -1,7 +1,7 @@
 use super::DriverResult;
 use super::draft::Drafter;
+use super::error::{DraftError, ScoreError};
 use super::score::Scorer;
-use crate::error::{DraftError, ScoreError};
 use serde::{Deserialize, Serialize};
 use std::cell::Cell;
 use std::cmp::Ordering;
