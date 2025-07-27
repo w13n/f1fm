@@ -196,7 +196,7 @@ impl FantasySeason {
         }
 
         if self.status.has_drafted(round + 1) {
-            return Err(DeleteError::LineupDeleteWhileScoresExist(round));
+            return Err(DeleteError::LineupDeleteWhenNextRoundDrafted(round));
         }
 
         self.teams.iter_mut().for_each(|t| t.delete_round(round));

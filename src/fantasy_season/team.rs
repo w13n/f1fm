@@ -3,7 +3,6 @@ use super::draft::Drafter;
 use super::error::{DraftError, ScoreError};
 use super::score::Scorer;
 use serde::{Deserialize, Serialize};
-use std::cell::Cell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -47,18 +46,17 @@ impl Team {
     pub fn store_score(&mut self, round: u8, score: i16) {
         let team_round = self
             .rounds
-            .get(&round)
+            .get_mut(&round)
             .expect("status out of date: scoring");
 
-        team_round.points.set(Some(score));
+        team_round.points = Some(score);
     }
 
     pub fn delete_score(&mut self, round: u8) {
         self.rounds
-            .get(&round)
+            .get_mut(&round)
             .expect("status out of date: deleting")
-            .points
-            .set(None);
+            .points = None;
     }
 
     pub fn delete_round(&mut self, round: u8) {
@@ -92,12 +90,12 @@ impl Team {
         self.rounds
             .iter()
             .filter(|pair| pair.0 <= &round)
-            .map(|pair| pair.1.points.get().unwrap_or_default())
+            .map(|pair| pair.1.points.unwrap_or_default())
             .sum::<i16>()
     }
 
     pub fn get_points_at(&self, round: u8) -> Option<i16> {
-        self.rounds.get(&round).and_then(|r| r.points.get())
+        self.rounds.get(&round).and_then(|r| r.points)
     }
 
     pub fn get_lineup_at(&self, round: u8) -> Option<Vec<u8>> {
@@ -114,7 +112,7 @@ impl Team {
                         p.rounds
                             .iter()
                             .filter(|pair| pair.0 <= &round)
-                            .map(|pair| pair.1.points.get().unwrap_or_default())
+                            .map(|pair| pair.1.points.unwrap_or_default())
                             .max()
                             .unwrap_or_default()
                     }
@@ -128,7 +126,7 @@ impl Team {
                                 p.rounds
                                     .iter()
                                     .filter(|pair| pair.0 <= &round)
-                                    .map(|pair| pair.1.points.get().unwrap_or_default())
+                                    .map(|pair| pair.1.points.unwrap_or_default())
                                     .min()
                                     .unwrap_or_default()
                             }
@@ -151,7 +149,6 @@ impl Team {
                     .get(&round)
                     .expect("status out of sync")
                     .points
-                    .get()
                     .expect("status out of sync")
             }
         };
@@ -164,15 +161,15 @@ impl Team {
 /// the drivers that a given team has for the round given
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TeamRound {
-    lineup: Vec<u8>,           // which drivers are on this team for this round
-    points: Cell<Option<i16>>, // the number of points gained for this round
+    lineup: Vec<u8>,     // which drivers are on this team for this round
+    points: Option<i16>, // the number of points gained for this round
 }
 
 impl TeamRound {
     pub fn new(lineup: Vec<u8>) -> TeamRound {
         TeamRound {
             lineup,
-            points: Cell::new(None),
+            points: None,
         }
     }
 }

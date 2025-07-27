@@ -431,7 +431,7 @@ impl Season {
     pub fn subscription(&self) -> Subscription<SeasonMessage> {
         fn handle_keystroke(
             key: keyboard::Key,
-            modifiers: keyboard::Modifiers,
+            _modifiers: keyboard::Modifiers,
         ) -> Option<SeasonMessage> {
             match key {
                 keyboard::Key::Named(keyboard::key::Named::ArrowLeft) => {
