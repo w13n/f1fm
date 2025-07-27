@@ -5,8 +5,9 @@ use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::race_results::RaceResults;
 use crate::vc::style::container::content_title;
 use crate::vc::{CONTENT, F1_FONT, PADDING, SYMB_FONT, VCAction, VCMessage, style};
+use iced::keyboard;
 use iced::widget::text::{danger, secondary};
-use iced::{Alignment, Element, Length};
+use iced::{Alignment, Element, Length, Subscription};
 use iced::{Task, widget};
 use popup::{Popup, PopupMessage};
 use std::collections::HashMap;
@@ -284,8 +285,10 @@ impl Season {
                 return VCAction::Task(self.download_task().map(VCMessage::Season));
             }
             SeasonMessage::DecrementRound => {
-                self.current_round -= 1;
-                return VCAction::Task(self.download_task().map(VCMessage::Season));
+                if self.current_round > 1 {
+                    self.current_round -= 1;
+                    return VCAction::Task(self.download_task().map(VCMessage::Season));
+                }
             }
             SeasonMessage::DownloadFirstRace => {
                 return VCAction::Task(self.download_task().map(VCMessage::Season));
@@ -372,7 +375,13 @@ impl Season {
                     self.warning = None;
                 }
             }
-            SeasonMessage::Exit => return VCAction::WindowExit,
+            SeasonMessage::Exit => {
+                if !self.popups.is_empty() {
+                    self.popups.pop();
+                } else {
+                    return VCAction::WindowExit;
+                }
+            }
         }
 
         VCAction::None
@@ -417,6 +426,26 @@ impl Season {
         } else {
             Task::none()
         }
+    }
+
+    pub fn subscription(&self) -> Subscription<SeasonMessage> {
+        fn handle_keystroke(
+            key: keyboard::Key,
+            modifiers: keyboard::Modifiers,
+        ) -> Option<SeasonMessage> {
+            match key {
+                keyboard::Key::Named(keyboard::key::Named::ArrowLeft) => {
+                    Some(SeasonMessage::DecrementRound)
+                }
+                keyboard::Key::Named(keyboard::key::Named::ArrowRight) => {
+                    Some(SeasonMessage::IncrementRound)
+                }
+                keyboard::Key::Named(keyboard::key::Named::Escape) => Some(SeasonMessage::Exit),
+                _ => None,
+            }
+        }
+
+        keyboard::on_key_press(handle_keystroke)
     }
 }
 

@@ -86,7 +86,14 @@ impl ViewController {
     }
 
     pub fn subscription(&self) -> Subscription<VCMessage> {
-        iced::time::every(Duration::from_secs(5)).map(|_| VCMessage::Save)
+        let save = iced::time::every(Duration::from_secs(5)).map(|_| VCMessage::Save);
+        let window = match &self.window {
+            Window::Season(s) => s.subscription().map(VCMessage::Season),
+            Window::Builder(_) => Subscription::none(),
+            Window::Landing(_) => Subscription::none(),
+        };
+
+        Subscription::batch(vec![save, window])
     }
 
     pub fn update(&mut self, message: VCMessage) -> Task<VCMessage> {
