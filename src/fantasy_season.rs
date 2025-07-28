@@ -22,49 +22,27 @@ pub struct FantasySeason {
     status: Status,
     score_choice: ScoreChoice,
     draft_choice: DraftChoice,
+    lineup_size: u8,
     season: u16,
     grid_size: u8,
     enforce_uniqueness: bool,
 }
 
 impl FantasySeason {
-    pub fn new(
+    pub fn new<I: IntoIterator<Item = String>>(
         name: String,
         score_choice: ScoreChoice,
         draft_choice: DraftChoice,
-        starting_teams: HashMap<String, Vec<u8>>,
+        starting_teams: I,
+        lineup_size: u8,
         season: u16,
         grid_size: u8,
         enforce_uniqueness: bool,
     ) -> FantasySeason {
-        let team_count = starting_teams.len() as u16;
-        let driver_count = starting_teams
-            .values()
-            .next()
-            .expect("no teams exist")
-            .len() as u8;
-        for lineup in starting_teams.values() {
-            assert_eq!(lineup.len() as u8, driver_count);
-        }
-        if enforce_uniqueness {
-            let mut already_seen =
-                Vec::with_capacity((team_count * (driver_count as u16)) as usize);
-            for lineup in starting_teams.values() {
-                for driver in lineup {
-                    assert!(!already_seen.contains(driver));
-                    already_seen.push(*driver);
-                }
-            }
-        }
-
-        let mut teams = Vec::with_capacity(team_count as usize);
-        for (name, lineup) in starting_teams {
-            teams.push(Team::new(name, lineup));
-        }
+        let teams = starting_teams.into_iter().map(Team::new).collect();
 
         let results = Vec::new();
-        let mut status = Status::new();
-        status.toggle_drafted(1);
+        let status = Status::new();
 
         FantasySeason {
             name,
@@ -73,6 +51,7 @@ impl FantasySeason {
             status,
             score_choice,
             draft_choice,
+            lineup_size,
             season,
             grid_size,
             enforce_uniqueness,
@@ -136,9 +115,6 @@ impl FantasySeason {
     }
 
     pub fn draft(&mut self, round: u8, df: &mut dyn Drafter) -> Result<(), DraftError> {
-        if !self.status.has_drafted(round - 1) {
-            return Err(DraftError::PreviousRoundLineupDoesNotExist(round - 1));
-        }
         if self.status.has_drafted(round) {
             return Err(DraftError::RoundLineupAlreadyExists(round));
         }
@@ -187,10 +163,6 @@ impl FantasySeason {
     }
 
     pub fn delete_lineup(&mut self, round: u8) -> Result<(), DeleteError> {
-        if round == 1 {
-            return Err(DeleteError::LineupDeleteFirstRound);
-        }
-
         if self.status.has_scored(round) {
             return Err(DeleteError::LineupDeleteWhileScoresExist(round));
         }
@@ -259,12 +231,7 @@ impl FantasySeason {
     }
 
     pub fn get_lineup_size(&self) -> u8 {
-        self.teams
-            .first()
-            .expect("zero team season created")
-            .get_lineup_at(1)
-            .expect("team created without round 1 lineup")
-            .len() as u8
+        self.lineup_size
     }
 
     pub fn get_status_at(&self, round: u8) -> (bool, bool, bool) {

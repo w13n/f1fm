@@ -13,9 +13,8 @@ pub(super) struct Team {
 }
 
 impl Team {
-    pub fn new(name: String, r1_lineup: Vec<u8>) -> Team {
-        let mut rounds = HashMap::new();
-        rounds.insert(1, TeamRound::new(r1_lineup));
+    pub fn new(name: String) -> Team {
+        let rounds = HashMap::new();
         Team { name, rounds }
     }
 
@@ -68,11 +67,7 @@ impl Team {
         round: u8,
         drafter: &mut dyn Drafter,
     ) -> Result<Vec<u8>, DraftError> {
-        let prev_round_drivers = &self
-            .rounds
-            .get(&(round - 1))
-            .expect("status out of sync")
-            .lineup;
+        let prev_round_drivers = self.rounds.get(&(round - 1)).map(|x| x.lineup.as_slice());
 
         drafter.draft(&self.name, prev_round_drivers)
     }

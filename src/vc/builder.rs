@@ -1,6 +1,6 @@
 use super::utils::{is_parsable_driver, is_unique_lineups, is_valid_driver_input};
 use crate::fantasy_season::FantasySeason;
-use crate::fantasy_season::draft::DraftChoice;
+use crate::fantasy_season::draft::{DraftChoice, ReplaceAll};
 use crate::fantasy_season::score::ScoreChoice;
 use crate::vc::{CONTENT, MONO_FONT, PADDING, SYMB_FONT, VCAction, style};
 use iced::{Alignment, Element, Length, widget};
@@ -225,18 +225,29 @@ impl Builder {
     }
 
     pub fn create(&mut self) -> FantasySeason {
-        FantasySeason::new(
+        let mut fantasy_season = FantasySeason::new(
             self.name.clone(),
             self.score_choice.unwrap(),
             self.draft_choice.unwrap(),
+            self.teams.iter().map(|team| team.get_name()),
+            self.team_size,
+            self.season.parse::<u16>().expect("cannot call create"),
+            self.grid_size.parse::<u8>().expect("cannot call create"),
+            self.enforce_uniqueness,
+        );
+
+        let mut drafter = ReplaceAll::new(
             self.teams
                 .iter()
                 .map(|team| (team.get_name(), team.parse()))
                 .collect(),
-            self.season.parse::<u16>().expect("cannot call create"),
-            self.grid_size.parse::<u8>().expect("cannot call create"),
-            self.enforce_uniqueness,
-        )
+        );
+
+        fantasy_season
+            .draft(1, &mut drafter)
+            .expect("we have guaranteed that nobody has drafted this round yet");
+
+        fantasy_season
     }
 
     fn can_create(&self) -> bool {

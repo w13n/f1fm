@@ -1,4 +1,5 @@
 use super::error::DraftError;
+use crate::fantasy_season::error::DraftError::PreviousRoundLineupDoesNotExist;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
@@ -23,7 +24,11 @@ impl Display for DraftChoice {
 }
 
 pub trait Drafter: Debug + Sync + Send {
-    fn draft(&mut self, team_name: &str, previous_drivers: &[u8]) -> Result<Vec<u8>, DraftError>;
+    fn draft(
+        &mut self,
+        team_name: &str,
+        previous_drivers: Option<&[u8]>,
+    ) -> Result<Vec<u8>, DraftError>;
 }
 
 #[derive(Default, Debug, Clone)]
@@ -36,8 +41,12 @@ impl Skip {
 }
 
 impl Drafter for Skip {
-    fn draft(&mut self, _: &str, previous_drivers: &[u8]) -> Result<Vec<u8>, DraftError> {
-        Ok(previous_drivers.to_vec())
+    fn draft(&mut self, _: &str, previous_drivers: Option<&[u8]>) -> Result<Vec<u8>, DraftError> {
+        if let Some(prev) = previous_drivers {
+            Ok(prev.to_vec())
+        } else {
+            Err(PreviousRoundLineupDoesNotExist)
+        }
     }
 }
 
@@ -53,15 +62,23 @@ impl RollOn {
 }
 
 impl Drafter for RollOn {
-    fn draft(&mut self, team: &str, previous_drivers: &[u8]) -> Result<Vec<u8>, DraftError> {
-        let team = team.to_string();
-        if self.drafted_drivers.contains_key(&team) {
-            let mut lineup = previous_drivers.to_vec();
-            lineup.pop();
-            lineup.insert(0, *self.drafted_drivers.get(&team).unwrap());
-            Ok(lineup)
+    fn draft(
+        &mut self,
+        team: &str,
+        previous_drivers: Option<&[u8]>,
+    ) -> Result<Vec<u8>, DraftError> {
+        if let Some(prev) = previous_drivers {
+            let team = team.to_string();
+            if self.drafted_drivers.contains_key(&team) {
+                let mut lineup = prev.to_vec();
+                lineup.pop();
+                lineup.insert(0, *self.drafted_drivers.get(&team).unwrap());
+                Ok(lineup)
+            } else {
+                Err(DraftError::IncompleteDrafter)
+            }
         } else {
-            Err(DraftError::IncompleteDrafter)
+            Err(DraftError::PreviousRoundLineupDoesNotExist)
         }
     }
 }
@@ -77,7 +94,7 @@ impl ReplaceAll {
     }
 }
 impl Drafter for ReplaceAll {
-    fn draft(&mut self, team: &str, _: &[u8]) -> Result<Vec<u8>, DraftError> {
+    fn draft(&mut self, team: &str, _: Option<&[u8]>) -> Result<Vec<u8>, DraftError> {
         let team = team.to_string();
         if self.team_lineups.contains_key(&team) {
             Ok(self.team_lineups.remove(&team).unwrap())

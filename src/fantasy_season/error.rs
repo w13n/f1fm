@@ -33,7 +33,7 @@ impl Error for ScoreError {}
 #[derive(Debug, Copy, Clone)]
 pub enum DraftError {
     RoundLineupAlreadyExists(u8),
-    PreviousRoundLineupDoesNotExist(u8),
+    PreviousRoundLineupDoesNotExist,
     RoundDraftNonUnique(u8, u8),
     IncompleteDrafter,
 }
@@ -44,10 +44,9 @@ impl Display for DraftError {
             DraftError::RoundLineupAlreadyExists(round) => {
                 write!(f, "lineup for round {round} already exist")
             }
-            DraftError::PreviousRoundLineupDoesNotExist(prev_round) => write!(
-                f,
-                "lineup for the previous round ({prev_round})  does not exist",
-            ),
+            DraftError::PreviousRoundLineupDoesNotExist => {
+                write!(f, "lineup for the previous round does not exist",)
+            }
             DraftError::RoundDraftNonUnique(round, driver) => {
                 write!(f, "lineup for round {round} has multiple drivers #{driver}")
             }
@@ -112,7 +111,6 @@ pub enum DeleteError {
     ResultsDeleteWhenResultsDontExist(u8),
     LineupDeleteWhileScoresExist(u8),
     LineupDeleteWhenNextRoundDrafted(u8),
-    LineupDeleteFirstRound,
 }
 
 impl Display for DeleteError {
@@ -139,9 +137,6 @@ impl Display for DeleteError {
                     round + 1,
                     round
                 )
-            }
-            DeleteError::LineupDeleteFirstRound => {
-                write!(f, "cannot delete round one lineup")
             }
         }
     }

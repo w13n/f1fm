@@ -189,7 +189,6 @@ impl Season {
         .style(style::button::primary);
 
         let edit_lineup_button = match (self.current_round, status, next_status) {
-            (1, _, _) => widget::button("edit lineup"),
             (_, (true, _, false), (false, _, _)) => {
                 widget::button("edit lineup").on_press(SeasonMessage::ReplaceLineup)
             }
