@@ -81,6 +81,7 @@ impl FantasySeason {
     pub fn get_score_choice(&self) -> ScoreChoice {
         self.score_choice
     }
+
     pub fn score(&mut self, round: u8) -> Result<(), ScoreError> {
         if !self.team_status.has_drafted(round) {
             return Err(ScoreError::RoundLineupDoesNotExist(round));
