@@ -7,9 +7,10 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Serialize)]
+
 pub(super) struct Team {
     name: String,
-    rounds: HashMap<u8, TeamRound>, // the driver lineup and points scored of this team for each round
+    rounds: HashMap<u8, TeamRound>,
 }
 
 impl Team {
@@ -152,11 +153,10 @@ impl Team {
     }
 }
 
-/// the drivers that a given team has for the round given
 #[derive(Debug, Deserialize, Serialize)]
-pub struct TeamRound {
-    lineup: Vec<u8>,     // which drivers are on this team for this round
-    points: Option<i16>, // the number of points gained for this round
+pub(super) struct TeamRound {
+    lineup: Vec<u8>,
+    points: Option<i16>,
 }
 
 impl TeamRound {

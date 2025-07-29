@@ -1,10 +1,12 @@
+#![warn(missing_docs)]
+
 use crate::vc::ViewController;
 use iced::font::Weight;
 use iced::theme::Palette;
 use iced::{Font, Theme};
 
-pub mod api;
-mod fantasy_season;
+mod api;
+pub mod fantasy_season;
 mod vc;
 
 const F1_FONT: &[u8] = include_bytes!("../assets/Formula1-Regular.ttf");

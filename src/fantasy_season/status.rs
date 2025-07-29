@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-// stores if the race results have been collected, the teams have drafted, or the teams have been scored for each round
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct TeamStatus(HashMap<u8, RoundStatus>);
 
