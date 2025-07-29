@@ -23,7 +23,7 @@ impl Team {
         round: u8,
         grid_size: u8,
         scorer: &dyn Scorer,
-        driver_results: &[DriverResult],
+        driver_results: &HashMap<u8, DriverResult>,
     ) -> Result<i16, ScoreError> {
         let team_round = self
             .rounds
@@ -34,8 +34,7 @@ impl Team {
 
         for driver in &team_round.lineup {
             let driver_result = driver_results
-                .iter()
-                .find(|dr| dr.driver == *driver)
+                .get(driver)
                 .ok_or(ScoreError::DriverDidNotRace(*driver))?;
             points += scorer.score(grid_size, driver_result);
         }

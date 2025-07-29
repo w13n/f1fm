@@ -5,6 +5,7 @@ use reqwest::Client;
 use std::collections::HashMap;
 use std::time::Duration;
 
+#[derive(Default)]
 pub struct Api {
     client: Client,
 }

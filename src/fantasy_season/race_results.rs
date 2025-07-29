@@ -1,13 +1,13 @@
 use super::error::DownloadError;
-use crate::vc::api::Api;
+use crate::api::Api;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 // the results of a race for all drivers
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RaceResults {
-    pub(super) round: u8,
-    pub(super) drivers: Vec<DriverResult>,
+    pub(super) drivers: HashMap<u8, DriverResult>,
 }
 
 impl RaceResults {
@@ -44,17 +44,16 @@ impl RaceResults {
         let drivers = broken_drivers
             .iter()
             .enumerate()
-            .map(|(pos, bd)| DriverResult::new(bd, pos as u8 + 1))
+            .map(|(pos, bd)| (bd.driver, DriverResult::new(bd, pos as u8 + 1)))
             .collect();
 
-        Ok(RaceResults { round, drivers })
+        Ok(RaceResults { drivers })
     }
 }
 
 // the results for a driver in a round
 #[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub(super) struct DriverResult {
-    pub driver: u8,
     pub final_position: u8,
     pub grid_position: u8,
     pub qualifying_position: u8,
@@ -63,7 +62,6 @@ pub(super) struct DriverResult {
 impl DriverResult {
     fn new(broken: &BrokenDriverResult, pos: u8) -> DriverResult {
         DriverResult {
-            driver: broken.driver,
             final_position: broken.final_position,
             grid_position: pos,
             qualifying_position: broken.qualifying_position,

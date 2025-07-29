@@ -3,6 +3,7 @@ use iced::font::Weight;
 use iced::theme::Palette;
 use iced::{Font, Theme};
 
+pub mod api;
 mod fantasy_season;
 mod vc;
 

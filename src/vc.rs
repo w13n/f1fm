@@ -1,4 +1,3 @@
-pub mod api;
 mod builder;
 mod landing;
 mod season;
@@ -222,6 +221,7 @@ impl ViewController {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum Window {
     Season(Season),
     Builder(Builder),

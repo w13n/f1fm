@@ -10,16 +10,17 @@ use error::{DeleteError, DownloadError, DraftError, ScoreError};
 use race_results::{DriverResult, RaceResults};
 use score::ScoreChoice;
 use serde::{Deserialize, Serialize};
-use status::Status;
+use status::TeamStatus;
 use std::collections::{HashMap, HashSet};
 use team::Team;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FantasySeason {
     name: String,
     teams: Vec<Team>,
-    results: Vec<RaceResults>,
-    status: Status,
+    results: HashMap<u8, RaceResults>,
+    team_status: TeamStatus,
     score_choice: ScoreChoice,
     draft_choice: DraftChoice,
     lineup_size: u8,
@@ -29,6 +30,7 @@ pub struct FantasySeason {
 }
 
 impl FantasySeason {
+    #[allow(clippy::too_many_arguments)]
     pub fn new<I: IntoIterator<Item = String>>(
         name: String,
         score_choice: ScoreChoice,
@@ -41,14 +43,14 @@ impl FantasySeason {
     ) -> FantasySeason {
         let teams = starting_teams.into_iter().map(Team::new).collect();
 
-        let results = Vec::new();
-        let status = Status::new();
+        let results = HashMap::new();
+        let status = TeamStatus::new();
 
         FantasySeason {
             name,
             teams,
             results,
-            status,
+            team_status: status,
             score_choice,
             draft_choice,
             lineup_size,
@@ -62,36 +64,35 @@ impl FantasySeason {
         self.name.as_str()
     }
 
-    pub fn update_results(&mut self, race_results: RaceResults) -> Result<(), DownloadError> {
-        let round = race_results.round;
-        if self.status.has_results(round) {
+    pub fn update_results(
+        &mut self,
+        round: u8,
+        race_results: RaceResults,
+    ) -> Result<(), DownloadError> {
+        if self.results.contains_key(&round) {
             return Err(DownloadError::RaceResultsAlreadyDownloaded(round));
         }
 
-        self.results.push(race_results);
-        self.status.toggle_results(round);
+        self.results.insert(round, race_results);
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn get_score_choice(&self) -> ScoreChoice {
         self.score_choice
     }
     pub fn score(&mut self, round: u8) -> Result<(), ScoreError> {
-        if !self.status.has_results(round) {
-            return Err(ScoreError::RoundResultsDoNotExist(round));
-        }
-        if !self.status.has_drafted(round) {
+        if !self.team_status.has_drafted(round) {
             return Err(ScoreError::RoundLineupDoesNotExist(round));
         }
-        if self.status.has_scored(round) {
+        if self.team_status.has_scored(round) {
             return Err(ScoreError::RoundResultsAlreadyExist(round));
         }
 
         let driver_results = &self
             .results
-            .iter()
-            .find(|dr| dr.round == round)
-            .expect("status out of sync: DriverResult")
+            .get(&round)
+            .ok_or(ScoreError::RoundResultsDoNotExist(round))?
             .drivers;
         let mut points = Vec::with_capacity(self.teams.len());
         for team in &self.teams {
@@ -106,7 +107,7 @@ impl FantasySeason {
             team.store_score(round, points.remove(0));
         }
 
-        self.status.toggle_scored(round);
+        self.team_status.toggle_scored(round);
         Ok(())
     }
 
@@ -115,7 +116,7 @@ impl FantasySeason {
     }
 
     pub fn draft(&mut self, round: u8, df: &mut dyn Drafter) -> Result<(), DraftError> {
-        if self.status.has_drafted(round) {
+        if self.team_status.has_drafted(round) {
             return Err(DraftError::RoundLineupAlreadyExists(round));
         }
 
@@ -140,40 +141,36 @@ impl FantasySeason {
             team.store_lineup(round, lineups.remove(0));
         }
 
-        self.status.toggle_drafted(round);
+        self.team_status.toggle_drafted(round);
         Ok(())
     }
 
     pub fn delete_round(&mut self, round: u8) -> Result<(), DeleteError> {
-        if !self.status.has_results(round) {
-            return Err(DeleteError::ResultsDeleteWhenResultsDontExist(round));
-        }
-
-        if self.status.has_scored(round) {
+        if self.team_status.has_scored(round) {
             self.teams.iter_mut().for_each(|t| t.delete_score(round));
-            self.status.toggle_scored(round);
+            self.team_status.toggle_scored(round);
         }
 
-        if self.status.has_results(round) {
-            self.results.retain(|rr| rr.round != round);
-            self.status.toggle_results(round);
-        }
+        let _ = self
+            .results
+            .remove(&round)
+            .ok_or(DeleteError::ResultsDeleteWhenResultsDontExist(round));
 
         Ok(())
     }
 
     pub fn delete_lineup(&mut self, round: u8) -> Result<(), DeleteError> {
-        if self.status.has_scored(round) {
+        if self.team_status.has_scored(round) {
             return Err(DeleteError::LineupDeleteWhileScoresExist(round));
         }
 
-        if self.status.has_drafted(round + 1) {
+        if self.team_status.has_drafted(round + 1) {
             return Err(DeleteError::LineupDeleteWhenNextRoundDrafted(round));
         }
 
         self.teams.iter_mut().for_each(|t| t.delete_round(round));
-        if self.status.has_drafted(round) {
-            self.status.toggle_drafted(round);
+        if self.team_status.has_drafted(round) {
+            self.team_status.toggle_drafted(round);
         }
 
         Ok(())
@@ -201,7 +198,7 @@ impl FantasySeason {
     }
 
     pub fn get_points_at(&self, round: u8) -> Option<Vec<(String, i16)>> {
-        if self.status.has_scored(round) {
+        if self.team_status.has_scored(round) {
             let mut teams: Vec<_> = self.teams.iter().collect();
             teams.sort_by(|a, b| Team::sort_at(a, b, round));
             Some(
@@ -236,9 +233,9 @@ impl FantasySeason {
 
     pub fn get_status_at(&self, round: u8) -> (bool, bool, bool) {
         (
-            self.status.has_drafted(round),
-            self.status.has_results(round),
-            self.status.has_scored(round),
+            self.team_status.has_drafted(round),
+            self.results.contains_key(&round),
+            self.team_status.has_scored(round),
         )
     }
 

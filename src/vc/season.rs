@@ -1,6 +1,6 @@
-use super::api::Api;
 use super::style::container::content_title;
 use super::{CONTENT, F1_FONT, PADDING, SYMB_FONT, VCAction, VCMessage, style};
+use crate::api::Api;
 use crate::fantasy_season::FantasySeason;
 use crate::fantasy_season::draft::{DraftChoice, Skip};
 use crate::fantasy_season::error::{ApiError, DownloadError};
@@ -339,7 +339,9 @@ impl Season {
             }
             SeasonMessage::DownloadedResults(result) => {
                 if let Ok(rr) = result.1 {
-                    self.season.update_results(rr).expect("cannot happen");
+                    self.season
+                        .update_results(result.0, rr)
+                        .expect("cannot happen");
                     self.download_attempts.remove(&result.0);
                 } else if let Err(err) = result.1 {
                     self.download_attempts.insert(result.0, err.to_string());
