@@ -1,0 +1,9 @@
+[book]
+authors = ["w13n"]
+language = "en"
+src = "src"
+title = "F1FM Documentation"
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "ayu"
