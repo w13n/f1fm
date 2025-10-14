@@ -15,7 +15,7 @@ const MONOSPACE_FONT: &[u8] = include_bytes!("../assets/IBMPlexMono-Bold.ttf");
 const SYMBOLS_FONT: &[u8] = include_bytes!("../assets/MaterialSymbolsRounded-Bold.ttf");
 
 fn main() {
-    iced::application("test", ViewController::update, ViewController::view)
+    iced::application("F1FM", ViewController::update, ViewController::view)
         .theme(|_| {
             Theme::custom(
                 String::from("Classic West"),
