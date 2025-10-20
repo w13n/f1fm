@@ -5,7 +5,7 @@ Each team has a set number of drivers that score points for that team.
 The number of drivers per team can be configured by the league manager, though the number of drivers per team must be consistent across rounds and must be the same for each team.
 
 ## Drafting
-Drafting is how teams select drivers for their team. 
+Drafting is how teams select drivers for their team.
 League managers can configure if drivers are "unique", meaning each driver is allowed to be drafted to only one team at only one time or not, when creating a season.
 League managers can also configure when drafting occurs, and who is replaced when drafting by selecting the draft strategy at when creating a season.
 The draft strategies currently in F1FM are:
@@ -30,7 +30,7 @@ A league manager can also delete all team's lineups for a given round, as if dra
 ## Scoring
 Scoring is how points are assigned to teams for each round.
 Scoring is based on the round results that are downloaded automatically by **F1FM**.
-Once downloaded, the race results are saved so that point calculations never change. 
+Once downloaded, the race results are saved so that point calculations never change.
 If Formula One standings change (because a penalty is imposed after the race, for example) and the league manager wants to update the race results, they can delete the standings and re-score the race.
 League managers can configure how points are calculated according to a scoring strategy.
 The draft strategies currently in F1FM are:
@@ -42,10 +42,16 @@ The draft strategies currently in F1FM are:
 | **Improvement**   | Same as Race Position, but drivers also get one point added or taken away for every positioned they gained or lost from their starting grid position | 1st place starting 1st on the grid gets 20 points, 1st place starting 5th on the grid gets 24 points, 15th place starting 1st on the grid gets -8 points, etc |
 | **Domination**    | Same as Race Position, but drivers also get points for their starting grid position following the same rules as Race Position                        | 1st place starting 1st on the grid gets 40 points, 1st place starting 5th on the grid gets 36 points, 15th place starting 1st on the grid gets 26 points, etc |
 
-> In order to score a round, drafting must have taken place for the round being scored and the round results need to be downloaded
+> In order to score a round, drafting must have taken place and the round results need to be downloaded
 
-### breaking ties
+### Breaking Ties
 
-SCORING
+There are no ties in the **F1FM** season rankings, as there is always a way to break ties if one scoring method results in a tie.
+Every time an ordering is needed, either for showing the results of a race or the current race standings, all teams are first considered tied, and then ties are broken by the first row which differentiates a team, according to the following list.
 
-GRID POSITION
+1. Total points
+2. Highest scoring round
+3. Lowest scoring round (more points beats less points)
+4. Order in which the team was entered at the season creation
+
+> As a consequence of these ordering rules, teams should always be created in tiebreaker order when a season is created.
