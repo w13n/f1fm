@@ -1,4 +1,5 @@
 # Format
+This page describes the format of F1FM. The details of how drafting, scoring, and editing lineups takes place is described here. For information on how to navigate the F1FM app, see [Setup](./setup.md).
 
 ## Teams
 Each team has a set number of drivers that score points for that team.
