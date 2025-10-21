@@ -5,7 +5,7 @@ Each round is a separate opportunity for drivers to score points for their team,
 At the end of a season, the team with the most points total is considered the winner.
 Each round allows for trades, drafts, and other lineup changes before the race takes place as the league manager allows.
 
-**F1FM**, or Formula One Fantasy Manager, is a desktop application to help a league manager keep up with a fantasy Formula One league.
-**F1FM** can automatically download race results, calculate points scored for each team, and update team rankings, all according to season settings configured by the league manager.
+F1FM, or Formula One Fantasy Manager, is a desktop application to help a league manager keep up with a fantasy Formula One league.
+F1FM can automatically download race results, calculate points scored for each team, and update team rankings, all according to season settings configured by the league manager. This website provides all you need to know in order to use F1FM and manage a league.
 
-[^note]: While there are other formats for Formula One fantasy, including one managed by Formula One, **F1FM** follows a custom format
+[^note]: While there are other formats for Formula One fantasy, including one managed by Formula One, F1FM follows a custom format

@@ -23,14 +23,14 @@ The draft strategies currently in F1FM are:
 There are a number of reasons that league managers may need to edit the lineup of a team outside of a season's draft.
 For one, real drivers may occasionally be replaced long term or short term due to sickness, injury, or performance, leaving fantasy teams with a non-racing driver.
 For another, a league manager may want to facilitate driver trades between teams mid-season.
-To account for these cases, **F1FM** allows a league manager to edit the lineup of any team.
+To account for these cases, F1FM allows a league manager to edit the lineup of any team.
 A league manager can also delete all team's lineups for a given round, as if drafting never took place.
 
 > In order to edit or delete lineups, drafting must have taken place for the round being edited, but scoring for the current round and drafting for the next round must not have taken place.
 
 ## Scoring
 Scoring is how points are assigned to teams for each round.
-Scoring is based on the round results that are downloaded automatically by **F1FM**.
+Scoring is based on the round results that are downloaded automatically by F1FM.
 Once downloaded, the race results are saved so that point calculations never change.
 If Formula One standings change (because a penalty is imposed after the race, for example) and the league manager wants to update the race results, they can delete the standings and re-score the race.
 League managers can configure how points are calculated according to a scoring strategy.
@@ -47,7 +47,7 @@ The draft strategies currently in F1FM are:
 
 ### Breaking Ties
 
-There are no ties in the **F1FM** season rankings, as there is always a way to break ties if one scoring method results in a tie.
+There are no ties in the F1FM season rankings, as there is always a way to break ties if one scoring method results in a tie.
 Every time an ordering is needed, either for showing the results of a race or the current race standings, all teams are first considered tied, and then ties are broken by the first row which differentiates a team, according to the following list.
 
 1. Total points

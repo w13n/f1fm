@@ -1,5 +1,5 @@
 # Setup
-This page will guide you through installing **F1FM** on your machine.
+This page will guide you through installing F1FM on your machine.
 Pre-compiled binaries are not currently built, so the build from source section is the only option for installation at the moment.
 
 ## Build from Source
