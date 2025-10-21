@@ -1,7 +1,7 @@
 # Summary
 
 [F1FM](./index.md)
-- [Setup]()
+- [Setup](./setup.md)
 - [format](./format.md)
 - [App Reference]()
 
