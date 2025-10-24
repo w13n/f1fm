@@ -11,4 +11,18 @@ To create a new season, first hit the **build new season** button on the home sc
 - Type each team name in the **name of team** text box
 - Assign each team their starting lineup in the numbered text entry boxes next to the team name
 
-## Season Selection
+### Season Settings
+- Choose the **Score Mode** for this season using the dropdown menu on the left
+- Choose the **Draft Mode** for this season using the dropdown menu on the right
+- set the number of drivers in the Formula One grid for this season (for scoring purposes)
+- set the year to download race results for
+- set if driver's can only be drafted by one team at a time using the **Enforce Uniqueness** toggle
+
+### Season Name
+- set the name for this season
+
+### Finalizing the Season
+The **Build Season** button will be enabled once the season can be created. Each of the following conditions must be met before this will occur:
+1. All teams should have all drivers assigned, and names set
+2. Score and draft mode should be set
+3. If **Enforce Uniqueness** is selected, all driver numbers must be unique
