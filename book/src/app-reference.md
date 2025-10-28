@@ -26,3 +26,5 @@ The **Build Season** button will be enabled once the season can be created. Each
 1. All teams should have all drivers assigned, and names set
 2. Score and draft mode should be set
 3. If **Enforce Uniqueness** is selected, all driver numbers must be unique
+
+## Season Management
