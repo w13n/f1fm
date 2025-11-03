@@ -34,6 +34,12 @@ Use the arrow keys or arrow buttons in the bottom corners to switch between roun
 By default, F1FM loads round 1. Round names are automatically downloaded and displayed at the top if a server connection can be made.
 
 ### Main View
+The main view will show three different panels.
+The points this round will panel will show the points this each team has scored for the current round.
+The total points panel will show the total number of points each team has won up to the current round, but will not show points scored after the selected round.
+The lineup panel shows the current lineup for this round if drafting has occurred.
+Both point panels are sorted according to the point values they contain, and the tiebreaker system.
+The lineup panel is sorted by team creation order, and each driver is in order of lineup position.
 
 ### Team Management and Scoring
 When a round is eligible for drafting or scoring, the orange button on the bottom row can be selected.
@@ -64,3 +70,4 @@ This will delete lineups as if drafting for that round never occurred.
 This button cannot be selected if scoring has already occurred or if the round is the first round of the season.
 
 ### Handling Errors
+If an error occurs during scoring or drafting, it will appear in purple at the top of the screen. This error prevents the action from taking place, and must be remedied before the action can take place. This error will automatically disappear after five seconds.
