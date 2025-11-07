@@ -1,7 +1,10 @@
 [package]
+description = "The Formula One Fantasy Manager"
 name = "f1fm"
 version = "0.1.0"
 edition = "2024"
+readme = "README.md"
+repository = "https://github.com/w13n/f1fm"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
