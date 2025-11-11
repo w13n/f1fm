@@ -49,7 +49,7 @@ impl Landing {
         );
 
         widget::column![
-            widget::text!["welcome to F1FM: the formula one fantasy manager"]
+            widget::text!["welcome to F1FM: the Formula One Fantasy Manager"]
                 .size(TITLE)
                 .height(TITLE + PADDING * 4)
                 .align_y(Alignment::Center),
