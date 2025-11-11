@@ -32,6 +32,7 @@ The **Build Season** button will be enabled once the season can be created. Each
 ### Navigation
 Use the arrow keys or arrow buttons in the bottom corners to switch between rounds in a season.
 By default, F1FM loads round 1. Round names are automatically downloaded and displayed at the top if a server connection can be made.
+Be careful not to navigate to too many rounds at once if no race results are downloaded, as the API server may rate limit you, leading to "cannot connect to server" errors.
 
 ### Main View
 The main view will show three different panels.
