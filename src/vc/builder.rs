@@ -175,6 +175,7 @@ impl Builder {
                 ScoreChoice::RacePosition,
                 ScoreChoice::Improvement,
                 ScoreChoice::Domination,
+                ScoreChoice::DoubleImprovement,
             ],
             self.score_choice,
             BuilderMessage::ScoreChoiceSelected,

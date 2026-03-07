@@ -13,6 +13,7 @@ pub enum ScoreChoice {
     RacePosition,
     Improvement,
     Domination,
+    DoubleImprovement,
 }
 
 impl Display for ScoreChoice {
@@ -22,6 +23,7 @@ impl Display for ScoreChoice {
             ScoreChoice::RacePosition => String::from("Race Position"),
             ScoreChoice::Improvement => String::from("Improvement"),
             ScoreChoice::Domination => String::from("Domination"),
+            ScoreChoice::DoubleImprovement => String::from("Double Improvement"),
         };
         write!(f, "{str}")
     }
@@ -51,6 +53,10 @@ impl Scorer for ScoreChoice {
             ScoreChoice::Domination => {
                 (grid_size as i16 + 1 - dr.final_position as i16)
                     + (grid_size as i16 + 1 - dr.qualifying_position as i16)
+            }
+            ScoreChoice::DoubleImprovement => {
+                (grid_size as i16 + 1 - dr.final_position as i16)
+                    + 2 * (dr.grid_position as i16 - dr.final_position as i16)
             }
         }
     }
