@@ -23,7 +23,7 @@ impl RaceResults {
 
         let race_results = race_results_down.map_err(DownloadError::ApiError)?;
 
-        let mut broken_drivers = Vec::new();
+        let mut drivers = HashMap::new();
         for result in race_results {
             let driver = result.driver.permanent_number as u8;
             let final_position = result.position as u8;
@@ -31,21 +31,13 @@ impl RaceResults {
             let qualifying_position = qualifying_results
                 .iter()
                 .find(|qr| qr.driver.permanent_number as u8 == driver)
-                .expect("driver raced but not qualified")
-                .position as u8;
-            broken_drivers.push(BrokenDriverResult {
+                .map(|x| x.position as u8)
+                .unwrap_or(grid_position);
+            drivers.insert(
                 driver,
-                final_position,
-                grid_position,
-                qualifying_position,
-            })
+                DriverResult::new(final_position, grid_position, qualifying_position),
+            );
         }
-        broken_drivers.sort();
-        let drivers = broken_drivers
-            .iter()
-            .enumerate()
-            .map(|(pos, bd)| (bd.driver, DriverResult::new(bd, pos as u8 + 1)))
-            .collect();
 
         Ok(RaceResults { drivers })
     }
@@ -60,46 +52,11 @@ pub(super) struct DriverResult {
 }
 
 impl DriverResult {
-    fn new(broken: &BrokenDriverResult, pos: u8) -> DriverResult {
+    fn new(final_pos: u8, grid_pos: u8, qualifying_pos: u8) -> DriverResult {
         DriverResult {
-            final_position: broken.final_position,
-            grid_position: pos,
-            qualifying_position: broken.qualifying_position,
-        }
-    }
-}
-struct BrokenDriverResult {
-    driver: u8,
-    final_position: u8,
-    grid_position: u8,
-    qualifying_position: u8,
-}
-
-impl Eq for BrokenDriverResult {}
-
-impl PartialEq<Self> for BrokenDriverResult {
-    fn eq(&self, other: &Self) -> bool {
-        self.grid_position == other.grid_position
-            && self.qualifying_position == other.qualifying_position
-    }
-}
-
-impl PartialOrd<Self> for BrokenDriverResult {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for BrokenDriverResult {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.grid_position == other.grid_position {
-            self.qualifying_position.cmp(&other.qualifying_position)
-        } else if self.grid_position == 0 {
-            Ordering::Greater
-        } else if other.grid_position == 0 {
-            Ordering::Less
-        } else {
-            self.grid_position.cmp(&other.grid_position)
+            final_position: final_pos,
+            grid_position: grid_pos,
+            qualifying_position: qualifying_pos,
         }
     }
 }
