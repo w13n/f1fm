@@ -36,7 +36,7 @@ impl ReplaceAllDrafter {
             enforce_uniqueness,
         }
     }
-    pub(super) fn view(&self) -> Element<RAMessage> {
+    pub(super) fn view(&self) -> Element<'_, RAMessage> {
         let content = self
             .team_lineups
             .iter()

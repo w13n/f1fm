@@ -22,7 +22,7 @@ impl Landing {
     pub fn delete(&mut self, element: usize) {
         let _ = self.season_names.remove(element);
     }
-    pub fn view(&self) -> Element<LandingMessage> {
+    pub fn view(&self) -> Element<'_, LandingMessage> {
         let content = widget::scrollable(
             widget::Column::from_vec(
                 self.season_names

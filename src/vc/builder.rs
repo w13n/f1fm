@@ -88,7 +88,7 @@ impl Builder {
         VCAction::None
     }
 
-    pub fn view(&self) -> Element<BuilderMessage> {
+    pub fn view(&self) -> Element<'_, BuilderMessage> {
         let top_row = crate::vc::top_row(
             "build new season".to_string(),
             MONO_FONT,
@@ -143,7 +143,7 @@ impl Builder {
         .align_x(Alignment::Center)
         .into()
     }
-    fn view_team_settings(&self) -> widget::Row<BuilderMessage> {
+    fn view_team_settings(&self) -> widget::Row<'_, BuilderMessage> {
         widget::row![
             widget::button(widget::text!["-"].size(CONTENT))
                 .on_press_maybe(if self.team_size > 1 {
@@ -168,7 +168,7 @@ impl Builder {
         .height(Length::Shrink)
     }
 
-    fn view_modes(&self) -> widget::Row<BuilderMessage> {
+    fn view_modes(&self) -> widget::Row<'_, BuilderMessage> {
         let score_mode = widget::pick_list(
             vec![
                 ScoreChoice::FormulaOne,
@@ -204,7 +204,7 @@ impl Builder {
             .height(Length::Shrink)
     }
 
-    fn view_season_and_grid_size(&self) -> widget::Row<BuilderMessage> {
+    fn view_season_and_grid_size(&self) -> widget::Row<'_, BuilderMessage> {
         widget::row![
             widget::text_input("grid size", &self.grid_size)
                 .on_input(BuilderMessage::ChangeGridSize)
@@ -298,7 +298,7 @@ impl TeamBuilder {
         }
     }
 
-    fn view(&self) -> Element<BuilderMessage> {
+    fn view(&self) -> Element<'_, BuilderMessage> {
         let name = widget::text_input("name of team", &self.name)
             .on_input(|name| BuilderMessage::ChangeTeamName(self.id, name))
             .width(200)

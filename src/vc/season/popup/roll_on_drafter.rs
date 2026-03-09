@@ -26,7 +26,7 @@ impl RollOnDrafter {
             enforce_uniqueness,
         }
     }
-    pub(super) fn view(&self) -> Element<ROMessage> {
+    pub(super) fn view(&self) -> Element<'_, ROMessage> {
         let content = self
             .returning_lineup
             .keys()

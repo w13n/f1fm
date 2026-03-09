@@ -79,7 +79,7 @@ impl Popup {
             PopupKind::ReplaceAllDrafter(ra) => Box::new(ra.get_drafter()),
         }
     }
-    pub fn view(&self) -> Element<PopupMessage> {
+    pub fn view(&self) -> Element<'_, PopupMessage> {
         let top = crate::vc::top_row(self.title.clone(), MONO_FONT, PopupMessage::Close);
 
         let main = widget::container(match &self.kind {

@@ -76,7 +76,7 @@ impl ViewController {
             save_path,
         }
     }
-    pub fn view(&self) -> Element<VCMessage> {
+    pub fn view(&self) -> Element<'_, VCMessage> {
         iced::widget::container(match &self.window {
             Window::Season(season) => season.view().map(VCMessage::Season),
             Window::Builder(builder) => builder.view().map(VCMessage::Builder),

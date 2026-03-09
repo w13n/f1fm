@@ -45,7 +45,7 @@ impl Season {
             warning_count: 0,
         }
     }
-    pub fn view(&self) -> Element<SeasonMessage> {
+    pub fn view(&self) -> Element<'_, SeasonMessage> {
         if !self.popups.is_empty() {
             self.popups
                 .last()
@@ -71,7 +71,7 @@ impl Season {
             .into()
         }
     }
-    fn view_top_row(&self) -> Element<SeasonMessage> {
+    fn view_top_row(&self) -> Element<'_, SeasonMessage> {
         let round_name = if let Some(round_name) = self
             .round_names
             .as_ref()
@@ -85,7 +85,7 @@ impl Season {
         crate::vc::top_row(round_name, F1_FONT, SeasonMessage::Exit)
     }
 
-    fn view_status_text(&self) -> widget::Text {
+    fn view_status_text(&self) -> widget::Text<'_> {
         if let Some(text) = &self.warning {
             widget::text!("{}", text).style(danger)
         } else {
@@ -103,7 +103,7 @@ impl Season {
         }
     }
 
-    fn view_content_rows(&self) -> widget::Column<SeasonMessage> {
+    fn view_content_rows(&self) -> widget::Column<'_, SeasonMessage> {
         let points_by = self.season.get_points_by(self.current_round);
         let data_points_by = points_by
             .iter()
@@ -170,7 +170,7 @@ impl Season {
         .align_x(Alignment::Center)
     }
 
-    fn view_bottom_row(&self) -> widget::Row<SeasonMessage> {
+    fn view_bottom_row(&self) -> widget::Row<'_, SeasonMessage> {
         let prev_status = if self.current_round == 1 {
             (true, true, true)
         } else {
