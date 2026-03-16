@@ -14,6 +14,8 @@ use status::TeamStatus;
 use std::collections::{HashMap, HashSet};
 use team::Team;
 
+use crate::fantasy_season::score::Scorer;
+
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FantasySeason {
@@ -238,6 +240,38 @@ impl FantasySeason {
             self.results.contains_key(&round),
             self.team_status.has_scored(round),
         )
+    }
+
+    pub fn get_driver_performance_by(&self, round: u8) -> HashMap<u8, i16> {
+        let mut drivers = HashMap::new();
+
+        for r in 1..=round {
+            if let Some(results) = self.results.get(&r) {
+                for (driver, result) in &results.drivers {
+                    let score = if drivers.contains_key(driver) {
+                        drivers.get_mut(driver).expect("contains said it existed")
+                    } else {
+                        drivers.insert(*driver, 0_i16);
+                        drivers.get_mut(driver).expect("we just inserted it")
+                    };
+
+                    *score += self.score_choice.score(self.grid_size, result)
+                }
+            }
+        }
+
+        drivers
+    }
+
+    pub fn get_driver_performance_at(&self, round: u8) -> Option<HashMap<u8, i16>> {
+        if let Some(results) = self.results.get(&round) {
+            let mut drivers = HashMap::new();
+            for (driver, result) in &results.drivers {
+                drivers.insert(*driver, self.score_choice.score(self.grid_size, result));
+            }
+            return Some(drivers);
+        }
+        None
     }
 
     pub fn enforces_unique(&self) -> bool {

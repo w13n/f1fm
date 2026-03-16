@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 use crate::vc::ViewController;
 use iced::font::Weight;
 use iced::theme::Palette;

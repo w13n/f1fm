@@ -1,7 +1,6 @@
 use super::error::DownloadError;
 use crate::api::Api;
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 use std::collections::HashMap;
 
 // the results of a race for all drivers

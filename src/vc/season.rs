@@ -211,6 +211,10 @@ impl Season {
         }
         .style(style::button::danger);
 
+        let driver_perf_button = widget::button("driver performance")
+            .on_press(SeasonMessage::PrintDriverPerf)
+            .style(style::button::secondary);
+
         let left_button = widget::button(widget::text!("\u{e5c4}").font(SYMB_FONT))
             .style(widget::button::text)
             .on_press_maybe((!self.current_round.eq(&1)).then_some(SeasonMessage::DecrementRound));
@@ -226,6 +230,7 @@ impl Season {
             edit_lineup_button,
             delete_lineup_button,
             delete_round_button,
+            driver_perf_button,
             widget::horizontal_space(),
             right_button,
         ]
@@ -376,6 +381,36 @@ impl Season {
                     self.warning = None;
                 }
             }
+            SeasonMessage::PrintDriverPerf => {
+                let sorter = |a: &(u8, i16), b: &(u8, i16)| b.1.cmp(&a.1);
+                let at = self
+                    .season
+                    .get_driver_performance_at(self.current_round)
+                    .map(|drivers| {
+                        let mut sorted = drivers.into_iter().collect::<Vec<_>>();
+                        sorted.sort_by(sorter);
+                        sorted
+                    });
+
+                let mut by = self
+                    .season
+                    .get_driver_performance_by(self.current_round)
+                    .into_iter()
+                    .collect::<Vec<_>>();
+
+                by.sort_by(sorter);
+
+                println!("== DRIVER PERF OVERALL ==");
+                for (driver, perf) in by {
+                    println!("{:02} {}", driver, perf);
+                }
+                if let Some(drivers) = at {
+                    println!("== DRIVER PERF THIS ROUND ==");
+                    for (driver, perf) in drivers {
+                        println!("{:02} {}", driver, perf);
+                    }
+                }
+            }
             SeasonMessage::Exit => {
                 if !self.popups.is_empty() {
                     self.popups.pop();
@@ -474,6 +509,7 @@ pub enum SeasonMessage {
     DownloadRaceNames,
     DownloadedRaceNames(Result<HashMap<u8, String>, ApiError>),
     RemoveWarning,
+    PrintDriverPerf,
     Exit,
 }
 
