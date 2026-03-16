@@ -66,6 +66,10 @@ impl FantasySeason {
         self.name.as_str()
     }
 
+    pub fn get_team_count(&self) -> usize {
+        self.teams.len()
+    }
+
     pub fn update_results(
         &mut self,
         round: u8,

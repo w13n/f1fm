@@ -111,17 +111,17 @@ impl Season {
             .collect();
         let teams_points_by: Vec<_> = points_by.into_iter().map(|(team, _)| team).collect();
         let points_by_table =
-            Self::view_table("total points", teams_points_by.clone(), data_points_by);
+            Self::view_table_teams("total points", teams_points_by.clone(), data_points_by);
 
         let points_at = self.season.get_points_at(self.current_round);
         let points_at_table: Element<SeasonMessage> = match points_at {
             None => {
                 let data_col = teams_points_by.iter().map(|_| "0".to_string()).collect();
-                Self::view_table("points this round", teams_points_by, data_col)
+                Self::view_table_teams("points this round", teams_points_by, data_col)
             }
             Some(vec) => {
                 let data_col = vec.iter().map(|(_, points)| points.to_string()).collect();
-                Self::view_table(
+                Self::view_table_teams(
                     "points this round",
                     vec.into_iter().map(|(team, _)| team).collect(),
                     data_col,
@@ -146,7 +146,7 @@ impl Season {
                     })
                 })
                 .collect();
-            Self::view_table(
+            Self::view_table_teams(
                 "lineup this round",
                 round_lineup.into_iter().map(|x| x.0).collect(),
                 data_col,
@@ -155,16 +155,57 @@ impl Season {
             let mut teams = self.season.get_team_names();
             teams.sort();
             let size = teams.len();
-            Self::view_table(
+            Self::view_table_teams(
                 "lineup this round",
                 teams,
                 vec![String::from("not yet drafted"); size],
             )
         };
 
+        let driver_perf_table = {
+            let mut driver_perf: Vec<_> = self
+                .season
+                .get_driver_performance_by(self.current_round)
+                .into_iter()
+                .collect();
+
+            driver_perf.sort_by(|a, b| (b.1).cmp(&a.1).then(b.0.cmp(&a.0)));
+
+            let rows = self.season.get_team_count();
+
+            let mut columns = Vec::new();
+
+            loop {
+                if driver_perf.is_empty() {
+                    break;
+                }
+
+                let mut driver_col = Vec::with_capacity(rows);
+                let mut points_col = Vec::with_capacity(rows);
+
+                for _ in 0..(std::cmp::min(rows, driver_perf.len())) {
+                    let driver = driver_perf.remove(0);
+                    driver_col.push(widget::text!("{:02}:", driver.0).size(CONTENT).into());
+                    points_col.push(widget::text!("{}", driver.1).size(CONTENT).into());
+                }
+
+                columns.push(
+                    widget::row![
+                        widget::Column::from_vec(driver_col),
+                        widget::Column::from_vec(points_col)
+                    ]
+                    .into(),
+                );
+            }
+            Season::view_table(
+                "driver performance",
+                widget::Row::from_vec(columns).spacing(PADDING * 2).into(),
+            )
+        };
+
         widget::column![
             widget::row![points_at_table, points_by_table].spacing(PADDING),
-            widget::row![lineup_table].spacing(PADDING),
+            widget::row![lineup_table, driver_perf_table].spacing(PADDING),
         ]
         .spacing(PADDING)
         .align_x(Alignment::Center)
@@ -239,6 +280,24 @@ impl Season {
 
     fn view_table<'a>(
         title: &str,
+        content: Element<'a, SeasonMessage>,
+    ) -> Element<'a, SeasonMessage> {
+        widget::container(
+            widget::column![
+                widget::text!("{}", title).size(CONTENT),
+                widget::container(content)
+                    .padding(3)
+                    .style(style::container::content)
+            ]
+            .width(Length::Shrink)
+            .align_x(Alignment::Center),
+        )
+        .style(content_title)
+        .into()
+    }
+
+    fn view_table_teams<'a>(
+        title: &str,
         teams: Vec<String>,
         data: Vec<String>,
     ) -> Element<'a, SeasonMessage> {
@@ -246,32 +305,21 @@ impl Season {
         let data_width_max = data.iter().map(|x| x.width()).max().unwrap_or_default();
         let title_width = (table_width - data_width_max).max(0);
 
-        widget::container(
-            widget::column![
-                widget::text!("{}", title).size(CONTENT),
-                widget::container(
-                    widget::row![
-                        widget::Column::from_iter(
-                            teams
-                                .into_iter()
-                                .map(|x| widget::text!("{x:title_width$}").size(CONTENT).into())
-                        ),
-                        widget::Column::from_iter(
-                            data.into_iter()
-                                .map(|x| widget::text!("{x}").size(CONTENT).into())
-                        )
-                        .align_x(Alignment::End),
-                    ]
-                    .spacing(PADDING * 2)
-                )
-                .padding(3)
-                .style(style::container::content)
-            ]
-            .width(Length::Shrink)
-            .align_x(Alignment::Center),
-        )
-        .style(content_title)
-        .into()
+        let content = widget::row![
+            widget::Column::from_iter(
+                teams
+                    .into_iter()
+                    .map(|x| widget::text!("{x:title_width$}").size(CONTENT).into())
+            ),
+            widget::Column::from_iter(
+                data.into_iter()
+                    .map(|x| widget::text!("{x}").size(CONTENT).into())
+            )
+            .align_x(Alignment::End),
+        ]
+        .spacing(PADDING * 2);
+
+        Season::view_table(title, content.into())
     }
 
     pub fn update(&mut self, message: SeasonMessage) -> VCAction {
