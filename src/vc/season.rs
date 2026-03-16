@@ -163,48 +163,47 @@ impl Season {
         };
 
         let driver_perf_table = {
-            let mut driver_perf: Vec<_> = self
+            let driver_perf: Vec<_> = self
                 .season
                 .get_driver_performance_by(self.current_round)
                 .into_iter()
                 .collect();
 
-            driver_perf.sort_by(|a, b| (b.1).cmp(&a.1).then(b.0.cmp(&a.0)));
-
             let rows = self.season.get_team_count();
 
-            let mut columns = Vec::new();
+            Season::view_driver_perf(rows, driver_perf, "performance")
+        };
 
-            loop {
-                if driver_perf.is_empty() {
-                    break;
+        let driver_perf_this_round_table = {
+            let rows = self.season.get_team_count();
+
+            if let Some(driver_perf_vec) = self.season.get_driver_performance_at(self.current_round)
+            {
+                let driver_perf: Vec<_> = driver_perf_vec.into_iter().collect();
+                Season::view_driver_perf(rows, driver_perf, "performance this round")
+            } else {
+                let mut rows_strings = Vec::new();
+                for _ in 0..rows {
+                    rows_strings.push(
+                        widget::text!("no driver performance data yet")
+                            .size(CONTENT)
+                            .into(),
+                    );
                 }
-
-                let mut driver_col = Vec::with_capacity(rows);
-                let mut points_col = Vec::with_capacity(rows);
-
-                for _ in 0..(std::cmp::min(rows, driver_perf.len())) {
-                    let driver = driver_perf.remove(0);
-                    driver_col.push(widget::text!("{:02}:", driver.0).size(CONTENT).into());
-                    points_col.push(widget::text!("{}", driver.1).size(CONTENT).into());
-                }
-
-                columns.push(
-                    widget::row![
-                        widget::Column::from_vec(driver_col),
-                        widget::Column::from_vec(points_col)
-                    ]
-                    .into(),
-                );
+                Season::view_table(
+                    "performance this round",
+                    widget::Column::from_vec(rows_strings).into(),
+                )
             }
-            Season::view_table(
-                "driver performance",
-                widget::Row::from_vec(columns).spacing(PADDING * 2).into(),
-            )
         };
 
         widget::column![
-            widget::row![points_at_table, points_by_table].spacing(PADDING),
+            widget::row![
+                points_at_table,
+                points_by_table,
+                driver_perf_this_round_table
+            ]
+            .spacing(PADDING),
             widget::row![lineup_table, driver_perf_table].spacing(PADDING),
         ]
         .spacing(PADDING)
@@ -320,6 +319,42 @@ impl Season {
         .spacing(PADDING * 2);
 
         Season::view_table(title, content.into())
+    }
+
+    fn view_driver_perf<'a>(
+        rows: usize,
+        mut driver_perf: Vec<(u8, i16)>,
+        title: &str,
+    ) -> Element<'a, SeasonMessage> {
+        driver_perf.sort_by(|a, b| (b.1).cmp(&a.1).then(b.0.cmp(&a.0)));
+        let mut columns = Vec::new();
+
+        loop {
+            if driver_perf.is_empty() {
+                break;
+            }
+
+            let mut driver_col = Vec::with_capacity(rows);
+            let mut points_col = Vec::with_capacity(rows);
+
+            for _ in 0..(std::cmp::min(rows, driver_perf.len())) {
+                let driver = driver_perf.remove(0);
+                driver_col.push(widget::text!("{:02}:", driver.0).size(CONTENT).into());
+                points_col.push(widget::text!("{}", driver.1).size(CONTENT).into());
+            }
+
+            columns.push(
+                widget::row![
+                    widget::Column::from_vec(driver_col),
+                    widget::Column::from_vec(points_col)
+                ]
+                .into(),
+            );
+        }
+        Season::view_table(
+            title,
+            widget::Row::from_vec(columns).spacing(PADDING * 2).into(),
+        )
     }
 
     pub fn update(&mut self, message: SeasonMessage) -> VCAction {
