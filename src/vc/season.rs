@@ -24,6 +24,7 @@ pub(super) struct Season {
     popups: Vec<Popup>,
     warning: Option<String>,
     warning_count: usize,
+    show_perf: bool,
 }
 
 impl Season {
@@ -43,6 +44,7 @@ impl Season {
             popups: Vec::new(),
             warning: None,
             warning_count: 0,
+            show_perf: true,
         }
     }
     pub fn view(&self) -> Element<'_, SeasonMessage> {
@@ -163,37 +165,46 @@ impl Season {
         };
 
         let driver_perf_table = {
-            let driver_perf: Vec<_> = self
-                .season
-                .get_driver_performance_by(self.current_round)
-                .into_iter()
-                .collect();
+            if !self.show_perf {
+                widget::Row::new().into()
+            } else {
+                let driver_perf: Vec<_> = self
+                    .season
+                    .get_driver_performance_by(self.current_round)
+                    .into_iter()
+                    .collect();
 
-            let rows = self.season.get_team_count();
+                let rows = self.season.get_team_count();
 
-            Season::view_driver_perf(rows, driver_perf, "performance")
+                Season::view_driver_perf(rows, driver_perf, "performance")
+            }
         };
 
         let driver_perf_this_round_table = {
-            let rows = self.season.get_team_count();
-
-            if let Some(driver_perf_vec) = self.season.get_driver_performance_at(self.current_round)
-            {
-                let driver_perf: Vec<_> = driver_perf_vec.into_iter().collect();
-                Season::view_driver_perf(rows, driver_perf, "performance this round")
+            if !self.show_perf {
+                widget::Row::new().into()
             } else {
-                let mut rows_strings = Vec::new();
-                for _ in 0..rows {
-                    rows_strings.push(
-                        widget::text!("no driver performance data yet")
-                            .size(CONTENT)
-                            .into(),
-                    );
+                let rows = self.season.get_team_count();
+
+                if let Some(driver_perf_vec) =
+                    self.season.get_driver_performance_at(self.current_round)
+                {
+                    let driver_perf: Vec<_> = driver_perf_vec.into_iter().collect();
+                    Season::view_driver_perf(rows, driver_perf, "performance this round")
+                } else {
+                    let mut rows_strings = Vec::new();
+                    for _ in 0..rows {
+                        rows_strings.push(
+                            widget::text!("no driver performance data yet")
+                                .size(CONTENT)
+                                .into(),
+                        );
+                    }
+                    Season::view_table(
+                        "performance this round",
+                        widget::Column::from_vec(rows_strings).into(),
+                    )
                 }
-                Season::view_table(
-                    "performance this round",
-                    widget::Column::from_vec(rows_strings).into(),
-                )
             }
         };
 
@@ -251,8 +262,8 @@ impl Season {
         }
         .style(style::button::danger);
 
-        let driver_perf_button = widget::button("driver performance")
-            .on_press(SeasonMessage::PrintDriverPerf)
+        let driver_perf_button = widget::button("toggle performance")
+            .on_press(SeasonMessage::ToggleDriverPerf)
             .style(style::button::secondary);
 
         let left_button = widget::button(widget::text!("\u{e5c4}").font(SYMB_FONT))
@@ -464,36 +475,7 @@ impl Season {
                     self.warning = None;
                 }
             }
-            SeasonMessage::PrintDriverPerf => {
-                let sorter = |a: &(u8, i16), b: &(u8, i16)| b.1.cmp(&a.1);
-                let at = self
-                    .season
-                    .get_driver_performance_at(self.current_round)
-                    .map(|drivers| {
-                        let mut sorted = drivers.into_iter().collect::<Vec<_>>();
-                        sorted.sort_by(sorter);
-                        sorted
-                    });
-
-                let mut by = self
-                    .season
-                    .get_driver_performance_by(self.current_round)
-                    .into_iter()
-                    .collect::<Vec<_>>();
-
-                by.sort_by(sorter);
-
-                println!("== DRIVER PERF OVERALL ==");
-                for (driver, perf) in by {
-                    println!("{:02} {}", driver, perf);
-                }
-                if let Some(drivers) = at {
-                    println!("== DRIVER PERF THIS ROUND ==");
-                    for (driver, perf) in drivers {
-                        println!("{:02} {}", driver, perf);
-                    }
-                }
-            }
+            SeasonMessage::ToggleDriverPerf => self.show_perf = !self.show_perf,
             SeasonMessage::Exit => {
                 if !self.popups.is_empty() {
                     self.popups.pop();
@@ -592,7 +574,7 @@ pub enum SeasonMessage {
     DownloadRaceNames,
     DownloadedRaceNames(Result<HashMap<u8, String>, ApiError>),
     RemoveWarning,
-    PrintDriverPerf,
+    ToggleDriverPerf,
     Exit,
 }
 
